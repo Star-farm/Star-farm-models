@@ -16,29 +16,30 @@ import "Constants.gaml"
 
 
 global {
-	float step <- 1 #day;
-	
-	date starting_date <- date([2026,8,1]);
 	geometry shape <- envelope(plots_shapefile);
 	 
 	init {
-		do create_crop_type;
+		do create_practices;
 		do create_plots;
 	}
 	
 	action create_plots {
-		create Plot from: plots_shapefile;
+		create Plot from: plots_shapefile; 
 		
 		ask Plot {
+			
 			create Farm { 
-				plots << myself;
-				create Farmer {
+				plots << myself; 
+				create Farmer returns: f{
 					my_farm <- myself;
+					shape <-  union(myself.plots);
+					
 				}
+				myself.the_farmer <- first(f);
 			}
 		}
 		ask Farmer {
-			do define_associate_crop_type;
+			do define_neighbors;
 		}
 	}
 }

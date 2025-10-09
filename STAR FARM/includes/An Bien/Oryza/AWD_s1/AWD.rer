@@ -1,0 +1,151 @@
+*AWD
+*---Run set 11: W-S 2015-2016'
+IYEAR = 2015
+EMYR = 2015
+STTIME = 300.
+EMD = 310
+SWITPD = 1
+IRMTAB = 0.0, 2.0,    ! Continuous flooding from transplanting
+         0.2, 3.0,    ! Start AWD after establishment (DVS 0.2)
+         0.6, 2.0,    ! Resume flooding before panicle initiation
+         0.8, 3.0,    ! AWD during early reproductive stage
+         1.0, 2.0,    ! Flooding during flowering (critical stage)
+         1.2, 3.0,    ! AWD during grain filling
+         1.8, 0.0,    ! Stop irrigation near maturity
+         2.0, 0.0
+
+*---Run set 12: S-A 2016
+IYEAR = 2016
+EMYR = 2016
+STTIME = 80.
+EMD = 85
+SWITPD = 1
+IRMTAB = 0.0, 2.0,    ! Continuous flooding from transplanting
+         0.2, 3.0,    ! Start AWD after establishment (DVS 0.2)
+         0.6, 2.0,    ! Resume flooding before panicle initiation
+         0.8, 3.0,    ! AWD during early reproductive stage
+         1.0, 2.0,    ! Flooding during flowering (critical stage)
+         1.2, 3.0,    ! AWD during grain filling
+         1.8, 0.0,    ! Stop irrigation near maturity
+         2.0, 0.0
+
+*---Run set 13: W-S 2016-2017
+IYEAR = 2016
+EMYR = 2016
+STTIME = 300.
+EMD = 310
+SWITPD = 1
+IRMTAB = 0.0, 2.0,    ! Continuous flooding from transplanting
+         0.2, 3.0,    ! Start AWD after establishment (DVS 0.2)
+         0.6, 2.0,    ! Resume flooding before panicle initiation
+         0.8, 3.0,    ! AWD during early reproductive stage
+         1.0, 2.0,    ! Flooding during flowering (critical stage)
+         1.2, 3.0,    ! AWD during grain filling
+         1.8, 0.0,    ! Stop irrigation near maturity
+         2.0, 0.0
+
+*---Run set 14: S-A 2017
+IYEAR = 2017
+EMYR = 2017
+STTIME = 80.
+EMD = 85
+SWITPD = 1
+IRMTAB = 0.0, 2.0,    ! Continuous flooding from transplanting
+         0.2, 3.0,    ! Start AWD after establishment (DVS 0.2)
+         0.6, 2.0,    ! Resume flooding before panicle initiation
+         0.8, 3.0,    ! AWD during early reproductive stage
+         1.0, 2.0,    ! Flooding during flowering (critical stage)
+         1.2, 3.0,    ! AWD during grain filling
+         1.8, 0.0,    ! Stop irrigation near maturity
+         2.0, 0.0
+
+*---Run set 15: W-S 2017-2018
+IYEAR = 2017
+EMYR = 2017
+STTIME = 300.
+EMD = 310
+SWITPD = 1
+IRMTAB = 0.0, 2.0,    ! Continuous flooding from transplanting
+         0.2, 3.0,    ! Start AWD after establishment (DVS 0.2)
+         0.6, 2.0,    ! Resume flooding before panicle initiation
+         0.8, 3.0,    ! AWD during early reproductive stage
+         1.0, 2.0,    ! Flooding during flowering (critical stage)
+         1.2, 3.0,    ! AWD during grain filling
+         1.8, 0.0,    ! Stop irrigation near maturity
+         2.0, 0.0
+
+*---Run set 16: S-A 2018
+IYEAR = 2018
+EMYR = 2018
+STTIME = 80.
+EMD = 85
+SWITPD = 1
+IRMTAB = 0.0, 2.0,    ! Continuous flooding from transplanting
+         0.2, 3.0,    ! Start AWD after establishment (DVS 0.2)
+         0.6, 2.0,    ! Resume flooding before panicle initiation
+         0.8, 3.0,    ! AWD during early reproductive stage
+         1.0, 2.0,    ! Flooding during flowering (critical stage)
+         1.2, 3.0,    ! AWD during grain filling
+         1.8, 0.0,    ! Stop irrigation near maturity
+         2.0, 0.0
+
+*---Run set 17: W-S 2018-2019
+IYEAR = 2018
+EMYR = 2018
+STTIME = 300.
+EMD = 310
+SWITPD = 1
+IRMTAB = 0.0, 2.0,    ! Continuous flooding from transplanting
+         0.2, 3.0,    ! Start AWD after establishment (DVS 0.2)
+         0.6, 2.0,    ! Resume flooding before panicle initiation
+         0.8, 3.0,    ! AWD during early reproductive stage
+         1.0, 2.0,    ! Flooding during flowering (critical stage)
+         1.2, 3.0,    ! AWD during grain filling
+         1.8, 0.0,    ! Stop irrigation near maturity
+         2.0, 0.0
+
+*---Run set 18: S-A 2019
+IYEAR = 2019
+EMYR = 2019
+STTIME = 80.
+EMD = 85
+SWITPD = 1
+IRMTAB = 0.0, 2.0,    ! Continuous flooding from transplanting
+         0.2, 3.0,    ! Start AWD after establishment (DVS 0.2)
+         0.6, 2.0,    ! Resume flooding before panicle initiation
+         0.8, 3.0,    ! AWD during early reproductive stage
+         1.0, 2.0,    ! Flooding during flowering (critical stage)
+         1.2, 3.0,    ! AWD during grain filling
+         1.8, 0.0,    ! Stop irrigation near maturity
+         2.0, 0.0
+
+*---Run set 19: W-S 2019-2020
+IYEAR = 2019
+EMYR = 2019
+STTIME = 300.
+EMD = 310
+SWITPD = 1
+IRMTAB = 0.0, 2.0,    ! Continuous flooding from transplanting
+         0.2, 3.0,    ! Start AWD after establishment (DVS 0.2)
+         0.6, 2.0,    ! Resume flooding before panicle initiation
+         0.8, 3.0,    ! AWD during early reproductive stage
+         1.0, 2.0,    ! Flooding during flowering (critical stage)
+         1.2, 3.0,    ! AWD during grain filling
+         1.8, 0.0,    ! Stop irrigation near maturity
+         2.0, 0.0
+
+*---Run set 20: S-A 2020
+IYEAR = 2020
+EMYR = 2020
+STTIME = 80.
+EMD = 85
+SWITPD = 1
+IRMTAB = 0.0, 2.0,    ! Continuous flooding from transplanting
+         0.2, 3.0,    ! Start AWD after establishment (DVS 0.2)
+         0.6, 2.0,    ! Resume flooding before panicle initiation
+         0.8, 3.0,    ! AWD during early reproductive stage
+         1.0, 2.0,    ! Flooding during flowering (critical stage)
+         1.2, 3.0,    ! AWD during grain filling
+         1.8, 0.0,    ! Stop irrigation near maturity
+         2.0, 0.0
+        

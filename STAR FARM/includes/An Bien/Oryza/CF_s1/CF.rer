@@ -1,0 +1,91 @@
+*CF
+*---Run set 1: W-S 2015-2016
+IYEAR = 2015
+EMYR = 2015
+STTIME = 300.
+EMD = 310
+SWITPD = 1
+IRMTAB = 0.0, 2.0,
+         2.0, 2.0
+
+*---Run set 2: S-A 2016
+IYEAR = 2016
+EMYR = 2016
+STTIME = 80.
+EMD = 85
+SWITPD = 1
+IRMTAB = 0.0, 2.0,
+         2.0, 2.0
+
+*---Run set 3: W-S 2016-2017
+IYEAR = 2016
+EMYR = 2016
+STTIME = 300.
+EMD = 310
+SWITPD = 1
+IRMTAB = 0.0, 2.0,
+         2.0, 2.0
+
+*---Run set 4: S-A 2017
+IYEAR = 2017
+EMYR = 2017
+STTIME = 80.
+EMD = 85
+SWITPD = 1
+IRMTAB = 0.0, 2.0,
+         2.0, 2.0
+
+*---Run set 5: W-S 2017-2018
+IYEAR = 2017
+EMYR = 2017
+STTIME = 300.
+EMD = 310
+SWITPD = 1
+IRMTAB = 0.0, 2.0,
+         2.0, 2.0
+
+*---Run set 6: S-A 2018
+IYEAR = 2018
+EMYR = 2018
+STTIME = 80.
+EMD = 85
+SWITPD = 1
+IRMTAB = 0.0, 2.0,
+         2.0, 2.0
+
+*---Run set 7: W-S 2018-2019
+IYEAR = 2018
+EMYR = 2018
+STTIME = 300.
+EMD = 310
+SWITPD = 1
+IRMTAB = 0.0, 2.0,
+         2.0, 2.0
+
+*---Run set 8: S-A 2019
+IYEAR = 2019
+EMYR = 2019
+STTIME = 80.
+EMD = 85
+SWITPD = 1
+IRMTAB = 0.0, 2.0,
+         2.0, 2.0
+
+*---Run set 9: W-S 2019-2020
+IYEAR = 2019
+EMYR = 2019
+STTIME = 300.
+EMD = 310
+SWITPD = 1
+IRMTAB = 0.0, 2.0,
+         2.0, 2.0
+
+*---Run set 10: S-A 2020
+IYEAR = 2020
+EMYR = 2020
+STTIME = 80.
+EMD = 85
+SWITPD = 1
+IRMTAB = 0.0, 2.0,
+         2.0, 2.0
+        
