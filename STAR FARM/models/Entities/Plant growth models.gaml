@@ -53,7 +53,7 @@ species basicModel parent: Plant_growth_model {
 		return current_date.day_of_year in pr.harvesting_date ;
 	}
 }
-
+ 
 species Oryza parent: Plant_growth_model {
 	string id <- ORYZA;
 	

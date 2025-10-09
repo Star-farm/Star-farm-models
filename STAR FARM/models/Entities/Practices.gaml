@@ -29,6 +29,7 @@ global {
 species Crop_practice virtual: true{
 	string id; 
 	rgb color;
+	rgb color_farmer;
 	float market_price; // per kg
 	float fert_cost;  // per ha
 	float seed_cost; // per ha
@@ -52,6 +53,7 @@ species Crop_practice virtual: true{
 species RiceCF parent: Crop_practice {
 	string id <- RICE_CF;
 	rgb color <- #darkgreen;
+	rgb color_farmer <- #red;
 	list<int> sowing_date <- [120, 300];
 	list<int> harvesting_date <- [70,210];
 	
@@ -67,11 +69,13 @@ species RiceCF parent: Crop_practice {
 	float Harvest_index <- 0.45;
 	
 	
+	
 }
 
 species RiceAWD parent: Crop_practice {
 	string id <- RICE_AWD;
 	rgb color <- #lightgreen;
+	rgb color_farmer <- #blue;
 	list<int> sowing_date <- [120, 300];
 	list<int> harvesting_date <- [70,210];
 	

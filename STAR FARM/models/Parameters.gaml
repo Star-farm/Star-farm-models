@@ -15,6 +15,7 @@ global {
 	
 	date starting_date <- date([2026,8,1]);
 	
+	image_file farmer_image <- image_file("../includes/Images/farmer.png");
 	
 	shape_file plots_shapefile <- shape_file("../includes/An Bien/an_bien_parcelles.shp");
 	
@@ -22,6 +23,7 @@ global {
    
     map<string, float> possible_practices <- [RICE_AWD::0.1, RICE_CF::0.9];
    
+	
 	
 	string plant_grow_model <- ORYZA ; //POSSIBLE VALUES : BASIC/ORYZA
 

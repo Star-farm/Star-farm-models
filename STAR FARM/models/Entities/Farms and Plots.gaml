@@ -13,7 +13,7 @@ import "Plant growth models.gaml"
 import "Practices.gaml"
 
 import "../Parameters.gaml"
-
+ 
 
 species Farmer {
 	Farm my_farm;
@@ -33,7 +33,7 @@ species Farmer {
 			}
 		}
 	}
-	
+	 
 	action innovation_diffusion_neighbors {
 		map<string, float> practice_candidates;
 		loop p over: possible_practices.keys {
@@ -47,7 +47,7 @@ species Farmer {
 		}
 	}
 	aspect default {
-		draw shape.contour + 1 color: practice.color ;
+		draw farmer_image size: {50, 50} color: practice.color_farmer;
 	}
 }
 
@@ -69,7 +69,7 @@ species Plot {
 	
 	
 	reflex harvesting when: PG_model.is_harvesting_date(the_farmer.practice){
-		the_farmer.money <- the_farmer.money + associated_crop.income_computation();
+		the_farmer.money <-  associated_crop.income_computation();
 		ask associated_crop {
 			do die;
 		}
