@@ -11,14 +11,13 @@ import "../Global.gaml"
 
 
 experiment simple_exp type:gui {
-	/** Insert here the definition of the inputs and outputs of the model */
-	
-	/** Parameters can be used to input values to the model **/
-	// parameter "First parameter" var: an_attribute_of_the_model <- an_expression;
+	float minimum_cycle_duration <- 0.01;
 	
 	output {
 		display map {
 			species Plot;
+			species Farmer;
+			
 		}
 
 	} 

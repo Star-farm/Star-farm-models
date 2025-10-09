@@ -8,6 +8,8 @@
 
 model STARFARM
 
+import "Plant growth models.gaml"
+
 import "Practices.gaml"
 
 import "../Parameters.gaml"
@@ -16,7 +18,7 @@ import "../Parameters.gaml"
 species Farmer {
 	Farm my_farm;
 	
-	Crop_practices practice <- practices[possible_practices.keys[rnd_choice(possible_practices.values)]];
+	Crop_practice practice <- practices[possible_practices.keys[rnd_choice(possible_practices.values)]];
 	float money; 
 	list<Farmer> neighbors;
 	
@@ -44,7 +46,9 @@ species Farmer {
 			practice <- practices[practice_candidates.keys[rnd_choice(practice_candidates.values)]];
 		}
 	}
-	
+	aspect default {
+		draw shape.contour + 1 color: practice.color ;
+	}
 }
 
 species Farm { 
@@ -52,23 +56,26 @@ species Farm {
 }
 
 
-species Plot {
-	Farmer the_farmer;
+species Plot { 
+	Farmer the_farmer; 
 	Crop associated_crop;
 	
-	reflex sowing when: current_date.day_of_year in the_farmer.practice.sowing_date{
+	reflex sowing when: PG_model.is_sowing_date(the_farmer.practice){
 		create Crop with:(the_farmer:the_farmer) {
 			myself.associated_crop <- self;
 			concerned_plot <- myself;
 		} 
 	}
-	reflex harvesting when: current_date.day_of_year in the_farmer.practice.harvesting_date{
+	
+	
+	reflex harvesting when: PG_model.is_harvesting_date(the_farmer.practice){
 		the_farmer.money <- the_farmer.money + associated_crop.income_computation();
 		ask associated_crop {
 			do die;
 		}
 		associated_crop <- nil;
 	}
+	
 	aspect default {
 		draw shape color: associated_crop =nil ? #white : the_farmer.practice.color border: #black;
 	}
@@ -81,10 +88,13 @@ species Crop {
 	int lifespan <- 0 update: lifespan + 1;
 	
 	
-	float biomass_computation {
+	float basic_biomass_computation {
 		return concerned_plot.shape.area * the_farmer.practice.Bmax / (1+ exp(-the_farmer.practice.k * (lifespan - the_farmer.practice.t0)));
 	}
+	
+	
+	
 	float income_computation {
-		return self.biomass_computation() * the_farmer.practice.Harvest_index * 1000.0 * the_farmer.practice.market_price;
+		return PG_model.biomass_computation(self) * the_farmer.practice.Harvest_index * 1000.0 * the_farmer.practice.market_price;
 	}
 }

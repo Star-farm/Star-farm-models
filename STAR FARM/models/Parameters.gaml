@@ -17,19 +17,25 @@ global {
 	
 	
 	shape_file plots_shapefile <- shape_file("../includes/An Bien/an_bien_parcelles.shp");
-
 	
-	string rice_grow_model <- BASIC ; //POSSIBLE VALUES : BASIC/ORYZA
+	string innovation_diffusion_model <- NEIGHBORS; //NONE, NEIGHBORS
+   
+    map<string, float> possible_practices <- [RICE_AWD::0.1, RICE_CF::0.9];
+   
+	
+	string plant_grow_model <- ORYZA ; //POSSIBLE VALUES : BASIC/ORYZA
 
 	/******* PARAMETERS FOR ORYZA *********/
 	 
-	 map<string, file> data_files <- [
-        RICE_CF::csv_file("../includes/An Bien/Oryza/CF_s1/cf_res.csv"),
-        RICE_AWD::csv_file("../includes/An Bien/Oryza/AWD_s1/awd_res.csv")
+	 map<string, string> data_files_practices <- [
+        RICE_CF::("../includes/An Bien/Oryza/CF_s1/cf_res.csv"),
+        RICE_AWD::("../includes/An Bien/Oryza/AWD_s1/awd_res.csv")
+    ];
+     map<string, string> data_files_yields <- [
+        RICE_CF::("../includes/An Bien/Oryza/CF_s1/cf_op.csv"),
+        RICE_AWD::("../includes/An Bien/Oryza/AWD_s1/awd_op.csv")
     ];
     
-    string innovation_diffusion_model <- NEIGHBORS; //NONE, NEIGHBORS
-    map<string, float> possible_practices <- [RICE_AWD::0.1, RICE_CF::0.9];
     
 }
 

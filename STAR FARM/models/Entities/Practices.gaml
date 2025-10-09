@@ -8,24 +8,25 @@
 
 model STARFARM
 
+import "../Global.gaml"
+
 import "../Constants.gaml"
 
 
 global {
-	map<string,Crop_practices> practices;
+	map<string,Crop_practice> practices;
 	
 	action create_practices {
-		loop s over: Crop_practices.subspecies { 
+		loop s over: Crop_practice.subspecies { 
 			create s returns: new_practices;
-			Crop_practices ct <- Crop_practices(first(new_practices));
+			Crop_practice ct <- Crop_practice(first(new_practices));
 			practices[ct.id] <- ct ;
 		}
-			
 	}	
 }
 
 
-species Crop_practices {
+species Crop_practice virtual: true{
 	string id; 
 	rgb color;
 	float market_price; // per kg
@@ -41,10 +42,14 @@ species Crop_practices {
 	float k ;
 	int t0;
 	
+	map<list<int>,float> oryza_data;
+	pair<list<int>,float> current_oryza;
+	
+	
 }
 
 
-species RiceCF parent: Crop_practices {
+species RiceCF parent: Crop_practice {
 	string id <- RICE_CF;
 	rgb color <- #darkgreen;
 	list<int> sowing_date <- [120, 300];
@@ -60,9 +65,11 @@ species RiceCF parent: Crop_practices {
 	
 	
 	float Harvest_index <- 0.45;
+	
+	
 }
 
-species RiceAWD parent: Crop_practices {
+species RiceAWD parent: Crop_practice {
 	string id <- RICE_AWD;
 	rgb color <- #lightgreen;
 	list<int> sowing_date <- [120, 300];
