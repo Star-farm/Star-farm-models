@@ -23,7 +23,7 @@ global {
    
     map<string, float> possible_practices <- [RICE_AWD::0.1, RICE_CF::0.9];
    
-	
+	map<string,string> plots_to_keep <- ["Lu05_en"::"Rice"];
 	
 	string plant_grow_model <- ORYZA ; //POSSIBLE VALUES : BASIC/ORYZA
 

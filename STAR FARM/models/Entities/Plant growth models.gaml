@@ -74,7 +74,7 @@ species Oryza parent: Plant_growth_model {
 			matrix<string> yieldsP <- matrix(csv_file(data_files_yields[p], true)); 
 			matrix<string> dataP <- matrix(csv_file(data_files_practices[p], true)); 
 			
-			int rs_ <- 1;
+			int rs_ <- 1; 
 			int rs;
 			int r <- 0;
 			int de <- -1;

@@ -11,7 +11,6 @@ import "../Global.gaml"
 
 
 experiment simple_exp type:gui {
-//	float minimum_cycle_duration update: empty(Crop) ? 0.0 : 0.01  ;
 	
 	output {
 		display map {

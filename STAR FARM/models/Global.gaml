@@ -33,6 +33,12 @@ global {
 		create Plot from: plots_shapefile; 
 		
 		ask Plot {
+			map attributes <- shape.attributes;
+			loop att over: plots_to_keep.keys {
+				if not(att in attributes.keys) or not(string(attributes[att]) contains plots_to_keep[att]) {
+					do die;
+				}
+			}
 			
 			create Farm { 
 				plots << myself; 
