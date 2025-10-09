@@ -63,8 +63,6 @@ species Plot {
 		} 
 	}
 	reflex harvesting when: current_date.day_of_year in the_farmer.practice.harvesting_date{
-		write sample(the_farmer.practice.market_price);
-		write sample(associated_crop.income_computation());
 		the_farmer.money <- the_farmer.money + associated_crop.income_computation();
 		ask associated_crop {
 			do die;

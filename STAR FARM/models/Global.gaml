@@ -16,8 +16,9 @@ import "Constants.gaml"
 
 
 global {
+	
 	geometry shape <- envelope(plots_shapefile);
-	 
+	int init_day_of_year <-  current_date.day_of_year;
 	init {
 		do create_practices;
 		do create_plots;
@@ -40,6 +41,12 @@ global {
 		}
 		ask Farmer {
 			do define_neighbors;
+		}
+	}
+	
+	reflex change_practices when:cycle > 0 and current_date.day_of_year = init_day_of_year {
+		ask Farmer {
+			do decide_practice;
 		}
 	}
 }
