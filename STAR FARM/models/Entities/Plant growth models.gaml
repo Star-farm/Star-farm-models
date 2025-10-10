@@ -7,10 +7,10 @@
 
 
 model STARFARM
-
+ 
 import "Farms and Plots.gaml"
 
-
+ 
  
 
 global {

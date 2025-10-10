@@ -38,6 +38,9 @@ species Crop_practice virtual: true{
 	list<int> sowing_date;
 	list<int> harvesting_date;
 	
+	map<int,string> irrigation;
+	map<int,float> fertilization;
+	
 	float Bmax ;
 	float Harvest_index;
 	float k ;
@@ -66,6 +69,7 @@ species RiceCF parent: Crop_practice {
 	float other_cost <- 300000.0; // VND/per ha 
 	
 	
+
 	float Harvest_index <- 0.45;
 	
 	

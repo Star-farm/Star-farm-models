@@ -35,6 +35,23 @@ experiment simple_exp type:gui {
 			
 			}
 		}
+		
+		display Weather type: 2d {
+			chart "Temperature" type: series size: {0.5,0.5}{
+				data "temperature min" value: the_weather.temp_min[current_date]  color: #blue;
+				data "temperature max" value: the_weather.temp_max[current_date]  color: #red;
+			}
+			chart "Solar radiation" type: series size: {0.5,0.5} position: {0.5,0.0}{
+				data "Solar radiation" value: the_weather.solar_radiation[current_date]  color: #orange;
+			}
+			chart "Humidity" type: series size: {0.5,0.5} position: {0.0,0.5}{
+				data "Humidity" value: the_weather.humidity[current_date]  color: #cyan;
+			}
+			chart "Rainfall" type: series size: {0.5,0.5} position: {0.5,0.5}{
+				data "Rainfall" value: the_weather.rainfall[current_date]  color: #darkblue;
+			}
+		}
+		
 
 	} 
 }

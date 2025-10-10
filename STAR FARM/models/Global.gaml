@@ -8,6 +8,8 @@
 
 model STARFARM
 
+import "Entities/Weather.gaml"
+
 import "Entities/Plant growth models.gaml"
 
 import "Entities/Farms and Plots.gaml"
@@ -22,10 +24,13 @@ global {
 	geometry shape <- envelope(plots_shapefile);
 	int init_day_of_year <-  current_date.day_of_year;
 	
+
+	
 	init {
 		do create_practices;
 		do create_plant_growth_models;
-		do create_plots;
+		do create_plots; 
+		do init_weather_data;
 		
 	}
 	
