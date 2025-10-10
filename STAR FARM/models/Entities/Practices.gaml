@@ -72,6 +72,9 @@ species RiceCF parent: Crop_practice {
 
 	float Harvest_index <- 0.45;
 	
+	map<int,string> irrigation <- [0::CONTINUOUS, 91::NO_IRRIGATION];
+	map<int,float> fertilization <- [7::40.0, 20::40.0, 50::40.0];
+	
 	
 	
 }
@@ -93,4 +96,9 @@ species RiceAWD parent: Crop_practice {
 	
 	
 	float Harvest_index <- 0.45;
+	
+	map<int,string> irrigation <- [0::CONTINUOUS, 21::ALTERNATE,81::CONTINUOUS, 90::NO_IRRIGATION];
+	map<int,float> fertilization <- [7::40.0, 20::40.0, 50::40.0];
+	
+	
 }

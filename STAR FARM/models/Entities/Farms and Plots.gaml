@@ -46,6 +46,11 @@ species Farmer {
 			practice <- practices[practice_candidates.keys[rnd_choice(practice_candidates.values)]];
 		}
 	}
+	
+	reflex change_practices when:cycle > 0 and current_date.day_of_year = init_day_of_year {
+		do decide_practice;
+	} 
+	
 	aspect default {
 		draw farmer_image size: {50, 50} color: practice.color_farmer;
 	}
@@ -86,13 +91,20 @@ species Crop {
 	float current_biomass;
 	Plot concerned_plot;
 	int lifespan <- 0 update: lifespan + 1;
-	
+	string irrigation_mode <- NO_IRRIGATION;
 	
 	float basic_biomass_computation {
 		return concerned_plot.shape.area * the_farmer.practice.Bmax / (1+ exp(-the_farmer.practice.k * (lifespan - the_farmer.practice.t0)));
 	}
 	
+
+	reflex fertilization when:lifespan in the_farmer.practice.fertilization.keys {
+		float quantity <- the_farmer.practice.fertilization[lifespan];
+	}
 	
+	reflex change_irrigation when:lifespan in the_farmer.practice.irrigation.keys {
+		irrigation_mode <- the_farmer.practice.irrigation[lifespan];
+	} 
 	
 	float income_computation {
 		return PG_model.biomass_computation(self) * the_farmer.practice.Harvest_index * 1000.0 * the_farmer.practice.market_price;

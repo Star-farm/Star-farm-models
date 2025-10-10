@@ -60,11 +60,7 @@ global {
 		}
 	}
 	
-	reflex change_practices when:cycle > 0 and current_date.day_of_year = init_day_of_year {
-		ask Farmer {
-			do decide_practice;
-		}
-	}
+	
 	
 }
 

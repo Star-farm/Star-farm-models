@@ -23,5 +23,10 @@ global {
 	string RICE_AWD <- "rice_awd" const: true;
 	string RICE_CF <- "rice_cf" const: true;
 	
+	/******* RICE IRRIGATION *******/
+	string CONTINUOUS <- "continuous" const: true;
+	string ALTERNATE <- "alternate" const: true;
+	string NO_IRRIGATION <- "no_irrigation" const: true;
+	
 }
 
