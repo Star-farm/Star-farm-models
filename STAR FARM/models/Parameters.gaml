@@ -27,7 +27,7 @@ global {
    
 	map<string,string> plots_to_keep <- ["Lu05_en"::"Rice"];
 		
-	string plant_grow_model <- ORYZA ; //POSSIBLE VALUES : BASIC/ORYZA
+	string plant_grow_model <- BASIC;// ORYZA ; //POSSIBLE VALUES : BASIC/ORYZA
 
 	/******* PARAMETERS FOR ORYZA *********/
 	 
@@ -40,6 +40,28 @@ global {
         RICE_AWD::("../includes/An Bien/Oryza/AWD_s1/awd_op.csv")
     ];
     
+    /**** PARAMETERS FOR BASIC PLANT GROWTH MODEL *****/
+    
+ 	// Latitude pour ETo (en degrés)
+	float latitude <- 10.0;
+
+	// Paramètres du modèle (à calibrer)
+	float alpha_par <- 0.48;    // fraction du rayonnement global converti en PAR
+	float RUE <- 1.8;           // g MS / MJ PAR
+	float k_LAI <- 0.5;         // coefficient d'extinction
+	float aB <- 0.0025;         // m2 de feuille / g biomasse
+	float m_resp <- 0.003;      // respiration quotidienne
+	float HI <- 0.45;           // Harvest Index
+	float S_max <- 150.0;       // réserve utile (mm)
+	float S_opt_frac <- 0.7;
+	float S_wp_frac <- 0.1;
+	float N_opt <- 30.0;       // N optimal (kg/ha)
+	float eta_N <- 0.015;       // % N dans biomasse
+	float N_loss_frac <- 0.15;
+	float PD_target <- 40.0;    // hauteur de submersion cible (mm)
+	float AWD_WTD_trigger <- 150.0; // seuil de ré-irrigation (mm)
+	float CF_min_PD <- 20.0;
+	
 
 
     

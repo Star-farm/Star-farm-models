@@ -27,6 +27,11 @@ global {
 					temp_min[d] <- float(mat[4,i]); 
 					temp_max[d] <- float(mat[5,i]); 
 					solar_radiation[d] <- float(mat[3,i]); 
+					if (solar_radiation[d] = 0.0) {
+						if (i > 0) {
+							solar_radiation[d] <- last(solar_radiation.values);
+						}
+					}
 					humidity[d] <- float(mat[6,i]); 
 					windspeed[d] <- float(mat[7,i]); 
 					rainfall[d] <- float(mat[8,i]); 

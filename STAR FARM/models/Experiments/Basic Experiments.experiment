@@ -32,7 +32,6 @@ experiment simple_exp type:gui {
 				loop p over: practices.values {
 					data "Mean income of " + p.id value: empty(Farmer where (each.practice = p)) ? 0.0 :((Farmer where (each.practice = p)) mean_of (each.money)) color: p.color_farmer;
 				}
-			
 			}
 		}
 		

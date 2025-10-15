@@ -58,7 +58,7 @@ species RiceCF parent: Crop_practice {
 	rgb color <- #darkgreen;
 	rgb color_farmer <- #red;
 	list<int> sowing_date <- [120, 300];
-	list<int> harvesting_date <- [70,210];
+	list<int> harvesting_date <- [210,70];
 	
 	float Bmax <- 14 / 10000 ;
 	float k <- 0.075;

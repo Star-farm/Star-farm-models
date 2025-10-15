@@ -1,7 +1,7 @@
 /**
-* Name: FarmsandPlots
+* Name: Farms and Plots 
 * Based on the internal empty template. 
-* Author: patricktaillandier
+* Author: Patrick Taillandier
 * Tags: 
 */
 
@@ -65,19 +65,26 @@ species Plot {
 	Farmer the_farmer; 
 	Crop associated_crop;
 	
+	reflex plantGrow when: associated_crop != nil {
+		ask PG_model {
+			do biomass_computation_day(myself.associated_crop);
+		}
+	}
 	reflex sowing when: PG_model.is_sowing_date(the_farmer.practice){
 		create Crop with:(the_farmer:the_farmer) {
 			myself.associated_crop <- self;
 			concerned_plot <- myself;
+			crop_duration <- PG_model.compute_crop_duration(self);
+			
 		} 
 	}
 	
 	
 	reflex harvesting when: PG_model.is_harvesting_date(the_farmer.practice){
 		the_farmer.money <-  associated_crop.income_computation();
-		ask associated_crop {
-			do die;
-		}
+		ask associated_crop { 
+			do die; 
+		} 
 		associated_crop <- nil;
 	}
 	
@@ -91,8 +98,14 @@ species Crop {
 	float current_biomass;
 	Plot concerned_plot;
 	int lifespan <- 0 update: lifespan + 1;
+	int crop_duration;
 	string irrigation_mode <- NO_IRRIGATION;
+	float B <- 0.0;         // Biomasse (g/m²)
+	float S <- S_max * 0.9;  // réserve en eau (mm)
+	float PD <- PD_target;   // profondeur d’eau (mm)
+	float N_avail <- 2.0;   // azote disponible (kg/ha)
 	
+
 	float basic_biomass_computation {
 		return concerned_plot.shape.area * the_farmer.practice.Bmax / (1+ exp(-the_farmer.practice.k * (lifespan - the_farmer.practice.t0)));
 	}
@@ -100,6 +113,7 @@ species Crop {
 
 	reflex fertilization when:lifespan in the_farmer.practice.fertilization.keys {
 		float quantity <- the_farmer.practice.fertilization[lifespan];
+		N_avail <- N_avail + quantity;
 	}
 	
 	reflex change_irrigation when:lifespan in the_farmer.practice.irrigation.keys {
