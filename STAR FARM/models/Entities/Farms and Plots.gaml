@@ -20,8 +20,9 @@ species Farmer {
 	
 	Crop_practice practice <- practices[possible_practices.keys[rnd_choice(possible_practices.values)]];
 	float money; 
+	float water_usage update: my_farm.plots sum_of (each.associated_crop = nil ? 0.0 : each.associated_crop.irrigation_total);
 	list<Farmer> neighbors;
-	
+	 
 	action define_neighbors {
 		neighbors <- Farmer at_distance 1.0;
 	}
@@ -104,13 +105,10 @@ species Crop {
 	float S <- S_max * 0.9;  // réserve en eau (mm)
 	float PD <- PD_target;   // profondeur d’eau (mm)
 	float N_avail <- 2.0;   // azote disponible (kg/ha)
-	
+	float irrigation_total ;
+	int irrigation_events ;
 
-	float basic_biomass_computation {
-		return concerned_plot.shape.area * the_farmer.practice.Bmax / (1+ exp(-the_farmer.practice.k * (lifespan - the_farmer.practice.t0)));
-	}
 	
-
 	reflex fertilization when:lifespan in the_farmer.practice.fertilization.keys {
 		float quantity <- the_farmer.practice.fertilization[lifespan];
 		N_avail <- N_avail + quantity;
@@ -121,6 +119,6 @@ species Crop {
 	} 
 	
 	float income_computation {
-		return PG_model.biomass_computation(self) * the_farmer.practice.Harvest_index * 1000.0 * the_farmer.practice.market_price;
+		return PG_model.biomass_computation(self) * 1000.0 * the_farmer.practice.market_price;
 	}
 }

@@ -21,13 +21,13 @@ global {
 	
 	string weather_folder <- "../includes/An Bien/Weather";
 	
-	string innovation_diffusion_model <- NEIGHBORS; //NONE, NEIGHBORS
+	string innovation_diffusion_model <- NONE; //NONE, NEIGHBORS
    
     map<string, float> possible_practices <- [RICE_AWD::0.1, RICE_CF::0.9];
    
 	map<string,string> plots_to_keep <- ["Lu05_en"::"Rice"];
 		
-	string plant_grow_model <- BASIC;// ORYZA ; //POSSIBLE VALUES : BASIC/ORYZA
+	string plant_grow_model <- ORYZA;// ORYZA ; //POSSIBLE VALUES : BASIC/ORYZA
 
 	/******* PARAMETERS FOR ORYZA *********/
 	 
@@ -58,7 +58,7 @@ global {
 	float N_opt <- 30.0;       // N optimal (kg/ha)
 	float eta_N <- 0.015;       // % N dans biomasse
 	float N_loss_frac <- 0.15;
-	float PD_target <- 40.0;    // hauteur de submersion cible (mm)
+	float PD_target <- 50.0;    // hauteur de submersion cible (mm)
 	float AWD_WTD_trigger <- 150.0; // seuil de ré-irrigation (mm)
 	float CF_min_PD <- 20.0;
 	

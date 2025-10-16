@@ -41,10 +41,6 @@ species Crop_practice virtual: true{
 	map<int,string> irrigation;
 	map<int,float> fertilization;
 	
-	float Bmax ;
-	float Harvest_index;
-	float k ;
-	int t0;
 	
 	map<list<int>,float> oryza_data;
 	pair<list<int>,float> current_oryza;
@@ -60,17 +56,11 @@ species RiceCF parent: Crop_practice {
 	list<int> sowing_date <- [120, 300];
 	list<int> harvesting_date <- [210,70];
 	
-	float Bmax <- 14 / 10000 ;
-	float k <- 0.075;
-	int t0 <- 60;
 	float market_price <- 6500.0 ; //VND/kg
 	float fert_cost <- 400000.0; // VND/per ha
 	float seed_cost <- 600000.0; // VND/per ha
 	float other_cost <- 300000.0; // VND/per ha 
 	
-	
-
-	float Harvest_index <- 0.45;
 	
 	map<int,string> irrigation <- [0::CONTINUOUS, 91::NO_IRRIGATION];
 	map<int,float> fertilization <- [7::40.0, 20::40.0, 50::40.0];
@@ -86,16 +76,11 @@ species RiceAWD parent: Crop_practice {
 	list<int> sowing_date <- [120, 300];
 	list<int> harvesting_date <- [70,210];
 	
-	float Bmax <- 14 / 10000 ;
-	float k <- 0.075;
-	int t0 <- 60;
 	float market_price <- 6500.0 ; //VND/kg
 	float fert_cost <- 400000.0; // VND/per ha
 	float seed_cost <- 600000.0; // VND/per ha
 	float other_cost <- 300000.0; // VND/per ha 
 	
-	
-	float Harvest_index <- 0.45;
 	
 	map<int,string> irrigation <- [0::CONTINUOUS, 21::ALTERNATE,81::CONTINUOUS, 90::NO_IRRIGATION];
 	map<int,float> fertilization <- [7::40.0, 20::40.0, 50::40.0];

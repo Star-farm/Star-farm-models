@@ -98,9 +98,7 @@ species basicModel parent: Plant_growth_model {
 	    return (24.0 * 60.0 / PI) * Gsc * dr * ( ws * sin(lat_rad) * sin(delta) + cos(lat_rad) * cos(delta) * sin(ws) );
 	}
 	float biomass_computation(Crop c) {
-		if ((length(Crop) > 1) and (c = first(Crop))) {
-			write sample(c.B);
-		} 
+		
 		c.B <- c.B * c.concerned_plot.shape.area;
 		
 		return c.B;
@@ -110,6 +108,7 @@ species basicModel parent: Plant_growth_model {
 		
 		float tmean <- (tmax + tmin) / 2.0;
 
+	
 		// ETo (Hargreaves)
 		float ETo <- 0.0023 * (tmean + 17.8) * sqrt(max(0.0, tmax - tmin)) * Ra;
 		// Coeff Kc selon stade
@@ -127,17 +126,17 @@ species basicModel parent: Plant_growth_model {
 				c.PD <- c.PD + I;
 			}
 		} else { // AWD
-			if (c.PD < CF_min_PD and c.S < S_max - (AWD_WTD_trigger * 0.01 * S_max)) {
+			if (c.PD <= 0 and c.S < AWD_WTD_trigger) {
 				I <- PD_target - c.PD;
 				c.PD <- c.PD + I;
 			}
 		}
 		
 		
-		/*if (I > 0) {
-			irrigation_total <- irrigation_total + I;
-			irrigation_events <- irrigation_events + 1;
-		}*/
+		if (I > 0) {
+			c.irrigation_total <- c.irrigation_total + I;
+			c.irrigation_events <- c.irrigation_events + 1;
+		}
 
 		// ET -> perte d'eau
 		if (c.PD > 0) {
@@ -181,10 +180,10 @@ species basicModel parent: Plant_growth_model {
 		float deltaB <- RUE * PAR * fPAR * fT * fW * fN - m_resp * c.B;
 		deltaB <- max(deltaB, -0.05 * c.B);
 		if ((length(Crop) > 0) and (c =(Crop first_with (each.the_farmer.practice.id = RICE_CF)) )) {
-			write "CF " + c.name + " " + cycle + " -> " + sample(sw) + " " + sample(c.PD)+ " " + sample(fT) + " " +sample(fW) + " "+ sample(fN)+ " " + sample(PAR)+" " + sample(fPAR) +" "+ sample(RUE) + " "+ sample(deltaB) + sample(c.B);
+		//	write "CF " + c.name + " " + cycle + " -> " + sample(sw) + " " + sample(c.PD)+ " " + sample(fT) + " " +sample(fW) + " "+ sample(fN)+ " " + sample(PAR)+" " + sample(fPAR) +" "+ sample(RUE) + " "+ sample(deltaB) + sample(c.B);
 		}
 		if ((length(Crop) > 0) and (c =(Crop first_with (each.the_farmer.practice.id = RICE_AWD)) )) {
-			write "AWD " +c.name + " " + cycle + " -> " + sample(sw) + " " + sample(c.PD)+ " " + sample(fT) + " " +sample(fW) + " "+ sample(fN)+ " " + sample(PAR)+" " + sample(fPAR) +" "+ sample(RUE) + " "+ sample(deltaB) + sample(c.B);
+		//	write "AWD " +c.name + " " + cycle + " -> " + sample(sw) + " " + sample(c.PD)+ " " + sample(fT) + " " +sample(fW) + " "+ sample(fN)+ " " + sample(PAR)+" " + sample(fPAR) +" "+ sample(RUE) + " "+ sample(deltaB) + sample(c.B);
 		}
 		c.B <- c.B + deltaB; 
 

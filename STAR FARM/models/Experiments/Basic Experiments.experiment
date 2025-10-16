@@ -28,9 +28,14 @@ experiment simple_exp type:gui {
 		}
 		
 		display income_per_ha type: 2d{
-			chart "Income per ha" type: series {
+			chart "Income per ha" type: series  size: {1.0,0.5}  {
 				loop p over: practices.values {
 					data "Mean income of " + p.id value: empty(Farmer where (each.practice = p)) ? 0.0 :((Farmer where (each.practice = p)) mean_of (each.money)) color: p.color_farmer;
+				}
+			}
+			chart "Water usage" type: series  size: {1.0,0.5}  position: {0.0,0.5}{
+				loop p over: practices.values {
+					data "Mean water usage" + p.id value: empty(Farmer where (each.practice = p)) ? 0.0 :((Farmer where (each.practice = p)) mean_of (each.water_usage)) color: p.color_farmer;
 				}
 			}
 		}
