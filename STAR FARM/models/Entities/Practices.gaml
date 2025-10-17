@@ -51,8 +51,8 @@ species Crop_practice virtual: true{
 
 species RiceCF parent: Crop_practice {
 	string id <- RICE_CF;
-	rgb color <- #darkgreen;
-	rgb color_farmer <- #red;
+	rgb color <- rgb(198, 219, 239);
+	rgb color_farmer <- rgb(33, 113, 181); // dark mode: rgb(102, 157, 246)
 	list<int> sowing_date <- [120, 300];
 	list<int> harvesting_date <- [210,70];
 	
@@ -71,8 +71,8 @@ species RiceCF parent: Crop_practice {
 
 species RiceAWD parent: Crop_practice {
 	string id <- RICE_AWD;
-	rgb color <- #lightgreen;
-	rgb color_farmer <- #blue;
+	rgb color <- rgb(199, 233, 192);
+	rgb color_farmer <- rgb(67, 176, 105); // dark mode
 	list<int> sowing_date <- [120, 300];
 	list<int> harvesting_date <- [70,210];
 	
