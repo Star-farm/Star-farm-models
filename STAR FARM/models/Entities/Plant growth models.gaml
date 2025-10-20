@@ -98,7 +98,9 @@ species basicModel parent: Plant_growth_model {
 	    return (24.0 * 60.0 / PI) * Gsc * dr * ( ws * sin(lat_rad) * sin(delta) + cos(lat_rad) * cos(delta) * sin(ws) );
 	}
 	float biomass_computation(Crop c) {
-		
+		/*if (flip(0.01) and c.the_farmer.practice.id = RICE_CF ) {
+			write sample(cycle) + " " + c.B;
+		}*/
 		c.B <- c.B * c.concerned_plot.shape.area;
 		
 		return c.B;
@@ -164,18 +166,7 @@ species basicModel parent: Plant_growth_model {
 		  : (c.S <= S_wp ? 0.0
 		  : (c.S - S_wp) / (S_opt - S_wp)));
 		
-		//float fN <- min(1.0, c.N_avail / 20.0);
 		
-		// --- Dynamique de l'azote --- //
-	//	if (c.lifespan = c.crop_duration * 0.5) { c.N_avail <- c.N_avail + 5.0; }
-		/*float Topt <- 29.0;
-		float Trange <- 12.0;
-		float fT <- max(0.0, 1.0 - abs(tmean - Topt) / Trange);
-
-		float S_opt <- S_max * S_opt_frac;
-		float S_wp <- S_max * S_wp_frac;
-		float fW <- (c.PD > 0) ? 1.0 : (c.S >= S_opt ? 1.0 : (c.S <= S_wp ? 0.0 : (c.S - S_wp) / (S_opt - S_wp)));
-*/
 		float fN <- min(1.0, c.N_avail / N_opt);
 		float deltaB <- RUE * PAR * fPAR * fT * fW * fN - m_resp * c.B;
 		deltaB <- max(deltaB, -0.05 * c.B);
