@@ -96,6 +96,7 @@ species Parasite {
 
 
 species Predator skills: [moving] {
+	float speed <- 20#m/#d;
 	
 	reflex move {
 		do wander;
