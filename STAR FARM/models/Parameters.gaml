@@ -64,6 +64,16 @@ global {
 	
 
 
+	// Paramètres du modèle avec parasite(à calibrer)
+	float init_parasite_resistant_rate <- 0.25;
+	int init_parasite_number <- 15 min: 0;
+	int init_predator_number <- 15 min: 0;
+	
+	int parasite_day_lifespan <- 800;
+	
+	float parasite_quantity_B_to_eat <- 0.1;
+	float parasite_reprod_effi_rate <- 2.0; // Energy cost of reproduction
+
     
 }
 
