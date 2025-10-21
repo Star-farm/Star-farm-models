@@ -18,6 +18,7 @@ experiment simple_exp type:gui {
 			species Plot;
 			species Farmer;
 			species Parasite;
+			species Predator;
 		}
 		display stats type: 2d {
 			chart "Adoption rates" type: series {

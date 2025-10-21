@@ -19,6 +19,9 @@ global {
 				farm_to_eat <- myself;
 			}
 		}
+		create Predator number: init_predator_number{
+			location <- any_location_in(any(Farm));
+		}
 	}
 }
 
@@ -90,6 +93,18 @@ species Parasite {
 	}
 }
 
+
+
+species Predator skills: [moving] {
+	
+	reflex move {
+		do wander;
+	}
+		
+	aspect default {
+		draw triangle(50) color: #green;
+	}
+}
 
 
 
