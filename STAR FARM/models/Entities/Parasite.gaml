@@ -20,7 +20,7 @@ global {
 			}
 		}
 		create Predator number: init_predator_number{
-			location <- any_location_in(any(Farm));
+			location <- any_location_in(any(Plot));
 		}
 	}
 }
@@ -96,14 +96,51 @@ species Parasite {
 
 
 species Predator skills: [moving] {
-	float speed <- 20#m/#d;
+	float speed <- 15#m/#d;
+	
+	bool resistant <- false;
+	float hunting_radius <- 40.0;
+	float energy <- 0.0;
+	date date_of_birth;
+	
+	init {
+		if flip(init_predator_resistant_rate){
+			resistant <- true;
+		}
+		date_of_birth <- current_date;
+	}
 	
 	reflex move {
 		do wander;
 	}
+	
+	reflex hunting {
+		loop prey over: Parasite at_distance hunting_radius {//Parasite where (each at_distance self > hunting_radius) {
+			if flip(predator_hunting_rate) {
+				energy <- energy + (prey.energy*predator_eating_effi_rate);
+				ask prey {
+					do die;
+				}
+			}
+		}
+	}
+	reflex reproduction {
+		loop times: int(energy / predator_reprod_effi_rate ) {
+			create Predator {
+				resistant <- myself.resistant;
+				location <- myself.location;
+			}
+			energy <- energy - predator_reprod_effi_rate;
+		}
+	}
+	
+	reflex natural_death when: (current_date - date_of_birth >= predator_day_lifespan # days){
+		do die;
+	}
 		
 	aspect default {
-		draw triangle(50) color: #green;
+		draw circle(hunting_radius) color: #lightgreen border: #darkgreen;
+		draw triangle(20) color: #green;
 	}
 }
 

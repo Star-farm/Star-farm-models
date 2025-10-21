@@ -70,10 +70,15 @@ global {
 	int init_predator_number <- 15 min: 0;
 	
 	int parasite_day_lifespan <- 800;
+	int predator_day_lifespan <- 800;
 	
 	float parasite_quantity_B_to_eat <- 0.1;
 	float parasite_reprod_effi_rate <- 2.0; // Energy cost of reproduction
 
+	float init_predator_resistant_rate <- 0.25;
+	float predator_hunting_rate <- 0.8;
+	float predator_reprod_effi_rate <- 20.0; // Energy cost of reproduction
+	float predator_eating_effi_rate <- 0.02;
     
 }
 
