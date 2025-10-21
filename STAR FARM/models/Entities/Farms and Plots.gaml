@@ -67,21 +67,21 @@ species Plot {
 	Crop associated_crop;
 	
 	reflex plantGrow when: associated_crop != nil {
-		ask PG_model {
+		ask  PG_models[the_farmer.practice.id] {
 			do biomass_computation_day(myself.associated_crop);
 		}
 	}
-	reflex sowing when: PG_model.is_sowing_date(the_farmer.practice){
+	reflex sowing when: PG_models[the_farmer.practice.id].is_sowing_date(the_farmer.practice){
 		create Crop with:(the_farmer:the_farmer) {
 			myself.associated_crop <- self;
 			concerned_plot <- myself;
-			crop_duration <- PG_model.compute_crop_duration(self);
+			crop_duration <-  PG_models[the_farmer.practice.id].compute_crop_duration(self);
 			
 		} 
 	}
 	
 	
-	reflex harvesting when: PG_model.is_harvesting_date(the_farmer.practice){
+	reflex harvesting when:  PG_models[the_farmer.practice.id].is_harvesting_date(the_farmer.practice){
 		the_farmer.money <-  associated_crop.income_computation();
 		ask associated_crop { 
 			do die; 
@@ -119,6 +119,6 @@ species Crop {
 	} 
 	
 	float income_computation {
-		return PG_model.biomass_computation(self) * 1000.0 * the_farmer.practice.market_price;
+		return  PG_models[the_farmer.practice.id].biomass_computation(self) * 1000.0 * the_farmer.practice.market_price;
 	}
 }

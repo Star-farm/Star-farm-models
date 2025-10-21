@@ -27,7 +27,7 @@ global {
    
 	map<string,string> plots_to_keep <- ["Lu05_en"::"Rice"];
 		
-	string plant_grow_model <- ORYZA;// ORYZA ; //POSSIBLE VALUES : BASIC/ORYZA
+	map<string,string> plant_grow_models <-[RICE_AWD::ORYZA, RICE_CF::ORYZA];// ORYZA ; //POSSIBLE VALUES : BASIC/ORYZA
 
 	/******* PARAMETERS FOR ORYZA *********/
 	 

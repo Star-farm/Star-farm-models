@@ -8,6 +8,8 @@
 
 model STARFARM
 
+import "../Parameters.gaml"
+
 import "../Constants.gaml"
 
 import "Weather.gaml"
@@ -20,17 +22,19 @@ import "Farms and Plots.gaml"
 
 global {
 		
-	Plant_growth_model PG_model;
+	map<string,Plant_growth_model> PG_models;
 	
 	action create_plant_growth_models {
-		map<string,Plant_growth_model> plant_growth_models;
+		map<string,Plant_growth_model> models;
 		loop s over: Plant_growth_model.subspecies { 
 			create s returns: new_practices;
 			Plant_growth_model ct <- Plant_growth_model(first(new_practices));
-			plant_growth_models[ct.id] <- ct ;
+			models[ct.id] <- ct ;
 		}
-		PG_model <- plant_growth_models[plant_grow_model];
-		ask PG_model{
+		loop pract over: plant_grow_models.keys {
+			PG_models[pract] <- models[plant_grow_models[pract]];
+		}
+		ask PG_models{
 			do initialize();
 		} 
 	}	
