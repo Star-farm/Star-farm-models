@@ -13,6 +13,7 @@ import "../Global.gaml"
 import "../Constants.gaml"
 
 
+
 global {
 	map<string,Crop_practice> practices;
 	
@@ -37,15 +38,26 @@ species Crop_practice virtual: true{
 	
 	list<int> sowing_date;
 	list<int> harvesting_date;
+	bool is_active_season <- false;// update: (PG_model.is_sowing_date(self) or PG_model.is_harvesting_date(self))?!is_active_season:is_active_season;
 	
 	map<int,string> irrigation;
 	map<int,float> fertilization;
 	
 	
-	map<list<int>,float> oryza_data;
+	map<list<int>,float> oryza_data;	// why is it here ? Can we make a "generic handler" to keep each model appart ?
 	pair<list<int>,float> current_oryza;
 	
+	reflex active_season_update{
+		 if (PG_model.is_sowing_date(self)){
+		 	is_active_season <- true;
+		 	write "sowing "+current_date.day_of_year+" "+cycle;//+" "+pr.sowing_date;
+		 }
+		 if (PG_model.is_harvesting_date(self)){
+		 	is_active_season <- false;
+		 }
+	}
 	
+	 
 }
 
 

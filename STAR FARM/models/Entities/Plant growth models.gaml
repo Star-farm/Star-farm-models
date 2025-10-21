@@ -19,7 +19,10 @@ import "Farms and Plots.gaml"
  
 
 global {
-		
+	
+	map<string, int> m1 <- ["a"::8,"b"::10,"c"::14];
+	map<string, int> m2 <- ["a"::5,"b"::7,"c"::20];
+			
 	Plant_growth_model PG_model;
 	
 	action create_plant_growth_models {
@@ -98,9 +101,7 @@ species basicModel parent: Plant_growth_model {
 	    return (24.0 * 60.0 / PI) * Gsc * dr * ( ws * sin(lat_rad) * sin(delta) + cos(lat_rad) * cos(delta) * sin(ws) );
 	}
 	float biomass_computation(Crop c) {
-		/*if (flip(0.01) and c.the_farmer.practice.id = RICE_CF ) {
-			write sample(cycle) + " " + c.B;
-		}*/
+		
 		c.B <- c.B * c.concerned_plot.shape.area;
 		
 		return c.B;
@@ -166,7 +167,18 @@ species basicModel parent: Plant_growth_model {
 		  : (c.S <= S_wp ? 0.0
 		  : (c.S - S_wp) / (S_opt - S_wp)));
 		
+		//float fN <- min(1.0, c.N_avail / 20.0);
 		
+		// --- Dynamique de l'azote --- //
+	//	if (c.lifespan = c.crop_duration * 0.5) { c.N_avail <- c.N_avail + 5.0; }
+		/*float Topt <- 29.0;
+		float Trange <- 12.0;
+		float fT <- max(0.0, 1.0 - abs(tmean - Topt) / Trange);
+
+		float S_opt <- S_max * S_opt_frac;
+		float S_wp <- S_max * S_wp_frac;
+		float fW <- (c.PD > 0) ? 1.0 : (c.S >= S_opt ? 1.0 : (c.S <= S_wp ? 0.0 : (c.S - S_wp) / (S_opt - S_wp)));
+*/
 		float fN <- min(1.0, c.N_avail / N_opt);
 		float deltaB <- RUE * PAR * fPAR * fT * fW * fN - m_resp * c.B;
 		deltaB <- max(deltaB, -0.05 * c.B);
@@ -181,7 +193,7 @@ species basicModel parent: Plant_growth_model {
 		c.N_avail <- max(0.0, c.N_avail - 0.3 * max(0.0, deltaB));
 		//return c.concerned_plot.shape.area * c.the_farmer.practice.Bmax / (1+ exp(-c.the_farmer.practice.k * (c.lifespan - c.the_farmer.practice.t0)));
 	}
-	bool is_sowing_date (Crop_practice pr){
+	bool is_sowing_date (Crop_practice pr){	
 		return current_date.day_of_year in pr.sowing_date ;
 	}
 	bool is_harvesting_date(Crop_practice pr) {

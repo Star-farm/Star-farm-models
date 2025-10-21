@@ -19,7 +19,9 @@ species Farmer {
 	Farm my_farm;
 	
 	Crop_practice practice <- practices[possible_practices.keys[rnd_choice(possible_practices.values)]];
-	float money; 
+	float money;
+	float day_revenue update: 0.0;
+	float day_expenses update: 0.0;
 	float water_usage update: my_farm.plots sum_of (each.associated_crop = nil ? 0.0 : each.associated_crop.irrigation_total);
 	list<Farmer> neighbors;
 	 
@@ -48,6 +50,16 @@ species Farmer {
 		}
 	}
 	
+	action add_income(float income){
+		day_revenue <- day_revenue + income;
+		money <- money + income;
+	}
+	
+	action add_expenses(float expenses){
+		day_expenses <- day_expenses + expenses;
+		money <- money + expenses;
+	}
+	
 	reflex change_practices when:cycle > 0 and current_date.day_of_year = init_day_of_year {
 		do decide_practice;
 	} 
@@ -60,7 +72,6 @@ species Farmer {
 species Farm { 
 	list<Plot> plots;
 }
-
 
 species Plot { 
 	Farmer the_farmer; 
@@ -75,14 +86,14 @@ species Plot {
 		create Crop with:(the_farmer:the_farmer) {
 			myself.associated_crop <- self;
 			concerned_plot <- myself;
-			crop_duration <- PG_model.compute_crop_duration(self);
-			
+			crop_duration <- PG_model.compute_crop_duration(self);		
 		} 
+		ask the_farmer{do add_expenses(myself.associated_crop.sowing_cost_computation());}
 	}
 	
 	
 	reflex harvesting when: PG_model.is_harvesting_date(the_farmer.practice){
-		the_farmer.money <-  associated_crop.income_computation();
+		ask the_farmer{do add_income(myself.associated_crop.income_computation());}
 		ask associated_crop { 
 			do die; 
 		} 
@@ -109,8 +120,10 @@ species Crop {
 	int irrigation_events ;
 
 	
+	// QUESTION why fertilization is in Crop and not Plot ?
 	reflex fertilization when:lifespan in the_farmer.practice.fertilization.keys {
 		float quantity <- the_farmer.practice.fertilization[lifespan];
+		ask the_farmer {do add_expenses(myself.fertilization_cost_computation());}
 		N_avail <- N_avail + quantity;
 	}
 	
@@ -121,4 +134,15 @@ species Crop {
 	float income_computation {
 		return PG_model.biomass_computation(self) * 1000.0 * the_farmer.practice.market_price;
 	}
+	
+	// QUESTION what is the area unit (to convert to ha ?)
+	float fertilization_cost_computation {
+		return  the_farmer.practice.fert_cost * concerned_plot.shape.area ;
+	}
+	
+	float sowing_cost_computation{
+		return the_farmer.practice.seed_cost * concerned_plot.shape.area ;
+	}
+	
+	
 }

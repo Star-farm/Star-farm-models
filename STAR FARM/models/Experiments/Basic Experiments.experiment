@@ -9,8 +9,15 @@ model STARFARM
   
 import "../Global.gaml"   
 
+global{
+	string economy_display_type <- "Income";
+}
+
 
 experiment simple_exp type:gui {
+	
+	category "Economy" expanded: true color: rgb(243, 156, 18);
+	parameter "Economy charts" var: economy_display_type among: ["Income","Details"] category: "Economy";
 	
 	
 	output {
@@ -19,21 +26,45 @@ experiment simple_exp type:gui {
 			species Farmer;
 			
 		}
-		display stats type: 2d {
-			chart "Adoption rates" type: series {
-				loop p over: practices.values {
-					data "Adoption of " + p.id value: (Farmer count (each.practice = p)) /length(Farmer) color: p.color_farmer marker: false thickness: 2;
+		display "Practices information" type: 2d {
+//			chart "Adoption rates" type: series {
+//				loop p over: practices.values {
+//					data "Adoption of " + p.id value: (Farmer count (each.practice = p)) /length(Farmer) color: p.color_farmer marker: false thickness: 2;
+//				}
+//				
+//			}
+
+			chart SeasonsChart name: "Seasons" type: series  lines: false y_range: [0, max(2.5,length(practices.values)+0.5)] y_tick_values_visible: false  {
+				loop i from: 0 to: length(practices.values)-1 step: 1 {
+					data ""+i value: (i+0.5) color: #white style: area line_visible: false marker: false;
+					data practices.values[i].id+" seasons" value: (i+1)*int(practices.values[i].is_active_season) color: practices.values[i].color_farmer style: area line_visible: false marker: false;
 				}
-				
 			}
+
 		}
 		
 		display Economy type: 2d{
-			chart "Income per ha" type: series {
+			chart "Income per ha" type: series size: {0.5,1} visible: economy_display_type = "Income"{
 				loop p over: reverse(practices.values) {
-					data "Mean income of " + p.id value: empty(Farmer where (each.practice = p)) ? 0.0 :((Farmer where (each.practice = p)) mean_of (each.money)) color: p.color_farmer style: area;
+					data "Mean income of " + p.id value: empty(Farmer where (each.practice = p))? 0.0 :((Farmer where (each.practice = p)) mean_of (each.day_revenue)) color: p.color_farmer style: bar;
 				}
+			}
 			
+			chart "Average yearly profit per ha" type: histogram size: {0.5,0.8}  position: {0.5,0.0} visible: economy_display_type = "Income"{
+				loop p over: reverse(practices.values) {
+					data p.id value: empty(Farmer where (each.practice = p))? 0.0 :(((Farmer where (each.practice = p)) mean_of (each.money))*365.0/(cycle+1)) color: p.color_farmer style: bar;
+				}
+			}
+			
+			chart "Income/expenses" type: series size: {0.5,1} visible: economy_display_type = "Details"{
+				loop p over: reverse(practices.values) {
+					data "Mean income of " + p.id value: empty(Farmer where (each.practice = p))? 0.0 :((Farmer where (each.practice = p)) mean_of (each.day_revenue)) color: p.color_farmer style: bar;
+					data "Mean expenses of " + p.id value: empty(Farmer where (each.practice = p))? 0.0 :((Farmer where (each.practice = p)) mean_of (-each.day_expenses)) color: p.color_farmer style: bar;
+				}
+			}
+			chart "Balance" type: series size: {0.5,1} position: {0.5,0.0} visible: economy_display_type = "Details"{
+				loop p over: reverse(practices.values) {
+					data "Mean income of " + p.id value: empty(Farmer where (each.practice = p))? 0.0 :((Farmer where (each.practice = p)) mean_of (each.money)) color: p.color_farmer style: line marker: false;				}
 			}
 		}
 		
