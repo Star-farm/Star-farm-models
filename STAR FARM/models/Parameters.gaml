@@ -27,7 +27,7 @@ global {
    
 	map<string,string> plots_to_keep <- ["Lu05_en"::"Rice"];
 		
-	string plant_grow_model <- ORYZA;// ORYZA ; //POSSIBLE VALUES : BASIC/ORYZA
+	map<string,string> plant_grow_models <-[RICE_AWD::ORYZA, RICE_CF::ORYZA];// ORYZA ; //POSSIBLE VALUES : BASIC/ORYZA
 
 	/******* PARAMETERS FOR ORYZA *********/
 	 
@@ -64,6 +64,21 @@ global {
 	
 
 
+	// Paramètres du modèle avec parasite(à calibrer)
+	float init_parasite_resistant_rate <- 0.25;
+	int init_parasite_number <- 15 min: 0;
+	int init_predator_number <- 15 min: 0;
+	
+	int parasite_day_lifespan <- 800;
+	int predator_day_lifespan <- 800;
+	
+	float parasite_quantity_B_to_eat <- 0.1;
+	float parasite_reprod_effi_rate <- 2.0; // Energy cost of reproduction
+
+	float init_predator_resistant_rate <- 0.25;
+	float predator_hunting_rate <- 0.8;
+	float predator_reprod_effi_rate <- 20.0; // Energy cost of reproduction
+	float predator_eating_effi_rate <- 0.02;
     
 }
 

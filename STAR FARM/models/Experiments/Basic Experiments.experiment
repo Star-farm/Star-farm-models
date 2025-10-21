@@ -9,9 +9,11 @@ model STARFARM
   
 import "../Global.gaml"   
 
+
 global{
 	string economy_display_type <- "Income";
 }
+
 
 
 experiment simple_exp type:gui {
@@ -22,9 +24,10 @@ experiment simple_exp type:gui {
 	
 	output {
 		display map axes: false{
-			species Plot;
+			species Plot;  
 			species Farmer;
-			
+			species Parasite;
+			species Predator;
 		}
 		display "Practices information" type: 2d {
 //			chart "Adoption rates" type: series {

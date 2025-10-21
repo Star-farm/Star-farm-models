@@ -8,6 +8,8 @@
 
 model STARFARM
 
+import "Entities/Parasite.gaml"
+
 import "Entities/Weather.gaml"
 
 import "Entities/Plant growth models.gaml"
@@ -31,7 +33,11 @@ global {
 		do create_plant_growth_models;
 		do create_plots; 
 		do init_weather_data;
-		
+	
+	}
+	
+	reflex start_parasite when: cycle = 450 {
+		do create_parasites_and_predators;
 	}
 	
 	action create_plots {

@@ -1,12 +1,28 @@
 /**
-* Name: Plant growth models
-* Based on the internal empty template. 
-* Author: Patrick Taillandier
-* Tags: 
-*/
-
+ * ================================================================================================
+ * Name: Plant growth models
+ * Description:
+ *   This model defines the different plant growth models used in the STARFARM simulation.
+ *   It provides a global mechanism for initializing and managing crop growth models associated 
+ *   with different agricultural practices. 
+ *
+ *   Two specific submodels are currently implemented:
+ *     1. basicModel – A simple generic crop growth model based on climatic and water balance factors.
+ *     2. Oryza – A model interfacing with external data files (from the ORYZA crop model) to simulate 
+ *                rice growth based on precomputed yield data.
+ *
+ *   The models are designed to be called by each crop agent to compute daily biomass increments 
+ *   and determine key phenological dates (sowing, harvesting, etc.).
+ * 
+ * Author: Patrick Taillandier
+ * Tags: crop growth, irrigation, rice, Oryza, STARFARM
+ *
+ * ================================================================================================
+ */
 
 model STARFARM
+
+import "../Parameters.gaml"
 
 import "../Constants.gaml"
 
@@ -18,29 +34,42 @@ import "Farms and Plots.gaml"
  
  
 
+// ======================================================================
+// GLOBAL DEFINITIONS
+// ======================================================================
+
 global {
+
+	//map containing the Plant Grow Model associated to a practice (id of the practice)
+	map<string,Plant_growth_model> PG_models;
+
 	
-	map<string, int> m1 <- ["a"::8,"b"::10,"c"::14];
-	map<string, int> m2 <- ["a"::5,"b"::7,"c"::20];
-			
-	Plant_growth_model PG_model;
-	
+	//action that creates at the initialization of the simulation the different plant growth models
 	action create_plant_growth_models {
-		map<string,Plant_growth_model> plant_growth_models;
+		map<string,Plant_growth_model> models;
 		loop s over: Plant_growth_model.subspecies { 
 			create s returns: new_practices;
 			Plant_growth_model ct <- Plant_growth_model(first(new_practices));
-			plant_growth_models[ct.id] <- ct ;
+			models[ct.id] <- ct ;
 		}
-		PG_model <- plant_growth_models[plant_grow_model];
-		ask PG_model{
+		loop pract over: plant_grow_models.keys {
+			PG_models[pract] <- models[plant_grow_models[pract]];
+		}
+		ask PG_models{
 			do initialize();
 		} 
 	}	
 }
 
+
+// ======================================================================
+// GENERIC PLANT GROWTH MODEL SPECIES
+// ======================================================================
+
 species Plant_growth_model virtual: true{
-	string id;
+	string id; // Unique identifier for the model
+	
+	// Virtual methods to be implemented in derived models
 	float biomass_computation(Crop c) virtual: true;	
 	action biomass_computation_day(Crop c) virtual: true;	
 	bool is_sowing_date(Crop_practice pr) virtual: true;
@@ -52,6 +81,12 @@ species Plant_growth_model virtual: true{
 	}
 	
 } 
+
+
+// ======================================================================
+// BASIC CROP GROWTH MODEL
+// ======================================================================
+
 
 species basicModel parent: Plant_growth_model {
 	string id <- BASIC;
@@ -203,6 +238,11 @@ species basicModel parent: Plant_growth_model {
 	
 }
  
+  
+// ======================================================================
+// ORYZA-BASED MODEL
+// ======================================================================
+ 
 species Oryza parent: Plant_growth_model {
 	string id <- ORYZA;
 	
@@ -215,6 +255,9 @@ species Oryza parent: Plant_growth_model {
 				need_update[p] <- false;
 			}
 		}
+	}
+	int compute_crop_duration(Crop c) {
+		return c.the_farmer.practice.current_oryza.key[1] - c.the_farmer.practice.current_oryza.key[0];
 	}
 			
 	action initialize {
@@ -263,12 +306,14 @@ species Oryza parent: Plant_growth_model {
 		}
 	}
 	
-	action biomass_computation_day(Crop c) ;
+	action biomass_computation_day(Crop c)  {
+		c.B <- c.the_farmer.practice.current_oryza.value * c.lifespan / c.crop_duration * c.concerned_plot.shape.area;
+	}
 	
 	float biomass_computation (Crop c) {
 		need_update[c.the_farmer.practice] <- true;
 		
-		return c.the_farmer.practice.current_oryza.value;
+		return c.the_farmer.practice.current_oryza.value * c.concerned_plot.shape.area;
 	}
 	bool is_sowing_date (Crop_practice pr){
 		return cycle = pr.current_oryza.key[0];
