@@ -228,7 +228,7 @@ species basicModel parent: Plant_growth_model {
 	
 }
  
- 
+  
 // ======================================================================
 // ORYZA-BASED MODEL
 // ======================================================================
@@ -245,6 +245,9 @@ species Oryza parent: Plant_growth_model {
 				need_update[p] <- false;
 			}
 		}
+	}
+	int compute_crop_duration(Crop c) {
+		return c.the_farmer.practice.current_oryza.key[1] - c.the_farmer.practice.current_oryza.key[0];
 	}
 			
 	action initialize {
@@ -293,12 +296,14 @@ species Oryza parent: Plant_growth_model {
 		}
 	}
 	
-	action biomass_computation_day(Crop c) ;
+	action biomass_computation_day(Crop c)  {
+		c.B <- c.the_farmer.practice.current_oryza.value * c.lifespan / c.crop_duration * c.concerned_plot.shape.area;
+	}
 	
 	float biomass_computation (Crop c) {
 		need_update[c.the_farmer.practice] <- true;
 		
-		return c.the_farmer.practice.current_oryza.value;
+		return c.the_farmer.practice.current_oryza.value * c.concerned_plot.shape.area;
 	}
 	bool is_sowing_date (Crop_practice pr){
 		return cycle = pr.current_oryza.key[0];
