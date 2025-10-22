@@ -25,10 +25,13 @@ global {
 	
 	geometry shape <- envelope(plots_shapefile);
 	int init_day_of_year <-  current_date.day_of_year;
-	
+	species plot_species;
 
 	
 	init {
+//		plot_species <- Plot;
+		write Plot.subspecies;
+//		plot_species <-  first(Plot.subspecies);
 		do create_practices;
 		do create_plant_growth_models;
 		do create_plots; 
@@ -45,6 +48,7 @@ global {
 	
 	action create_plots {
 		create Plot from: plots_shapefile; 
+//		create first(Plot.subspecies) from: plots_shapefile; 
 		
 		ask Plot {
 			map attributes <- shape.attributes;
