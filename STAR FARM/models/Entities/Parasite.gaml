@@ -7,13 +7,19 @@
 
 model Parasite
 
+import "../Global.gaml"
+
+
 import "Farms and Plots.gaml"
-import "../Parameters.gaml"
+import "../Parameters.gaml" 
 
 /* Insert your model definition here */
 
 global {
-	action create_parasites_and_predators{
+	species<Plot> plot_species <- species<Plot>("Plot_with_pest");
+	
+	action create_parasites_and_predators{ 
+		
 //		ask Farm {
 //			create Parasite number: rnd(init_parasite_number - 10, init_parasite_number + 10) {
 //				farm_to_eat <- myself;
@@ -21,14 +27,14 @@ global {
 //		}
 //		create Predator number: init_predator_number{
 //			location <- any_location_in(any(Plot));
-//		}
+//		} 
 	}
 }
 
 species Plot_with_pest parent: Plot{
 	int truc <- 6;
 	
-		aspect default {
+	aspect default {
 		// Visual representation: empty plots are white; cultivated plots take the color of the practice
 		draw shape color: #red border: #black;
 	}
@@ -103,26 +109,26 @@ species Parasite {
 }
 
 
-
+ 
 species Predator skills: [moving] {
 	float speed <- 15#m/#d;
 	
 	bool resistant <- false;
 	float hunting_radius <- 40.0;
 	float energy <- 0.0;
-	date date_of_birth;
-	
+	date date_of_birth; 
+	 
 	init {
 		if flip(init_predator_resistant_rate){
 			resistant <- true;
-		}
+		} 
 		date_of_birth <- current_date;
 	}
 	
 	reflex move {
-		do wander;
+		do wander; 
 	}
-	
+	 
 	reflex hunting {
 		loop prey over: Parasite at_distance hunting_radius {//Parasite where (each at_distance self > hunting_radius) {
 			if flip(predator_hunting_rate) {

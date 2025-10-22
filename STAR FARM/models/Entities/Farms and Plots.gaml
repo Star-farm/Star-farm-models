@@ -209,7 +209,7 @@ species Crop {
 	}
 	
 	/**
-	 * Reflex: change_irrigation
+	 * Reflex: change_irrigation 
 	 * Updates the irrigation mode according to the management schedule.
 	 */
 	reflex change_irrigation when: lifespan in the_farmer.practice.irrigation.keys {

@@ -22,7 +22,7 @@ model STARFARM
 
 import "../Global.gaml"
 
-import "../Constants.gaml"
+import "../Constants.gaml" 
 
 // ======================================================================
 // GLOBAL DEFINITIONS
@@ -61,7 +61,7 @@ species Crop_practice virtual: true{
 	float seed_cost;// Seed cost
 	float other_cost ;// Other production costs
 	
-
+ 
 	// Crop calendar information
 	list<int> sowing_date;       // List of possible sowing dates (day of year)
 	list<int> harvesting_date;   // List of possible harvesting dates (day of year)

@@ -25,7 +25,7 @@ global {
 	
 	geometry shape <- envelope(plots_shapefile);
 	int init_day_of_year <-  current_date.day_of_year;
-	species plot_species;
+	species<Plot> plot_species <- nil;
 
 	
 	init {
@@ -35,19 +35,24 @@ global {
 		do create_practices;
 		do create_plant_growth_models;
 		do create_plots; 
-		loop p over: Plot{
-			p <- Plot_with_pest(p);
-		}
+		
 		do init_weather_data;
 	
 	}
+	
+	action create_parasites_and_predators;
 	
 	reflex start_parasite when: cycle = 450 {
 		do create_parasites_and_predators;
 	}
 	
+	
+	
 	action create_plots {
-		create Plot from: plots_shapefile; 
+		if (plot_species = nil) {
+			plot_species	<- species<Plot>("Plot");
+		}
+		create plot_species from: plots_shapefile; 
 //		create first(Plot.subspecies) from: plots_shapefile; 
 		
 		ask Plot {
