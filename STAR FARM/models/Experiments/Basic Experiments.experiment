@@ -12,6 +12,24 @@ import "../Global.gaml"
 
 global{
 	string economy_display_type <- "Income";
+	int overlay_font_size <- 12;
+	font overlay_font <- font("SansSerif", overlay_font_size, #bold);
+	list<string> practices_list <- practices.keys;
+	string show_season <- "rice_awd";//practices_list[0];//"None";
+	int season_opacity <- 100;
+	string time_range_type <- "All";
+	
+	int truc{
+		return cycle;
+	} 
+	
+	map<string, int> time_range <- ["All"::truc(),"Last year"::365,"Last 3 years"::3*365];
+	
+	
+	reflex{
+		write time_range[time_range_type];
+		write truc();
+	}
 }
 
 
@@ -21,21 +39,29 @@ experiment simple_exp type:gui {
 	category "Economy" expanded: true color: rgb(243, 156, 18);
 	parameter "Economy charts" var: economy_display_type among: ["Income","Details"] category: "Economy";
 	
+	category "Visualization" expanded: true color: rgb(100,100,100);
+	parameter "Show season" var: show_season category: "Visualization" among: possible_practices.keys+"None";
+	parameter "Time range" var: time_range_type among: ["All","Last year","Last 3 years"];
 	
 	output {
-		display map axes: false{
+		layout value: horizontal([vertical([0::50,1::50])::50,vertical([2::50,3::50])::50]) tabs:false;
+		display map axes: false toolbar: false{
 			species Plot;  
 			species Farmer;
 			species Parasite;
 			species Predator;
 		}
-		display "Practices information" type: 2d {
+		display "Practices information" type: 2d toolbar: false antialias: true{
+			overlay position: {0, 0} size: {2000, 32#px} background: #white transparency: 0 rounded: false{
+				draw string("Seasons") at: {10 #px,10 #px}  anchor: #top_left color: #black font:overlay_font ; 
+            }
 //			chart "Adoption rates" type: series {
 //				loop p over: practices.values {
 //					data "Adoption of " + p.id value: (Farmer count (each.practice = p)) /length(Farmer) color: p.color_farmer marker: false thickness: 2;
 //				}
 //				
 //			}
+
 
 			chart SeasonsChart name: "Seasons" type: series  lines: false y_range: [0, max(2.5,length(practices.values)+0.5)] y_tick_values_visible: false  {
 				loop i from: 0 to: length(practices.values)-1 step: 1 {
@@ -46,7 +72,10 @@ experiment simple_exp type:gui {
 
 		}
 		
-		display Economy type: 2d{
+		display Economy type: 2d toolbar: false antialias: true{
+//			overlay position: {0, 0} size: {0.1, 0.1} background: #white transparency: 1 rounded: false{
+//				draw string("Economy") at: {10 #px,10 #px}  anchor: #top_left color: #black font:overlay_font ; 
+//            }
 			chart "Income per ha" type: series size: {0.5,1} visible: economy_display_type = "Income"{
 				loop p over: reverse(practices.values) {
 					data "Mean income of " + p.id value: empty(Farmer where (each.practice = p))? 0.0 :((Farmer where (each.practice = p)) mean_of (each.day_revenue)) color: p.color_farmer style: bar;
@@ -71,20 +100,38 @@ experiment simple_exp type:gui {
 			}
 		}
 		
-		display Weather type: 2d {
-			
+		display Weather type: 2d toolbar: false antialias: true{
+//			overlay position: {0, 0} size: {2000, 32#px} background: #white transparency: 0 rounded: false{
+//				draw string("Weather") at: {10 #px,10 #px}  anchor: #top_left color: #black font:overlay_font ; 
+//            }
 			chart "Temperature" type: series size: {0.5,0.5}{
 				data "temperature min" value: the_weather.temp_min[current_date]  color: rgb(49, 130, 189) marker: false;
 				data "temperature max" value: the_weather.temp_max[current_date]  color: rgb(230, 85, 13) marker: false;
+				// season overlay
+				loop i from: 0 to: length(practices.values)-1 step: 1 {					
+					data practices.values[i].id+" seasons" value: practices.values[i].activity collect(each*int(show_season = practices.values[i].id)) color: rgb(practices.values[i].color_farmer,season_opacity) style: area line_visible: false marker: false use_second_y_axis: true;
+				}
 			}
 			chart "Solar radiation" type: series size: {0.5,0.5} position: {0.5,0.0}{
 				data "Solar radiation" value: the_weather.solar_radiation[current_date]  color: rgb(255, 191, 0) marker: false;
+				// season overlay
+				loop i from: 0 to: length(practices.values)-1 step: 1 {					
+					data practices.values[i].id+" seasons" value: practices.values[i].activity collect(each*int(show_season = practices.values[i].id)) color: rgb(practices.values[i].color_farmer,season_opacity) style: area line_visible: false marker: false use_second_y_axis: true;
+				}
 			}
 			chart "Humidity" type: series size: {0.5,0.5} position: {0.0,0.5}{
 				data "Humidity" value: the_weather.humidity[current_date]  color: rgb(102, 194, 255) marker: false;
+				// season overlay
+				loop i from: 0 to: length(practices.values)-1 step: 1 {					
+					data practices.values[i].id+" seasons" value: practices.values[i].activity collect(each*int(show_season = practices.values[i].id)) color: rgb(practices.values[i].color_farmer,season_opacity) style: area line_visible: false marker: false use_second_y_axis: true;
+				}
 			}
 			chart "Rainfall" type: series size: {0.5,0.5} position: {0.5,0.5}{
 				data "Rainfall" value: the_weather.rainfall[current_date]  color: rgb(33, 113, 181) style: bar;
+				// season overlay
+				loop i from: 0 to: length(practices.values)-1 step: 1 {					
+					data practices.values[i].id+" seasons" value: practices.values[i].activity collect(each*int(show_season = practices.values[i].id)) color: rgb(practices.values[i].color_farmer,season_opacity) style: area line_visible: false marker: false use_second_y_axis: true;
+				}
 			}
 		}
 		

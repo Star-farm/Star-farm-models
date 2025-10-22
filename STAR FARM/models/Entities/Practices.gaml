@@ -66,7 +66,7 @@ species Crop_practice virtual: true{
 	list<int> sowing_date;       // List of possible sowing dates (day of year)
 	list<int> harvesting_date;   // List of possible harvesting dates (day of year)
 	bool is_active_season <- false;// update: (PG_model.is_sowing_date(self) or PG_model.is_harvesting_date(self))?!is_active_season:is_active_season;
-
+	list<int> activity <- [];
 	
 	// Agricultural management operations
 	map<int,string> irrigation;       // Irrigation type per day (e.g., continuous, AWD, none)
@@ -84,8 +84,10 @@ species Crop_practice virtual: true{
 //		 	write "sowing "+current_date.day_of_year+" "+cycle;//+" "+pr.sowing_date;
 		 }
 		 if (PG_models[id].is_harvesting_date(self)){
+//		 	write "harvesting "+current_date.day_of_year+" "+cycle;//+" "+pr.sowing_date;
 		 	is_active_season <- false;
 		 }
+		 activity << int(is_active_season);
 	}
 	
 	 

@@ -14,14 +14,23 @@ import "../Parameters.gaml"
 
 global {
 	action create_parasites_and_predators{
-		ask Farm {
-			create Parasite number: rnd(init_parasite_number - 10, init_parasite_number + 10) {
-				farm_to_eat <- myself;
-			}
-		}
-		create Predator number: init_predator_number{
-			location <- any_location_in(any(Plot));
-		}
+//		ask Farm {
+//			create Parasite number: rnd(init_parasite_number - 10, init_parasite_number + 10) {
+//				farm_to_eat <- myself;
+//			}
+//		}
+//		create Predator number: init_predator_number{
+//			location <- any_location_in(any(Plot));
+//		}
+	}
+}
+
+species Plot_with_pest parent: Plot{
+	int truc <- 6;
+	
+		aspect default {
+		// Visual representation: empty plots are white; cultivated plots take the color of the practice
+		draw shape color: #red border: #black;
 	}
 }
 

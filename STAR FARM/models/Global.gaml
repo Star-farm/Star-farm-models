@@ -32,6 +32,9 @@ global {
 		do create_practices;
 		do create_plant_growth_models;
 		do create_plots; 
+		loop p over: Plot{
+			p <- Plot_with_pest(p);
+		}
 		do init_weather_data;
 	
 	}

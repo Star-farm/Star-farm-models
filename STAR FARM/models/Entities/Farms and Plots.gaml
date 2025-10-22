@@ -88,7 +88,7 @@ species Farmer {
 	
 	action add_expenses(float expenses){
 		day_expenses <- day_expenses + expenses;
-		money <- money + expenses;
+		money <- money - expenses;
 	}
 	
 
