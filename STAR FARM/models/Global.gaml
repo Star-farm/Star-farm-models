@@ -40,12 +40,6 @@ global {
 	
 	}
 	
-	action create_parasites_and_predators;
-	
-	reflex start_parasite when: cycle = 450 {
-		do create_parasites_and_predators;
-	}
-	
 	
 	
 	action create_plots {
@@ -55,7 +49,7 @@ global {
 		create plot_species from: plots_shapefile; 
 //		create first(Plot.subspecies) from: plots_shapefile; 
 		
-		ask Plot {
+		ask plot_species {
 			map attributes <- shape.attributes;
 			loop att over: plots_to_keep.keys {
 				if not(att in attributes.keys) or not(string(attributes[att]) contains plots_to_keep[att]) {
