@@ -186,7 +186,7 @@ species Crop {
 	Plot concerned_plot;   // The plot where the crop is located
 	int lifespan <- 0 update: lifespan + 1;  // Number of days since sowing
 	int crop_duration;     // Expected total duration of the crop cycle
-	
+
 
 	// Biophysical state variables
 	string irrigation_mode <- NO_IRRIGATION;

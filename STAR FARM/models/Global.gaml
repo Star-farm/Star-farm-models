@@ -8,7 +8,7 @@
 
 model STARFARM
 
-import "Entities/Parasite.gaml"
+//import "Entities/Parasite.gaml"
 
 import "Entities/Weather.gaml"
 

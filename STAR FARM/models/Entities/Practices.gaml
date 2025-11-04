@@ -52,6 +52,7 @@ global {
 
 species Crop_practice virtual: true{
 	string id;  // Unique identifier for the practice
+	string practice_name; // The name used for displays. Can be merged with id ?
 	rgb color;  // Color used for visual representation
 	rgb color_farmer;  // Color used for the farmer representation (UI or visualization)
 
@@ -100,6 +101,7 @@ species Crop_practice virtual: true{
 
 species RiceCF parent: Crop_practice {
 	string id <- RICE_CF;
+	string practice_name <- "Rice (C.F.)";
 	rgb color <- rgb(198, 219, 239);
 	rgb color_farmer <- rgb(33, 113, 181); // dark mode: rgb(102, 157, 246)
 	list<int> sowing_date <- [120, 300];
@@ -122,6 +124,7 @@ species RiceCF parent: Crop_practice {
 
 species RiceAWD parent: Crop_practice {
 	string id <- RICE_AWD;
+	string practice_name <- "Rice (Alt. W. and D.)";
 	rgb color <- rgb(199, 233, 192);
 	rgb color_farmer <- rgb(67, 176, 105); // dark mode
 	list<int> sowing_date <- [120, 300];

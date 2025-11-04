@@ -17,16 +17,14 @@ import "../Parameters.gaml"
 /* Insert your model definition here */
 
 global {
-	string map_display <- "Normal";
+	string map_display <- "Current practice";
 	list<rgb> pest_density_palette <- brewer_colors("OrRd");
 	int palette_size <- length(pest_density_palette);
 	float palette_ceiling_value <- 0.1;
-//	list<string> chart_list <- ["Seasons","Pest"];
-
 	
 	species<Plot> plot_species <- species<Plot>("Plot_with_pest");
 	
-	// variable used temporarily to adjust the scale of the pest density
+	// variable used temporarily to adjust the scale of the pest density. It has no use appart from that
 	float max_pest_density <- 0.0;
 
 	
@@ -53,7 +51,7 @@ global {
 species Plot_with_pest parent: Plot{
 
 	aspect default {
-		if (map_display = "Normal"){
+		if (map_display = "Current practice"){
 			draw shape color: associated_crop = nil ? #white : the_farmer.practice.color border: #black;
 		}else{
 			float parasite_density <- length(Parasite overlapping self)/self.shape.area;
@@ -128,7 +126,7 @@ species Parasite {
 	}
 	
 	aspect default {
-		if (map_display = "Normal"){
+		if (map_display = "Current practice"){
 			draw circle(1) color: #red;
 		}
 	}
@@ -190,7 +188,7 @@ species Predator skills: [moving] {
 
 experiment "Pest experiment" parent: generic_exp virtual: false{
 	category "Map" expanded: true color: rgb(143, 156, 180);
-	parameter "Display" var: map_display among: ["Normal","Pest density"] category: "Map";
+	parameter "Display" var: map_display among: ["Current practice","Pest density"] category: "Map";
 	
 	parameter "Chart" var: current_chart category: "General information" among: chart_list+["Pest"] init: "Pest";
 	
