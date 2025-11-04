@@ -28,8 +28,7 @@ species Farmer {
 	float money; // Economic capital of the farmer
 	float day_revenue update: 0.0;
 	float day_expenses update: 0.0;
-
-
+	
 	
 	// Compute total water usage as the sum of irrigation water applied to all crops
 
