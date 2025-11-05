@@ -201,7 +201,7 @@ experiment "Pest experiment" parent: generic_exp virtual: false{
 		}
 		
 		
-		display "General information" type: 2d toolbar: false antialias: true parent: base_general_information{
+		display "Practices comparison" type: 2d toolbar: false antialias: true parent: base_practices_information{
 			chart "Pest" type: series x_range: time_range(time_range_type) y2_range: [0,1] y2_tick_unit: 2 y_label: "¨Pest density" visible: (current_chart = "Pest") {
 				data "Pest population" value: length(Parasite)  color: #red marker: false;
 				// season overlay

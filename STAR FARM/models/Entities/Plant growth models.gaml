@@ -72,10 +72,13 @@ species Plant_growth_model virtual: true{
 	string id; // Unique identifier for the model
 	
 	// Virtual methods to be implemented in derived models
-	float biomass_computation(Crop c) virtual: true;	
-	action biomass_computation_day(Crop c) virtual: true;	
-	bool is_sowing_date(Crop_practice pr) virtual: true;
-	bool is_harvesting_date(Crop_practice pr) virtual: true;
+	float yield_computation(Crop c) virtual: true;	
+	action day_biomass_growth(Crop c) virtual: true;	
+	bool is_sowing_date(Crop_practice pr, int shift) virtual: true; // used a shift to compute the end of a season just one day after the harvest. Need to properly define when a season starts and ends.
+	bool is_harvesting_date(Crop_practice pr, int shift) virtual: true; // used a shift to compute the end of a season just one day after the harvest. Need to properly define when a season starts and ends.
+//	bool move_to_next_season(Crop_practice pr)
+
+
 	
 	action initialize;
 	int compute_crop_duration(Crop c) {
@@ -137,14 +140,12 @@ species basicModel parent: Plant_growth_model {
 	    // Ra in MJ m-2 day-1
 	    return (24.0 * 60.0 / PI) * Gsc * dr * ( ws * sin(lat_rad) * sin(delta) + cos(lat_rad) * cos(delta) * sin(ws) );
 	}
-	float biomass_computation(Crop c) {
+	float yield_computation(Crop c) {
 		
-		c.B <- c.B * c.concerned_plot.shape.area;
-		
-		return c.B;
+		return c.B * c.concerned_plot.shape.area / 10000; // kg per ha ?
 	}
 
-	action biomass_computation_day(Crop c) {
+	action day_biomass_growth(Crop c) {
 		
 		float tmean <- (tmax + tmin) / 2.0;
 
@@ -230,11 +231,11 @@ species basicModel parent: Plant_growth_model {
 		c.N_avail <- max(0.0, c.N_avail - 0.3 * max(0.0, deltaB));
 		//return c.concerned_plot.shape.area * c.the_farmer.practice.Bmax / (1+ exp(-c.the_farmer.practice.k * (c.lifespan - c.the_farmer.practice.t0)));
 	}
-	bool is_sowing_date (Crop_practice pr){	
-		return current_date.day_of_year in pr.sowing_date ;
+	bool is_sowing_date (Crop_practice pr, int shift){	
+		return (current_date.day_of_year + shift) in pr.sowing_date ;
 	}
-	bool is_harvesting_date(Crop_practice pr) {
-		return current_date.day_of_year in pr.harvesting_date ;
+	bool is_harvesting_date(Crop_practice pr, int shift) {
+		return (current_date.day_of_year + shift)  in pr.harvesting_date ;
 	}
 	
 	
@@ -308,20 +309,22 @@ species Oryza parent: Plant_growth_model {
 		}
 	}
 	
-	action biomass_computation_day(Crop c)  {
+	action day_biomass_growth(Crop c)  {
 		c.B <- c.the_farmer.practice.current_oryza.value * c.lifespan / c.crop_duration * c.concerned_plot.shape.area;
 	}
 	
-	float biomass_computation (Crop c) {
+	float yield_computation (Crop c) {
 		need_update[c.the_farmer.practice] <- true;
-		
-		return c.the_farmer.practice.current_oryza.value * c.concerned_plot.shape.area;
+		return c.B * c.concerned_plot.shape.area / 10000; // kg per ha ?
+//		return c.the_farmer.practice.current_oryza.value * c.concerned_plot.shape.area;
 	}
-	bool is_sowing_date (Crop_practice pr){
-		return cycle = pr.current_oryza.key[0];
+	
+	bool is_sowing_date (Crop_practice pr, int shift){
+		return cycle + shift = pr.current_oryza.key[0];
 	}
-	bool is_harvesting_date(Crop_practice pr) {
-		return cycle = pr.current_oryza.key[1];
+	
+	bool is_harvesting_date(Crop_practice pr, int shift) {
+		return cycle + shift = pr.current_oryza.key[1];
 		
 	}
 }

@@ -55,6 +55,9 @@ species Crop_practice virtual: true{
 	string short_name; // Short name used for displays
 	rgb color;  // Color used for visual representation
 	rgb color_farmer;  // Color used for the farmer representation (UI or visualization)
+	list<string> key_indicators <- ["Harvest","Profit","Crop area","Water consumption","Fertilizer consumption","Current year","Current season"];
+	// key indicators regrouped by seasons (eg: ["harvest"::[21.0,23.4,19.9] is the total of crop produced for seasons 1 to 3.
+	map<string, list<float>> seasons_summary <- map(key_indicators collect(each::list<float>([]))); 
 
 	// Economic parameters (per hectare)
 	float market_price; // Market price per kilogram
@@ -78,19 +81,56 @@ species Crop_practice virtual: true{
 	map<list<int>,float> oryza_data;  // Yield data indexed by start and end dates
 	pair<list<int>,float> current_oryza; // Current yield pair in use
 
+	/** 
+	 * Update season status. 
+	 * If it is the start of a new season, create the corresponding key indicators
+	 */
 	
 	reflex active_season_update{
-		 if (PG_models[id].is_sowing_date(self)){
+		 if (PG_models[id].is_sowing_date(self,1)){
 		 	is_active_season <- true;
-//		 	write "sowing "+current_date.day_of_year+" "+cycle;//+" "+pr.sowing_date;
+		 	// starts a new season
+		 	loop key over: seasons_summary.keys-["Current year","Current season"] {
+				seasons_summary[key] <- seasons_summary[key]+0.0;
+			}
+			// add indicators that are only updated at the first step of the season
+			// add the current year
+			seasons_summary["Current year"] <+ ceil(cycle/365);
+			//add the season number (reset at the beginning of the year)
+			float new_season_index;
+			int len <- length(seasons_summary["Current year"]);
+			if (len = 1 or last(seasons_summary["Current year"]) != seasons_summary["Current year"][len-2]){
+				new_season_index <- 1.0;
+			}else{
+				new_season_index <- last(seasons_summary["Current season"])+1;
+			}
+			seasons_summary["Current season"] <+ new_season_index;
+			// add the crop area data
+			seasons_summary["Crop area"] <+ Plot where (each.the_farmer.practice = self) sum_of(each.shape.area); 
 		 }
-		 if (PG_models[id].is_harvesting_date(self)){
-//		 	write "harvesting "+current_date.day_of_year+" "+cycle;//+" "+pr.sowing_date;
+		 if (PG_models[id].is_harvesting_date(self,-1)){
 		 	is_active_season <- false;
+		 	
+			write seasons_summary;
 		 }
 		 activity << int(is_active_season);
 	}
 	
+	action add_to_indicator(string indicator, float val){
+		list<float> l <- seasons_summary[indicator];
+		l[length(l)-1] <- last(l) + val;
+		seasons_summary[indicator] <- l;
+	}
+	
+	
+	list<string> create_x_labels{
+		list<string> tmp <- [];
+		loop i from: 0 to: length(seasons_summary["Current season"]-1){
+			tmp <+ 'Y'+seasons_summary["Current year"][i]+"S"+seasons_summary["Current season"][i];
+		}
+		return tmp;
+//		return list<string>(seasons_summary["Current season"]);
+	}
 	 
 }
 

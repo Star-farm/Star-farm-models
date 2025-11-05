@@ -83,12 +83,16 @@ species Farmer {
 	action add_income(float income){
 		day_revenue <- day_revenue + income;
 		money <- money + income;
+		write 'farmer';
+		ask practice {do add_to_indicator('Profit',income);}
 	}
 	
 	action add_expenses(float expenses){
 		day_expenses <- day_expenses + expenses;
 		money <- money - expenses;
+		ask practice {do add_to_indicator('Profit',-expenses);}
 	}
+	
 	
 
 	/**
@@ -132,7 +136,7 @@ species Plot {
 	 */
 	reflex plantGrow when: associated_crop != nil {
 		ask  PG_models[the_farmer.practice.id] {
-			do biomass_computation_day(myself.associated_crop);
+			do day_biomass_growth(myself.associated_crop);
 		}
 	}
 	
@@ -140,8 +144,9 @@ species Plot {
 	 * Reflex: sowing
 	 * Checks whether sowing should occur according to the practice calendar
 	 * and creates a new crop on the plot if conditions are met.
+	 * Computes the expenses 
 	 */
-	reflex sowing when: PG_models[the_farmer.practice.id].is_sowing_date(the_farmer.practice){
+	reflex sowing when: PG_models[the_farmer.practice.id].is_sowing_date(the_farmer.practice,0){
 		create Crop with:(the_farmer:the_farmer) {
 			myself.associated_crop <- self;
 			concerned_plot <- myself;
@@ -160,8 +165,10 @@ species Plot {
 	 * When the harvesting date is reached, the crop’s income is added to the farmer,
 	 * and the crop is removed from the plot.
 	 */
-	reflex harvesting when: PG_models[the_farmer.practice.id].is_harvesting_date(the_farmer.practice){
-		ask the_farmer{do add_income(myself.associated_crop.income_computation());}
+	reflex harvesting when: PG_models[the_farmer.practice.id].is_harvesting_date(the_farmer.practice,0){
+		ask the_farmer{do add_income(myself.associated_crop.harvest_income_computation());}
+//		float harvested_biomass <- 
+		ask the_farmer.practice{do add_to_indicator("Harvest",myself.associated_crop.harvest_biomass_computation());}	
 
 		ask associated_crop { 
 			do die; 
@@ -189,7 +196,7 @@ species Crop {
 
 	// Biophysical state variables
 	string irrigation_mode <- NO_IRRIGATION;
-	float B <- 0.0;          // Biomass
+	float B <- 0.0;          // Biomass (kg? per m²)
 	float S <- S_max * 0.9;  // Soil water storage (mm)
 	float PD <- PD_target;   // Ponding depth (mm)
 	float N_avail <- 2.0;    // Available nitrogen (kg/ha)
@@ -216,14 +223,21 @@ species Crop {
 	} 
 	
 	/**
-	 * Function: income_computation
+	 * Function: harvest_income_computation
 	 * Computes the economic return of the crop based on its final biomass
 	 * and the market price defined by the farmer’s practice.
 	 */
-	float income_computation {
-		return PG_models[the_farmer.practice.id].biomass_computation(self) * 1000.0 * the_farmer.practice.market_price;
+	float harvest_income_computation {
+		return harvest_biomass_computation() * the_farmer.practice.market_price;
 	}
-
+	
+	/**
+	 * Function: harvest_biomass_computation
+	 * Computes the harvested quantity for the crop
+	 */
+	float harvest_biomass_computation {
+		return PG_models[the_farmer.practice.id].yield_computation(self) * 1000.0; // why * 1000 ?
+	}
 	
 	// QUESTION what is the area unit (to convert to ha ?)
 	float fertilization_cost_computation {
