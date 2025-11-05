@@ -41,7 +41,8 @@ global {
 			Crop_practice ct <- Crop_practice(first(new_practices));
 			practices[ct.id] <- ct ;
 		}
-	}	
+	}
+		
 }
 
 
@@ -58,6 +59,16 @@ species Crop_practice virtual: true{
 	list<string> key_indicators <- ["Harvest","Profit","Crop area","Water consumption","Fertilizer consumption","Current year","Current season"];
 	// key indicators regrouped by seasons (eg: ["harvest"::[21.0,23.4,19.9] is the total of crop produced for seasons 1 to 3.
 	map<string, list<float>> seasons_summary <- map(key_indicators collect(each::list<float>([]))); 
+	map<string, list<float>> year_summary <- map(
+		((key_indicators-["Current season"]) collect(each::[each="Current year"?1.0:0.0]))
+	); 
+	
+//	reflex test{
+////		write ((key_indicators-["Current year","Current season"]) collect(each::[0.0])
+////			+pair<string,list<float>>("a"::[1])
+////		);
+//		write year_summary;
+//	}
 
 	// Economic parameters (per hectare)
 	float market_price; // Market price per kilogram
@@ -85,6 +96,7 @@ species Crop_practice virtual: true{
 	 * Update season status. 
 	 * If it is the start of a new season, create the corresponding key indicators
 	 */
+	 
 	
 	reflex active_season_update{
 		 if (PG_models[id].is_sowing_date(self,1)){
@@ -116,10 +128,23 @@ species Crop_practice virtual: true{
 		 activity << int(is_active_season);
 	}
 	
+	// reset yearly key indicator monitor. Problem with the scheduler if sowing is the first day ?
+	reflex switch_to_new_year when: cycle > 0 and current_date.day_of_year = init_day_of_year{
+		// add monitor for the new year
+		loop key over: seasons_summary.keys-["Current year","Current season"] {
+			year_summary[key] <- year_summary[key]+0.0;
+		}
+		year_summary["Current year"] <+ last(year_summary["Current year"])+1;
+	}
+	
 	action add_to_indicator(string indicator, float val){
 		list<float> l <- seasons_summary[indicator];
 		l[length(l)-1] <- last(l) + val;
 		seasons_summary[indicator] <- l;
+		
+		list<float> l2 <- year_summary[indicator];
+		l2[length(l2)-1] <- last(l2) + val;
+		year_summary[indicator] <- l2;
 	}
 	
 	
@@ -141,7 +166,7 @@ species Crop_practice virtual: true{
 
 species RiceCF parent: Crop_practice {
 	string id <- RICE_CF;
-	string short_name <- "Rice (C.F.)";
+	string short_name <- "Rice (CF)";
 	rgb color <- rgb(198, 219, 239);
 	rgb color_farmer <- rgb(33, 113, 181); // dark mode: rgb(102, 157, 246)
 	list<int> sowing_date <- [120, 300];
@@ -164,7 +189,7 @@ species RiceCF parent: Crop_practice {
 
 species RiceAWD parent: Crop_practice {
 	string id <- RICE_AWD;
-	string short_name <- "Rice (Alt. W. and D.)";
+	string short_name <- "Rice (AWD)";
 	rgb color <- rgb(199, 233, 192);
 	rgb color_farmer <- rgb(67, 176, 105); // dark mode
 	list<int> sowing_date <- [120, 300];

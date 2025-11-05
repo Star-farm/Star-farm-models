@@ -64,6 +64,32 @@ global{
 		return tmp collect(each+p.id);
 	}
 	
+	list<string> add_ref_to_practice(string s){
+		return practices collect (each.short_name+' '+s);
+	}
+	
+	list<string> yearly_histo_labels{
+		return first(practices).year_summary["Current year"] accumulate(add_ref_to_practice('y'+int(each)));
+	}
+	
+	list<float> yearly_histo(string indicator){
+		list<float> tmp;
+		loop i from: 0 to: length(first(practices).year_summary["Current year"]){
+			loop p over: practices{
+				tmp <+ p.year_summary[indicator][i];
+			}
+		}
+		return tmp;
+	}
+	
+	list histo_colors {
+		list<rgb> cl <- practices collect (each.color_farmer);
+		return first(practices).year_summary["Current year"] accumulate(cl);
+	}
+
+//	reflex test{
+//		write yearly_histo_labels();
+//	}
 } 
 
 
@@ -93,17 +119,26 @@ experiment generic_exp type:gui virtual: true {
 //				draw string("Seasons") at: {10 #px,10 #px}  anchor: #top_left color: #black font:overlay_font ; 
 //            }
 
-
 			chart "Yield" type: histogram {
-//				datalist update_x_labels() value: first(practices).seasons_summary["Harvest"]  color: first(practices).color_farmer ;
-				loop p over: practices.values{
-					datalist update_x_labels(p) value: p.seasons_summary["Harvest"]  color: p.color_farmer ;
-				}
-				
-//				loop p over: practices.values {
-//					data "Total yield for " + p.short_name value: p.seasons_summary["Harvest"] color: p.color_farmer marker: false;
-//				}
+				datalist yearly_histo_labels() value: yearly_histo("Harvest")  color: histo_colors() ;
 			}
+
+
+//			chart "Yield" type: histogram {
+////				datalist update_x_labels() value: first(practices).seasons_summary["Harvest"]  color: first(practices).color_farmer ;
+//				loop p over: practices.values{
+//					datalist update_x_labels(p) value: p.seasons_summary["Harvest"]  color: p.color_farmer ;
+//				}
+//			}
+			
+//			chart "Test" type: histogram {
+//				datalist ["a","b","a","c"] value: [3,4,2,4];
+//			}
+			
+//			chart "Test2" type: series {
+//				data "data1" value: [3,4,2,4] color: #blue;
+//				data "data1" value: [4,1,1,4] color: #red;
+//			}
 
 //			chart "Adoption rates" visible: (current_chart = "Adoption rates") type: series {
 //				loop p over: practices.values {
@@ -225,7 +260,7 @@ experiment "Simple experiment" type:gui parent: generic_exp {
 		}
 
 		
-		display "Practices comparison" type: 2d toolbar: false antialias: true parent: base_practices_information{}
+		display pc name: "Practices comparison" type: 2d toolbar: false antialias: true parent: base_practices_information{}
 		
 		display Economy type: 2d toolbar: false antialias: true parent: base_economy{}
 		

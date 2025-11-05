@@ -93,7 +93,7 @@ species Farmer {
 		ask practice {do add_to_indicator('Profit',-expenses);}
 	}
 	
-	
+
 
 	/**
 	 * Reflex: change_practices
