@@ -26,18 +26,15 @@ global {
 	geometry shape <- envelope(plots_shapefile);
 	int init_day_of_year <-  current_date.day_of_year;
 	species<Plot> plot_species <- nil;
+	int current_year -> int(ceil(cycle/365));
 
 	
 	init {
-//		plot_species <- Plot;
-		write Plot.subspecies;
-//		plot_species <-  first(Plot.subspecies);
+//		write Plot.subspecies;
 		do create_practices;
 		do create_plant_growth_models;
-		do create_plots; 
-		
+		do create_plots; 		
 		do init_weather_data;
-	
 	}
 	
 	

@@ -34,6 +34,10 @@ global {
 	// Map storing all crop practices available in the model, keyed by their ID
 	map<string,Crop_practice> practices;
 	
+	// List of the key indicators to be monitored
+	list<string> key_indicators <- ["Harvest","Profit","Crop area","Water consumption","Fertilizer consumption","Current year","Current season"];
+	
+	
 	// Action to create all practice instances from their species definitions
 	action create_practices {
 		loop s over: Crop_practice.subspecies { 
@@ -56,19 +60,13 @@ species Crop_practice virtual: true{
 	string short_name; // Short name used for displays
 	rgb color;  // Color used for visual representation
 	rgb color_farmer;  // Color used for the farmer representation (UI or visualization)
-	list<string> key_indicators <- ["Harvest","Profit","Crop area","Water consumption","Fertilizer consumption","Current year","Current season"];
+	
 	// key indicators regrouped by seasons (eg: ["harvest"::[21.0,23.4,19.9] is the total of crop produced for seasons 1 to 3.
 	map<string, list<float>> seasons_summary <- map(key_indicators collect(each::list<float>([]))); 
 	map<string, list<float>> year_summary <- map(
 		((key_indicators-["Current season"]) collect(each::[each="Current year"?1.0:0.0]))
 	); 
 	
-//	reflex test{
-////		write ((key_indicators-["Current year","Current season"]) collect(each::[0.0])
-////			+pair<string,list<float>>("a"::[1])
-////		);
-//		write year_summary;
-//	}
 
 	// Economic parameters (per hectare)
 	float market_price; // Market price per kilogram
@@ -107,7 +105,7 @@ species Crop_practice virtual: true{
 			}
 			// add indicators that are only updated at the first step of the season
 			// add the current year
-			seasons_summary["Current year"] <+ ceil(cycle/365);
+			seasons_summary["Current year"] <+ current_year;
 			//add the season number (reset at the beginning of the year)
 			float new_season_index;
 			int len <- length(seasons_summary["Current year"]);
@@ -123,18 +121,25 @@ species Crop_practice virtual: true{
 		 if (PG_models[id].is_harvesting_date(self,-1)){
 		 	is_active_season <- false;
 		 	
-			write seasons_summary;
+//			write seasons_summary;
 		 }
 		 activity << int(is_active_season);
 	}
 	
-	// reset yearly key indicator monitor. Problem with the scheduler if sowing is the first day ?
+	// Reset yearly key indicator monitors. 
+	// The first day of the Problem with the scheduler if sowing is the first day ?
 	reflex switch_to_new_year when: cycle > 0 and current_date.day_of_year = init_day_of_year{
 		// add monitor for the new year
 		loop key over: seasons_summary.keys-["Current year","Current season"] {
 			year_summary[key] <- year_summary[key]+0.0;
 		}
-		year_summary["Current year"] <+ last(year_summary["Current year"])+1;
+		year_summary["Current year"] <+ current_year;
+	}
+	
+	// compute indicators that will be used for the whole year, such as crop surface.
+	// computed on day 2 in order to prevent schedule errors (decisions made on day 1)
+	reflex compute_first_day_indicators when: cycle > 0 and current_date.day_of_year = init_day_of_year+1{
+		year_summary["Crop area"][current_year - 1] <- Plot where(each.the_farmer.practice = self) sum_of(each.shape.area);
 	}
 	
 	action add_to_indicator(string indicator, float val){
@@ -143,7 +148,7 @@ species Crop_practice virtual: true{
 		seasons_summary[indicator] <- l;
 		
 		list<float> l2 <- year_summary[indicator];
-		l2[length(l2)-1] <- last(l2) + val;
+		l2[current_year-1] <- last(l2) + val;
 		year_summary[indicator] <- l2;
 	}
 	

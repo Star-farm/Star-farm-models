@@ -18,14 +18,12 @@ global{
 	int season_opacity <- 100;
 	string time_range_type <- "All";
 	map<string,unknown> options <- [];
-	list<string> chart_list <- ["Seasons","Total crop biomass per practice","Avg crop biomass per practice","Surface per practice","Adoption rates"];
+	
+	// List of the key indicators to be monitored
+	// the next list should be initialized with key_indicators from Practices.gaml, but presently there is a bug with Gama	
+	list<string> chart_list <- ["Harvest","Profit","Crop area","Water consumption","Fertilizer consumption"];
+//	list<string> chart_list <- ["Seasons","Total crop biomass per practice","Avg crop biomass per practice","Surface per practice","Adoption rates"];
 	string current_chart <- first(chart_list);
-//	list<string> x_labels <- ['1'];
-	
-	
-	int get_simulation_length{
-		return cycle;
-	} 
 	
 	int time_range(string s){
 		int range <- max(1,cycle);
@@ -52,10 +50,9 @@ global{
 		return total_area=0 ? 0:get_total_biomass_by_practice(p)/total_area;
 	}
 	
+	
+	// make x labels for season histograms
 	list<string> update_x_labels(Crop_practice p){
-//		ask first(practices){
-//			x_labels <- create_x_labels();
-//		}
 		list<string> tmp;
 		ask first(practices){
 			tmp <- create_x_labels();
@@ -64,6 +61,11 @@ global{
 		return tmp collect(each+p.id);
 	}
 	
+	/**
+	 * functions to build yearly histograms
+	 */ 
+	 
+	// functions to build x labels
 	list<string> add_ref_to_practice(string s){
 		return practices collect (each.short_name+' '+s);
 	}
@@ -72,6 +74,7 @@ global{
 		return first(practices).year_summary["Current year"] accumulate(add_ref_to_practice('y'+int(each)));
 	}
 	
+	// build the histogram for a given indicator
 	list<float> yearly_histo(string indicator){
 		list<float> tmp;
 		loop i from: 0 to: length(first(practices).year_summary["Current year"]){
@@ -82,14 +85,12 @@ global{
 		return tmp;
 	}
 	
+	// compute the color of the bars of the histogram
 	list histo_colors {
 		list<rgb> cl <- practices collect (each.color_farmer);
 		return first(practices).year_summary["Current year"] accumulate(cl);
 	}
-
-//	reflex test{
-//		write yearly_histo_labels();
-//	}
+	
 } 
 
 
@@ -119,8 +120,8 @@ experiment generic_exp type:gui virtual: true {
 //				draw string("Seasons") at: {10 #px,10 #px}  anchor: #top_left color: #black font:overlay_font ; 
 //            }
 
-			chart "Yield" type: histogram {
-				datalist yearly_histo_labels() value: yearly_histo("Harvest")  color: histo_colors() ;
+			chart histogram_info name: "" type: histogram y_label: current_chart{
+				datalist yearly_histo_labels() value: yearly_histo(current_chart)  color: histo_colors() ;
 			}
 
 

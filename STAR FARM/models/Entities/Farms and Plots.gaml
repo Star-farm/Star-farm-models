@@ -83,7 +83,6 @@ species Farmer {
 	action add_income(float income){
 		day_revenue <- day_revenue + income;
 		money <- money + income;
-		write 'farmer';
 		ask practice {do add_to_indicator('Profit',income);}
 	}
 	

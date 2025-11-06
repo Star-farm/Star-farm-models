@@ -241,7 +241,7 @@ species basicModel parent: Plant_growth_model {
 	
 }
  
-  
+ 
 // ======================================================================
 // ORYZA-BASED MODEL
 // ======================================================================
@@ -268,6 +268,7 @@ species Oryza parent: Plant_growth_model {
 			Crop_practice pract <- practices[p];
 			matrix<string> yieldsP <- matrix(csv_file(data_files_yields[p], true)); 
 			matrix<string> dataP <- matrix(csv_file(data_files_practices[p], true)); 
+			
 			
 			int rs_ <- 1; 
 			int rs;
