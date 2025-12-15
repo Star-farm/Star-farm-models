@@ -18,10 +18,11 @@ global{
 	int season_opacity <- 100;
 	string time_range_type <- "All";
 	map<string,unknown> options <- [];
+	string scale <- "Total";
 	
 	// List of the key indicators to be monitored
 	// the next list should be initialized with key_indicators from Practices.gaml, but presently there is a bug with Gama	
-	list<string> chart_list <- ["Harvest","Profit","Crop area","Water consumption","Fertilizer consumption"];
+	list<string> chart_list <- ["Harvest","Profit","Water consumption","Fertilizer consumption","Adoption rate","Expenses details"];
 //	list<string> chart_list <- ["Seasons","Total crop biomass per practice","Avg crop biomass per practice","Surface per practice","Adoption rates"];
 	string current_chart <- first(chart_list);
 	
@@ -33,6 +34,7 @@ global{
 			default {return range;}
 		}
 	}
+	
 	
 	// computes the total biomass for a given type of crop and practice
 	float get_total_biomass_by_practice(Crop_practice p){
@@ -79,10 +81,14 @@ global{
 		list<float> tmp;
 		loop i from: 0 to: length(first(practices).year_summary["Current year"]){
 			loop p over: practices{
-				tmp <+ p.year_summary[indicator][i];
+				tmp <+ scale = "Total" ? p.year_summary[indicator][i] :  (p.year_summary[indicator][i] / p.year_summary["Crop area"][i]);
 			}
 		}
 		return tmp;
+	}
+	
+	string y_label{
+		return scale = "Total" ? "Total " + current_chart : current_chart + " per ha";
 	}
 	
 	// compute the color of the bars of the histogram
@@ -91,6 +97,23 @@ global{
 		return first(practices).year_summary["Current year"] accumulate(cl);
 	}
 	
+	bool visibility{
+		return current_chart != "Adoption rate" and current_chart != "Expenses details";
+	}
+	
+	list<list<float>> get_adoption_rate {
+		if (scale = "Total"){
+			return practices collect(each.year_summary["Crop area"]);
+		}else{
+			float total_area <- Plot sum_of (each.shape.area);
+			list<list<float>> l <- [];
+			loop p over: practices {
+				l <+ p.year_summary["Crop area"] collect (each/total_area*100);
+			}
+			return l;
+		}
+		  
+	}
 } 
 
 
@@ -106,6 +129,7 @@ experiment generic_exp type:gui virtual: true {
 	
 	category "Practices comparison" expanded: true color: rgb(100,100,100);
 	parameter "Chart" var: current_chart init: "Total crop biomass per practice" category: "Practices comparison" among: chart_list;
+	parameter "Scale" var: scale init: "Total" category: "Practices comparison" among: ["Total","Per ha"];
 	
 	output {
 		display base_map axes: false toolbar: false virtual: true{
@@ -120,21 +144,20 @@ experiment generic_exp type:gui virtual: true {
 //				draw string("Seasons") at: {10 #px,10 #px}  anchor: #top_left color: #black font:overlay_font ; 
 //            }
 
-			chart histogram_info name: "" type: histogram y_label: current_chart{
+			chart histogram_info name: "" type: histogram y_label: y_label() visible: visibility(){
 				datalist yearly_histo_labels() value: yearly_histo(current_chart)  color: histo_colors() ;
+			}
+			
+			chart "Adoption rate"  type: histogram  visible: current_chart = "Adoption rate" y_label: scale = "Total" ? "Area per practice":"Area (%)"{
+				datalist practices collect(each.short_name) value:  get_adoption_rate() color: practices collect(each.color_farmer) style: stack;
 			}
 
 
-//			chart "Yield" type: histogram {
-////				datalist update_x_labels() value: first(practices).seasons_summary["Harvest"]  color: first(practices).color_farmer ;
-//				loop p over: practices.values{
-//					datalist update_x_labels(p) value: p.seasons_summary["Harvest"]  color: p.color_farmer ;
-//				}
-//			}
+			chart "Expenses details"  type: histogram  visible: current_chart = "Expenses details" y_label: scale = "Total" ? "Expenses per practice":"Expenses per ha"{
+				datalist practices collect(each.short_name) value:  get_adoption_rate() color: practices collect(each.color_farmer) style: stack;
+			}
+
 			
-//			chart "Test" type: histogram {
-//				datalist ["a","b","a","c"] value: [3,4,2,4];
-//			}
 			
 //			chart "Test2" type: series {
 //				data "data1" value: [3,4,2,4] color: #blue;
@@ -179,6 +202,8 @@ experiment generic_exp type:gui virtual: true {
 //			overlay position: {0, 0} size: {0.1, 0.1} background: #white transparency: 1 rounded: false{
 //				draw string("Economy") at: {10 #px,10 #px}  anchor: #top_left color: #black font:overlay_font ; 
 //            }
+
+			
 			chart "Income per ha" type: series size: {0.5,1} visible: economy_display_type = "Income" x_range: time_range(time_range_type) {
 				loop p over: reverse(practices.values) {
 					data "Mean income of " + p.short_name value: empty(Farmer where (each.practice = p))? 0.0 :((Farmer where (each.practice = p)) mean_of (each.day_revenue)) color: p.color_farmer style: bar;
@@ -186,8 +211,8 @@ experiment generic_exp type:gui virtual: true {
 			}
 			
 			chart "Average yearly profit per ha" type: histogram size: {0.5,0.8}  position: {0.5,0.0} visible: economy_display_type = "Income"{
-				loop p over: reverse(practices.values) {
-					data p.short_name value: empty(Farmer where (each.practice = p))? 0.0 :(((Farmer where (each.practice = p)) mean_of (each.money))*365.0/(cycle+1)) color: p.color_farmer style: bar;
+				loop p over: practices.values {
+					data p.short_name value: empty(Farmer where (each.practice = p))? 0.0 :(((Farmer where (each.practice = p)) sum_of (each.money))/p.practice_area) color: p.color_farmer style: bar;
 				}
 			}
 			
@@ -201,6 +226,8 @@ experiment generic_exp type:gui virtual: true {
 				loop p over: reverse(practices.values) {
 					data "Mean income of " + p.short_name value: empty(Farmer where (each.practice = p))? 0.0 :((Farmer where (each.practice = p)) mean_of (each.money)) color: p.color_farmer style: line marker: false;				}
 			}
+			
+			
 			
 //			chart "Total production" type: series size: {0.5,1} position: {0.5,0.0} visible: economy_display_type = "Details" x_range: time_range(time_range_type) {
 //				loop p over: reverse(practices.values) {

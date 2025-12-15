@@ -34,9 +34,12 @@ global {
 	// Map storing all crop practices available in the model, keyed by their ID
 	map<string,Crop_practice> practices;
 	
-	// List of the key indicators to be monitored
+	// List of the indicators to be monitored
 	list<string> key_indicators <- ["Harvest","Profit","Crop area","Water consumption","Fertilizer consumption","Current year","Current season"];
-	
+	// List of the expense categories, and the corresponding color for display
+	map<string,rgb> expense_categories <- ["Seed"::rgb(22, 160, 133),"Fertilizer"::rgb(241, 196, 15),"Irrigation"::rgb(52, 152, 219),"Manpower"::rgb(230, 126, 34),"Other"::rgb(127, 140, 141)];
+	// Dark theme version
+	//	map<string,rgb> expenses_categories <- ["Seed"::rgb(26, 188, 156),"Fertilizer"::rgb(253, 203, 110),"Irrigation"::rgb(133, 193, 233),"Manpower"::rgb(241, 148, 138),"Other"::rgb(189, 195, 199)];
 	
 	// Action to create all practice instances from their species definitions
 	action create_practices {
@@ -46,6 +49,8 @@ global {
 			practices[ct.id] <- ct ;
 		}
 	}
+	
+	
 		
 }
 
@@ -62,10 +67,13 @@ species Crop_practice virtual: true{
 	rgb color_farmer;  // Color used for the farmer representation (UI or visualization)
 	
 	// key indicators regrouped by seasons (eg: ["harvest"::[21.0,23.4,19.9] is the total of crop produced for seasons 1 to 3.
-	map<string, list<float>> seasons_summary <- map(key_indicators collect(each::list<float>([]))); 
+//	map<string, list<float>> seasons_summary <- map(key_indicators collect(each::list<float>([]))); 
+	map<string, list<float>> seasons_summary <- map((key_indicators + (expense_categories.keys collect("Expense: "+each))) collect(each::list<float>([]))); 
+	
 	map<string, list<float>> year_summary <- map(
-		((key_indicators-["Current season"]) collect(each::[each="Current year"?1.0:0.0]))
+		((key_indicators-["Current season"]+ (expense_categories.keys collect("Expense: "+each))) collect(each::[each="Current year"?1.0:0.0]))
 	); 
+	float practice_area <- 1.0; // total plot area dedicated to the practice. Updated at the beginning of each year (moment to decide for practices changes)
 	
 
 	// Economic parameters (per hectare)
@@ -139,10 +147,19 @@ species Crop_practice virtual: true{
 	// compute indicators that will be used for the whole year, such as crop surface.
 	// computed on day 2 in order to prevent schedule errors (decisions made on day 1)
 	reflex compute_first_day_indicators when: cycle > 0 and current_date.day_of_year = init_day_of_year+1{
-		year_summary["Crop area"][current_year - 1] <- Plot where(each.the_farmer.practice = self) sum_of(each.shape.area);
+		practice_area <- Plot where(each.the_farmer.practice = self) sum_of(each.shape.area);
+		year_summary["Crop area"][current_year - 1] <- practice_area;
 	}
 	
 	action add_to_indicator(string indicator, float val){
+		// Error message to help debug when the indicator is not in the list
+		if !(indicator in year_summary.keys){
+			write "ERROR in year summary: "+indicator+" not in "+key_indicators;
+		}
+		if !(indicator in seasons_summary.keys){
+			write "ERROR in seasons summary: "+indicator+" not in "+key_indicators;
+		}
+		
 		list<float> l <- seasons_summary[indicator];
 		l[length(l)-1] <- last(l) + val;
 		seasons_summary[indicator] <- l;
@@ -184,7 +201,7 @@ species RiceCF parent: Crop_practice {
 	
 	
 	map<int,string> irrigation <- [0::CONTINUOUS, 91::NO_IRRIGATION];
-	map<int,float> fertilization <- [7::40.0, 20::40.0, 50::40.0];	
+	map<int,float> fertilization <- [7::40.0, 20::40.0, 50::40.0];	// date::quantity per ha ??
 }
 
 

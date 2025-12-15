@@ -12,6 +12,7 @@ global {
 	/******* RICE GROTWH MODEL ********/
 	string BASIC <- "basic" const: true;
 	string ORYZA <- "oryza" const: true;
+	string CERES <- "ceres" const: true;
 	
 	
 	/******* INNOVATION DIFFUSION MODEL ********/

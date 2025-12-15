@@ -86,10 +86,13 @@ species Farmer {
 		ask practice {do add_to_indicator('Profit',income);}
 	}
 	
-	action add_expenses(float expenses){
+	action add_expenses(float expenses, string category){
 		day_expenses <- day_expenses + expenses;
 		money <- money - expenses;
-		ask practice {do add_to_indicator('Profit',-expenses);}
+		ask practice {
+			do add_to_indicator('Profit',-expenses);
+			do add_to_indicator('Expense: '+category,expenses);
+		}
 	}
 	
 
@@ -153,7 +156,7 @@ species Plot {
 			crop_duration <- PG_models[the_farmer.practice.id].compute_crop_duration(self);
 
 		} 
-		ask the_farmer{do add_expenses(myself.associated_crop.sowing_cost_computation());}
+		ask the_farmer{do add_expenses(myself.associated_crop.sowing_cost_computation(),"Seed");}
 	}
 	
 
@@ -208,9 +211,13 @@ species Crop {
 	 */
 	reflex fertilization when: lifespan in the_farmer.practice.fertilization.keys {
 
-		float quantity <- the_farmer.practice.fertilization[lifespan];
-		ask the_farmer {do add_expenses(myself.fertilization_cost_computation());}
-		N_avail <- N_avail + quantity;
+		float quantity_per_ha <- the_farmer.practice.fertilization[lifespan];
+		float surface <- concerned_plot.shape.area/10000;
+		float cost <- fertilization_cost_computation(quantity_per_ha, surface);
+		ask the_farmer {do add_expenses(cost,"Fertilizer");}
+		ask the_farmer.practice {do add_to_indicator("Fertilizer consumption", quantity_per_ha * surface);}
+
+		N_avail <- N_avail + quantity_per_ha; // quantity per ha ?
 	}
 	
 	/**
@@ -239,8 +246,8 @@ species Crop {
 	}
 	
 	// QUESTION what is the area unit (to convert to ha ?)
-	float fertilization_cost_computation {
-		return  the_farmer.practice.fert_cost * concerned_plot.shape.area ;
+	float fertilization_cost_computation(float quantity_per_ha, float surface) {
+		return  the_farmer.practice.fert_cost * quantity_per_ha * surface ;
 	}
 	
 	float sowing_cost_computation{
