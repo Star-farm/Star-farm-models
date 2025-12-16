@@ -184,7 +184,6 @@ species Predator skills: [moving] {
 	}
 }
 
-
 experiment "Pest experiment" parent: generic_exp virtual: false{
 	category "Map" expanded: true color: rgb(143, 156, 180);
 	parameter "Display" var: map_display among: ["Current practice","Pest density"] category: "Map";

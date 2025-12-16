@@ -80,18 +80,29 @@ species Farmer {
 		}
 	}
 	
+	// add income to the farmer and to the practice global indicator
 	action add_income(float income){
 		day_revenue <- day_revenue + income;
 		money <- money + income;
-		ask practice {do add_to_indicator('Profit',income);}
+		ask practice {
+			do add_to_indicator('Profit',income);
+			day_income <- day_income + income;
+			total_balance <- total_balance + income;
+			balance_per_ha <- balance_per_ha + income / practice_area;
+		}
 	}
 	
+	// add expenses to the farmer and to the practice global indicator. 
+	// add expenses to the corresponding category for detailed visualization
 	action add_expenses(float expenses, string category){
 		day_expenses <- day_expenses + expenses;
 		money <- money - expenses;
 		ask practice {
 			do add_to_indicator('Profit',-expenses);
-			do add_to_indicator('Expense: '+category,expenses);
+			do add_to_indicator('Expense: '+category, expenses);
+			day_expenses <- day_expenses + expenses;
+			total_balance <- total_balance - expenses;
+			balance_per_ha <- balance_per_ha - expenses / practice_area; 
 		}
 	}
 	

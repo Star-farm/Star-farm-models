@@ -56,9 +56,11 @@ global {
 			PG_models[pract] <- models[plant_grow_models[pract]];
 		}
 
-		ask remove_duplicates(PG_models){
-			do initialize();
-		} 
+// moved after the creation of every agents
+//
+//		ask remove_duplicates(PG_models){
+//			do initialize();
+//		} 
 	}	
 }
 
@@ -101,6 +103,15 @@ species ceresModel parent: Plant_growth_model {
     map<Plot,int> stage;         // 0=veg, 1=repro, 2=grain fill, 3=mat
     float LAI <- 0.1;
 //    float biomass <- 0.0;   // g/m²
+
+ // --- SOIL WATER PARAMETERS
+    float FC <- 200.0;    // field capacity (mm)
+    float WP <- 80.0;     // wilting point (mm)
+    float Zr <- 300.0;    // root depth (mm)
+
+    // --- STATE VARIABLES
+    map<Plot, float> soil_water;// <- 200.0;   // mm
+    map<Plot, float> water_stress;   // 0–1
 	
 	// weather
 	
@@ -109,6 +120,11 @@ species ceresModel parent: Plant_growth_model {
 	float precip update:  the_weather.rainfall[current_date];
 	float sw update:  the_weather.solar_radiation[current_date];
 	float Ra update:  compute_Ra();
+	
+	action initialize{
+		 soil_water <- create_map(list<Plot>(Plot), list_with(length(Plot),200.0)) ;
+		 water_stress <- create_map(list<Plot>(Plot), list_with(length(Plot),1.0)) ;
+	}
 		
 	int compute_crop_duration(Crop c) {
 		int start <- current_date.day_of_year;
@@ -120,11 +136,6 @@ species ceresModel parent: Plant_growth_model {
 		return harvesting_date - start;
 	}
 	
-//	action initialize{
-//		tt <- Plot as_map (each::0.0);        // initialize at 0
-//    	stage <- Plot as_map(each::0);         // 0=veg, 1=repro, 2=grain fill, 3=mat
-//    	write "inint "+length(Plot);
-//	}
 	
 	float compute_Ra {
     // constants
@@ -181,14 +192,59 @@ species ceresModel parent: Plant_growth_model {
         	
         }
     }
+    
+    // update soil water balance
+    
+    action soil_water_balance(Crop c)  {
+    	Plot p <- c.concerned_plot;
+
+		float inflow;
+		
+		// ETo (Hargreaves)
+		float tmean <- (tmax + tmin) / 2.0;
+		float ETo <- 0.0023 * (tmean + 17.8) * sqrt(max(0.0, tmax - tmin)) * Ra;
+		
+		// --- Irrigation logic
+	    if (c.the_farmer.practice.id = RICE_CF) {
+	    	if (soil_water[p] < FC) {
+	        	inflow <- precip + (FC - soil_water[p]);
+	        }
+	    }else{
+	        if (soil_water[p] < RiceAWD(c.the_farmer.practice).AWD_threshold * FC) {
+	            inflow <- precip + RiceAWD(c.the_farmer.practice).irrigation_amount;
+	        }
+	    }
+	
+	    // --- Outflows
+	    float transpiration <- ETo * water_stress[p];
+	    float drainage <- max(0, soil_water[p] + inflow - FC);
+	
+	    // --- Update soil water
+	    soil_water[p] <- soil_water[p] + inflow - transpiration - drainage;
+	
+	    soil_water[p] <- max(WP, min(soil_water[p], FC));
+	     
+	    
+	    // update water stress
+	    if (soil_water[p] <= WP) {
+            water_stress[p] <- 0.0;
+        }
+        else if (soil_water[p] < FC) {
+            water_stress[p] <- (soil_water[p] - WP) / (FC - WP);
+        }
+        else {
+            water_stress[p] <- 1.0;
+        }
+    }
 	
 	
 	action day_biomass_growth(Crop c){
-//		write "stage "+stage;
+		do soil_water_balance(c);
+
 		if (stage[c.concerned_plot] < 3) {
             float IPAR <- Ra * (1 - exp(-k * LAI));
-            float dBiomass <- IPAR * RUE_ceres;
-//            write dBiomass;
+            float dBiomass <- IPAR * RUE_ceres * water_stress[c.concerned_plot];
+
             c.B <- c.B + dBiomass;
 
             // simple LAI expansion

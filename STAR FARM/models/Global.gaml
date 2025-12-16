@@ -30,18 +30,28 @@ global {
 
 	
 	init {
-//		write Plot.subspecies;
 		do create_practices;
 		do create_plant_growth_models;
-		do create_plots; 		
+		do create_plots;	
 		do init_weather_data;
+		ask remove_duplicates(PG_models){
+			do initialize();
+		} 
 	}
 	
-	
+	// this reflex is used to reset variables to their initial values everyday, at the begining of each step. 
+	// putting reinit here avoids scheduler artefacts that would prevent reinitializing variables
+	// at the wrong moment.
+	reflex daily_reset{
+		ask practices{
+			day_income <- 0.0;
+			day_expenses <- 0.0;
+		}
+	}
 	
 	action create_plots {
 		if (plot_species = nil) {
-			plot_species	<- species<Plot>("Plot");
+			plot_species <- species<Plot>("Plot");
 		}
 		create plot_species from: plots_shapefile; 
 //		create first(Plot.subspecies) from: plots_shapefile; 

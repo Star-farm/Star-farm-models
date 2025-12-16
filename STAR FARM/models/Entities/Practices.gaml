@@ -74,6 +74,10 @@ species Crop_practice virtual: true{
 		((key_indicators-["Current season"]+ (expense_categories.keys collect("Expense: "+each))) collect(each::[each="Current year"?1.0:0.0]))
 	); 
 	float practice_area <- 1.0; // total plot area dedicated to the practice. Updated at the beginning of each year (moment to decide for practices changes)
+	float day_income <- 0.0;// update: 0.0; // day income. Reinitialized at 0 the first day
+	float day_expenses <- 0.0;// update: 0.0; // day expense. Reinitialized at 0 the first day
+	float total_balance <- 0.0;
+	float balance_per_ha <- 0.0;
 	
 
 	// Economic parameters (per hectare)
@@ -222,6 +226,10 @@ species RiceAWD parent: Crop_practice {
 	float fert_cost <- 400000.0; // VND/per ha
 	float seed_cost <- 600000.0; // VND/per ha
 	float other_cost <- 300000.0; // VND/per ha 
+	
+	// CERES parameters
+	float AWD_threshold <- 0.5;   // fraction of FC triggering irrigation
+    float irrigation_amount <- 40.0; // mm per event
 	
 	
 	map<int,string> irrigation <- [0::CONTINUOUS, 21::ALTERNATE,81::CONTINUOUS, 90::NO_IRRIGATION];
