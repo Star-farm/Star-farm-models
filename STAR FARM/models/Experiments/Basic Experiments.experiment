@@ -11,7 +11,7 @@ import "../Global.gaml"
 
  
 global{
-	string economy_display_type <- "Income";
+	string current_indicator_family <- "Economy";
 	int overlay_font_size <- 12;
 	font overlay_font <- font("SansSerif", overlay_font_size, #bold);
 	string show_season <- first(possible_practices.keys);
@@ -97,7 +97,7 @@ global{
 				tmp <+ scale = "Total" ? p.year_summary[indicator][i] :  (p.year_summary[indicator][i] / p.year_summary["Crop area"][i]);
 			}
 		}
-		return tmp;
+		return list<float>(truncate(tmp));
 	}
 	
 	// function to build y label, based on the scale choice (total or per ha)
@@ -128,7 +128,22 @@ global{
 			}
 			return l;
 		}
-		  
+	}
+	
+	
+	// keep information corresponding to the current time range (all, 1 year, 3 years)
+	list truncate(list l){
+		switch time_range_type{
+			match "Last year" {
+				int start_index <- length(l) - length(practices);
+				return copy_between(l, start_index, length(l-1));
+			}
+			match "Last 3 years" {
+				int start_index <- length(l) - 3 * length(practices);
+				return  copy_between(l, start_index, length(l-1));
+			}
+			default {return l;}
+		}	
 	}
 } 
 
@@ -141,16 +156,18 @@ global{
 // virtual generic experiment with common charts. All experiments inherit for this one, so it is not necessary to rewrite common charts
 experiment generic_exp type:gui virtual: true {
 	
-	category "Economy" expanded: true color: rgb(243, 156, 18);
-	parameter "Economy charts" var: economy_display_type among: ["Income","Details","Seasons summary"] category: "Economy";
+	category "Daily indicators" expanded: true color: rgb(243, 156, 18);
+	parameter "Indicators family" var: current_indicator_family among: ["Economy", "Practices seasons", "Biomass", "Mean biomass"] category: "Daily indicators";
 	
-	category "Practices comparison per year" expanded: true color: rgb(46, 204, 113);
-	parameter "Chart" var: current_chart init: "Total crop biomass per practice" category: "Practices comparison per year" among: chart_list;
-	parameter "Scale" var: scale init: "Total" category: "Practices comparison per year" among: ["Total","Per ha"];
+	category "Year evolution" expanded: true color: rgb(46, 204, 113);
+	parameter "Chart" var: current_chart init: "Total crop biomass per practice" category: "Year evolution" among: chart_list;
+	parameter "Scale" var: scale init: "Total" category: "Year evolution" among: ["Total","Per ha"];
 	
 	category "Weather and practices" expanded: true color: rgb(52, 152, 219);
 	parameter "Show practice seasons" var: show_season category: "Weather and practices" among: possible_practices.keys+"None";
-	parameter "Time range" var: time_range_type among: ["All","Last year","Last 3 years"] category: "Weather and practices";
+	
+	category  "Scale and time" expanded: true color: rgb(100, 100, 100);
+	parameter "Time range" var: time_range_type among: ["All","Last year","Last 3 years"] category: "Scale and time";
 	
 	output {
 		display base_map axes: false toolbar: false virtual: true{
@@ -176,79 +193,58 @@ experiment generic_exp type:gui virtual: true {
 				datalist practices collect(each.short_name) value:  get_adoption_rate() color: practices collect(each.color_farmer) style: stack;
 			}
 
-			
-			
-//			chart "Test2" type: series {
-//				data "data1" value: [3,4,2,4] color: #blue;
-//				data "data1" value: [4,1,1,4] color: #red;
-//			}
-
-//			chart "Adoption rates" visible: (current_chart = "Adoption rates") type: series {
-//				loop p over: practices.values {
-//					data "Adoption of " + p.short_name value: (Farmer count (each.practice = p)) /length(Farmer) color: p.color_farmer marker: false thickness: 2;
-//				}
-//				
-//			}
-//
-//			chart SeasonsChart name: "Seasons" visible: (current_chart = "Seasons") type: series  lines: false y_range: [0, max(2.5,length(practices.values)+0.5)] y_tick_values_visible: false x_range: time_range(time_range_type)  {
-//				loop i from: 0 to: length(practices.values)-1 step: 1 {
-//					data ""+i value: (i+0.5) color: #white style: area line_visible: false marker: false;
-//					data practices.values[i].short_name+" seasons" value: (i+1)*int(practices.values[i].is_active_season) color: practices.values[i].color_farmer style: area line_visible: false marker: false;
-//				}
-//			}
-//			
-//			chart surfacePerPractice name: "Surface per practice" visible: (current_chart = "Surface per practice") type: series x_range: time_range(time_range_type)  {
-//				loop i from: 0 to: length(practices.values)-1 step: 1 {
-//					data practices.values[i].short_name+" biomass" value: get_cultivated_area_by_practice(practices.values[i]) color: practices.values[i].color_farmer marker: false;
-//				}
-//			}
-//			
-//			chart totalCropBiomass name: "Total crop biomass per practice" visible: (current_chart = "Total crop biomass per practice") type: series x_range: time_range(time_range_type)  {
-//				loop i from: 0 to: length(practices.values)-1 step: 1 {
-//					data practices.values[i].short_name+" biomass" value: get_total_biomass_by_practice(practices.values[i]) color: practices.values[i].color_farmer marker: false;
-//				}
-//			}
-//			
-//			chart AvgCropBiomass name: "Avg crop biomass per practice" visible: (current_chart = "Avg crop biomass per practice") type: series x_range: time_range(time_range_type)  {
-//				loop i from: 0 to: length(practices.values)-1 step: 1 {
-//					data practices.values[i].short_name+" biomass" value: get_avg_biomass_by_practice(practices.values[i]) color: practices.values[i].color_farmer marker: false;
-//				}
-//			} 
-
 		}
 		
-		display base_economy type: 2d toolbar: false antialias: true virtual: true {
+		display base_indicators type: 2d toolbar: false antialias: true virtual: true {
 //			overlay position: {0, 0} size: {0.1, 0.1} background: #white transparency: 1 rounded: false{
-//				draw string("Economy") at: {10 #px,10 #px}  anchor: #top_left color: #black font:overlay_font ; 
+//				draw string("Daily indicators") at: {10 #px,10 #px}  anchor: #top_left color: #black font:overlay_font ; 
 //            }
 
 			
-			chart "Income per ha" type: series size: {0.5,1} visible: economy_display_type = "Income" x_range: time_range(time_range_type) {
-				loop p over: reverse(practices.values) {
-					data "Mean income of " + p.short_name value: empty(Farmer where (each.practice = p))? 0.0 :((Farmer where (each.practice = p)) mean_of (each.day_revenue)) color: p.color_farmer style: bar;
-				}
-			}
+			// economy indicators
 			
-			chart "Average yearly profit per ha" type: histogram size: {0.5,0.8}  position: {0.5,0.0} visible: economy_display_type = "Income"{
-				loop p over: practices.values {
-					data p.short_name value: empty(Farmer where (each.practice = p))? 0.0 :(((Farmer where (each.practice = p)) sum_of (each.money))/p.practice_area) color: p.color_farmer style: bar;
-				}
-			}
-			
-			chart "Income/expenses" type: series size: {0.5,1} visible: economy_display_type = "Details" x_range: time_range(time_range_type) {
+			chart "Income/expenses" type: series size: {0.5,1} visible: current_indicator_family = "Economy" x_range: time_range(time_range_type) {
 				loop p over: reverse(practices.values) {
 					data "Mean income of " + p.short_name value: empty(Farmer where (each.practice = p))? 0.0 :((Farmer where (each.practice = p)) mean_of (each.day_revenue)) color: p.color_farmer style: bar;
 					data "Mean expenses of " + p.short_name value: empty(Farmer where (each.practice = p))? 0.0 :((Farmer where (each.practice = p)) mean_of (-each.day_expenses)) color: p.color_farmer style: bar;
 				}
 			}
-			chart "Balance" type: series size: {0.5,1} position: {0.5,0.0} visible: economy_display_type = "Details" x_range: time_range(time_range_type) {
+			
+			chart "Balance" type: series size: {0.5,1} position: {0.5,0.0} visible: current_indicator_family = "Economy" x_range: time_range(time_range_type) {
 				loop p over: reverse(practices.values) {
 					data "Mean income of " + p.short_name value: empty(Farmer where (each.practice = p))? 0.0 :((Farmer where (each.practice = p)) mean_of (each.money)) color: p.color_farmer style: line marker: false;				}
 			}
 			
+			// season indicators
+			
+			chart SeasonsChart name: "Seasons" visible: current_indicator_family = "Practices seasons" type: series  lines: false y_range: [0, max(2.5,length(practices.values)+0.5)] y_tick_values_visible: false x_range: time_range(time_range_type)  {
+				loop i from: 0 to: length(practices.values)-1 step: 1 {
+					data ""+i value: (i+0.5) color: #white style: area line_visible: false marker: false;
+					data practices.values[i].short_name+" seasons" value: (i+1)*int(practices.values[i].is_active_season) color: practices.values[i].color_farmer style: area line_visible: false marker: false;
+				}
+			}
+//			
+
+			
+			chart totalCropBiomass name: "Total crop biomass per practice" visible: current_indicator_family = "Biomass" type: series x_range: time_range(time_range_type)  {
+				loop i from: 0 to: length(practices.values)-1 step: 1 {
+					data practices.values[i].short_name+" biomass" value: get_total_biomass_by_practice(practices.values[i]) color: practices.values[i].color_farmer marker: false;
+				}
+			}
+			
+			chart AvgCropBiomass name: "Avg crop biomass per practice" visible: current_indicator_family = "Mean biomass" type: series x_range: time_range(time_range_type)  {
+				loop i from: 0 to: length(practices.values)-1 step: 1 {
+					data practices.values[i].short_name+" biomass" value: get_avg_biomass_by_practice(practices.values[i]) color: practices.values[i].color_farmer marker: false;
+				}
+			} 
+
+
+
+
+
 			
 			
-//			chart "Total production" type: series size: {0.5,1} position: {0.5,0.0} visible: economy_display_type = "Details" x_range: time_range(time_range_type) {
+//			chart "Total production" type: series size: {0.5,1} position: {0.5,0.0} visible: current_indicator_family = "Details" x_range: time_range(time_range_type) {
 //				loop p over: reverse(practices.values) {
 //					data "Mean income of " + p.short_name value: empty(Farmer where (each.practice = p))? 0.0 :((Farmer where (each.practice = p)) mean_of (each.money)) color: p.color_farmer style: line marker: false;				}
 //			}
@@ -309,9 +305,9 @@ experiment "Simple experiment" type:gui parent: generic_exp {
 		}
 
 		
-		display pc name: "Practices comparison per year" type: 2d toolbar: false antialias: true parent: base_practices_information{}
+		display pc name: "Year evolution" type: 2d toolbar: false antialias: true parent: base_practices_information{}
 		
-		display Economy type: 2d toolbar: false antialias: true parent: base_economy{}
+		display Indicators type: 2d toolbar: false antialias: true parent: base_indicators{}
 		
 		display Weather type: 2d toolbar: false antialias: true parent: base_weather{}
 		

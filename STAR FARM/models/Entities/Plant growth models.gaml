@@ -171,9 +171,9 @@ species ceresModel parent: Plant_growth_model {
         		myself.stage[self] <- 0;
         	}else{
         		myself.tt[self] <- myself.tt[self] + dTT;
-        		if (int(self) = 0){
-        			write "stage "+myself.stage[self]+": "+myself.tt[self]+"/"+P1;
-        		}
+//        		if (int(self) = 0){
+//        			write "stage "+myself.stage[self]+": "+myself.tt[self]+"/"+P1;
+//        		}
         		if (myself.stage[self] = 0 and myself.tt[self] >= P1) { myself.stage[self] <- 1; }
 		        if (myself.stage[self] = 1 and myself.tt[self] >= (P1 + P5)) { myself.stage[self] <- 2; }
 		        if (myself.stage[self] = 2 and myself.tt[self] >= (P1 + 2 * P5)) { myself.stage[self] <- 3; }
@@ -188,7 +188,7 @@ species ceresModel parent: Plant_growth_model {
 		if (stage[c.concerned_plot] < 3) {
             float IPAR <- Ra * (1 - exp(-k * LAI));
             float dBiomass <- IPAR * RUE_ceres;
-            write dBiomass;
+//            write dBiomass;
             c.B <- c.B + dBiomass;
 
             // simple LAI expansion
