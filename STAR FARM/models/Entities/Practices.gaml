@@ -67,7 +67,7 @@ species Crop_practice virtual: true{
 	rgb color_farmer;  // Color used for the farmer representation (UI or visualization)
 	
 	// key indicators regrouped by seasons (eg: ["harvest"::[21.0,23.4,19.9] is the total of crop produced for seasons 1 to 3.
-//	map<string, list<float>> seasons_summary <- map(key_indicators collect(each::list<float>([]))); 
+ 
 	map<string, list<float>> seasons_summary <- map((key_indicators + (expense_categories.keys collect("Expense: "+each))) collect(each::list<float>([]))); 
 	
 	map<string, list<float>> year_summary <- map(
@@ -151,6 +151,7 @@ species Crop_practice virtual: true{
 		year_summary["Crop area"][current_year - 1] <- practice_area;
 	}
 	
+	// store actual value for a given indicator to build a yearly or season summary
 	action add_to_indicator(string indicator, float val){
 		// Error message to help debug when the indicator is not in the list
 		if !(indicator in year_summary.keys){
