@@ -26,15 +26,11 @@ global{
 //	list<string> chart_list <- ["Seasons","Total crop biomass per practice","Avg crop biomass per practice","Surface per practice","Adoption rates"];
 	string current_chart <- first(chart_list);
 	
-	int time_range(string s){
-		int range <- max(1,cycle);
-		switch s {
-			match "Last year" {return min(365,range);}
-			match "Last 3 years" {return min(1095,range);}
-			default {return range;}
-		}
-	}
 	
+	
+	// ======================================================================
+	// indicators
+	// ======================================================================
 	
 	// computes the total biomass for a given type of crop and practice
 	float get_total_biomass_by_practice(Crop_practice p){
@@ -53,25 +49,42 @@ global{
 	}
 	
 	
+	
+	// ======================================================================
+	// auxiliary functions for charts
+	// ======================================================================
+	
+	// compute the time range for charts, i.e. the number of days for which charts should be displayed
+	int time_range(string s){
+		int range <- max(1,cycle);
+		switch s {
+			match "Last year" {return min(365,range);}
+			match "Last 3 years" {return min(1095,range);}
+			default {return range;}
+		}
+	}
+	
 	// make x labels for season histograms
 	list<string> update_x_labels(Crop_practice p){
 		list<string> tmp;
 		ask first(practices){
 			tmp <- create_x_labels();
-		}
-		 
+		}		 
 		return tmp collect(each+p.id);
 	}
 	
-	/**
-	 * functions to build yearly histograms
-	 */ 
+	
+
+	// ======================================================================
+	// functions to build yearly histograms
+	// ======================================================================
 	 
-	// functions to build x labels
+	// functions to build x labels for histograms
 	list<string> add_ref_to_practice(string s){
 		return practices collect (each.short_name+' '+s);
 	}
 	
+	// generate the current histogram labels
 	list<string> yearly_histo_labels{
 		return first(practices).year_summary["Current year"] accumulate(add_ref_to_practice('y'+int(each)));
 	}
@@ -87,6 +100,7 @@ global{
 		return tmp;
 	}
 	
+	// function to build y label, based on the scale choice (total or per ha)
 	string y_label{
 		return scale = "Total" ? "Total " + current_chart : current_chart + " per ha";
 	}
@@ -97,10 +111,12 @@ global{
 		return first(practices).year_summary["Current year"] accumulate(cl);
 	}
 	
+	// defines the visilibity of charts
 	bool visibility{
 		return current_chart != "Adoption rate" and current_chart != "Expenses details";
 	}
 	
+	// returns the adoption rate
 	list<list<float>> get_adoption_rate {
 		if (scale = "Total"){
 			return practices collect(each.year_summary["Crop area"]);
@@ -117,26 +133,29 @@ global{
 } 
 
 
+// ======================================================================
+// experiments
+// ======================================================================
 
+
+// virtual generic experiment with common charts. All experiments inherit for this one, so it is not necessary to rewrite common charts
 experiment generic_exp type:gui virtual: true {
 	
 	category "Economy" expanded: true color: rgb(243, 156, 18);
 	parameter "Economy charts" var: economy_display_type among: ["Income","Details","Seasons summary"] category: "Economy";
 	
-	category "Visualization" expanded: true color: rgb(100,100,100);
-	parameter "Show season" var: show_season category: "Visualization" among: possible_practices.keys+"None";
-	parameter "Time range" var: time_range_type among: ["All","Last year","Last 3 years"] category: "Visualization";
+	category "Practices comparison per year" expanded: true color: rgb(46, 204, 113);
+	parameter "Chart" var: current_chart init: "Total crop biomass per practice" category: "Practices comparison per year" among: chart_list;
+	parameter "Scale" var: scale init: "Total" category: "Practices comparison per year" among: ["Total","Per ha"];
 	
-	category "Practices comparison" expanded: true color: rgb(100,100,100);
-	parameter "Chart" var: current_chart init: "Total crop biomass per practice" category: "Practices comparison" among: chart_list;
-	parameter "Scale" var: scale init: "Total" category: "Practices comparison" among: ["Total","Per ha"];
+	category "Weather and practices" expanded: true color: rgb(52, 152, 219);
+	parameter "Show practice seasons" var: show_season category: "Weather and practices" among: possible_practices.keys+"None";
+	parameter "Time range" var: time_range_type among: ["All","Last year","Last 3 years"] category: "Weather and practices";
 	
 	output {
 		display base_map axes: false toolbar: false virtual: true{
 			species species(plot_species);  
 			species Farmer;
-//			agents pest value: (plot_species != Plot?species("Parasite"):nil);	
-//			agents predator value: (plot_species != Plot?species("Predator"):nil);
 		}
 		
 		display base_practices_information type: 2d toolbar: false antialias: true virtual: true{
@@ -240,6 +259,7 @@ experiment generic_exp type:gui virtual: true {
 //			overlay position: {0, 0} size: {2000, 32#px} background: #white transparency: 0 rounded: false{
 //				draw string("Weather") at: {10 #px,10 #px}  anchor: #top_left color: #black font:overlay_font ; 
 //            }
+
 			chart "Temperature" type: series size: {0.5,0.5} x_range: time_range(time_range_type) {
 				data "temperature min" value: the_weather.temp_min[current_date]  color: rgb(49, 130, 189) marker: false style: spline;
 				data "temperature max" value: the_weather.temp_max[current_date]  color: rgb(230, 85, 13) marker: false style: spline;
@@ -276,6 +296,7 @@ experiment generic_exp type:gui virtual: true {
 }
 
 
+// simple experiment, wi
 experiment "Simple experiment" type:gui parent: generic_exp {	
 	
 	output {
@@ -288,7 +309,7 @@ experiment "Simple experiment" type:gui parent: generic_exp {
 		}
 
 		
-		display pc name: "Practices comparison" type: 2d toolbar: false antialias: true parent: base_practices_information{}
+		display pc name: "Practices comparison per year" type: 2d toolbar: false antialias: true parent: base_practices_information{}
 		
 		display Economy type: 2d toolbar: false antialias: true parent: base_economy{}
 		

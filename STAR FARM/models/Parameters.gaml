@@ -27,7 +27,7 @@ global {
    
 	map<string,string> plots_to_keep <- ["Lu05_en"::"Rice"];
 		
-	map<string,string> plant_grow_models <-[RICE_AWD::BASIC, RICE_CF::BASIC];// ORYZA ; //POSSIBLE VALUES : BASIC/ORYZA
+	map<string,string> plant_grow_models <-[RICE_AWD::CERES, RICE_CF::CERES];// ORYZA ; //POSSIBLE VALUES : BASIC/CERES/ORYZA
 	
 	/******* PARAMETERS FOR ORYZA *********/
 	 
@@ -39,6 +39,14 @@ global {
         RICE_CF::("../includes/An Bien/Oryza/CF_s1/cf_op.csv"),
         RICE_AWD::("../includes/An Bien/Oryza/AWD_s1/awd_op.csv")
     ];
+    
+    /**** PARAMETERS FOR CERES PLANT GROWTH MODEL *****/
+    float Tbase <- 8.0;
+    float Topt_ceres  <- 30.0; 
+    float k     <- 0.6;     // extinction coefficient 
+    float P1    <- 500.0;   // °C.day emergence → panicle initiation
+    float P5    <- 500.0;   // °C.day grain filling
+    float RUE_ceres   <- 3.0;     // g DM / MJ
     
     /**** PARAMETERS FOR BASIC PLANT GROWTH MODEL *****/
     

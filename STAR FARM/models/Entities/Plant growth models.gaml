@@ -55,7 +55,8 @@ global {
 		loop pract over: plant_grow_models.keys {
 			PG_models[pract] <- models[plant_grow_models[pract]];
 		}
-		ask PG_models{
+
+		ask remove_duplicates(PG_models){
 			do initialize();
 		} 
 	}	
@@ -91,6 +92,120 @@ species Plant_growth_model virtual: true{
 // CERES CROP GROWTH MODEL
 // ======================================================================
 
+species ceresModel parent: Plant_growth_model {
+	string id <- CERES;
+	
+   
+    // --- STATE VARIABLES
+    map<Plot,float> tt;        // thermal time
+    map<Plot,int> stage;         // 0=veg, 1=repro, 2=grain fill, 3=mat
+    float LAI <- 0.1;
+//    float biomass <- 0.0;   // g/m²
+	
+	// weather
+	
+	float tmax update: the_weather.temp_max[current_date];
+	float tmin update: the_weather.temp_min[current_date];
+	float precip update:  the_weather.rainfall[current_date];
+	float sw update:  the_weather.solar_radiation[current_date];
+	float Ra update:  compute_Ra();
+		
+	int compute_crop_duration(Crop c) {
+		int start <- current_date.day_of_year;
+		int index_start <- c.the_farmer.practice.sowing_date index_of start;
+		int harvesting_date <-  c.the_farmer.practice.harvesting_date[index_start];
+		if (harvesting_date < start) {
+			harvesting_date <- harvesting_date + 365;
+		}
+		return harvesting_date - start;
+	}
+	
+//	action initialize{
+//		tt <- Plot as_map (each::0.0);        // initialize at 0
+//    	stage <- Plot as_map(each::0);         // 0=veg, 1=repro, 2=grain fill, 3=mat
+//    	write "inint "+length(Plot);
+//	}
+	
+	float compute_Ra {
+    // constants
+    
+    	float lat_deg <- CRS_transform(world.location, "4326").location.y;
+    
+		int doy <- current_date.day_of_year;
+	    float PI <- 3.141592653589793;
+	    float Gsc <- 0.0820; // MJ m-2 min-1, constante solaire
+	
+	    // convert latitude to radians
+	    float lat_rad <- lat_deg * PI / 180.0;
+	
+	    // inverse relative distance Earth-Sun
+	    float dr <- 1.0 + 0.033 * cos(2.0 * PI / 365.0 * doy);
+	
+	    // solar declination (radians)
+	    float delta <- 0.409 * sin(2.0 * PI / 365.0 * doy - 1.39);
+	
+	    // sunset hour angle (radians)
+	    float tmp <- -tan(lat_rad) * tan(delta);
+	    // clamp tmp to [-1,1] to avoid NaN from acos for extreme lat/doy combos
+	    if (tmp < -1.0) { tmp <- -1.0; }
+	    if (tmp >  1.0) { tmp <-  1.0; }
+	    float ws <- acos(tmp);
+	
+	    // Ra in MJ m-2 day-1
+	    return (24.0 * 60.0 / PI) * Gsc * dr * ( ws * sin(lat_rad) * sin(delta) + cos(lat_rad) * cos(delta) * sin(ws) );
+	}	
+	
+	float yield_computation(Crop c){
+		return c.B * c.concerned_plot.shape.area / 10000; // kg per ha ?
+	}
+	
+	// update phenology. Remark: all plots (and crops) share the same variables (temperature,
+	// development stage, etc. This makes sense until data (weather...) is made spatially explicit.
+	
+	reflex phenology {
+        float Tmean <- (tmax + tmin) / 2;
+        float dTT <- max(0, Tmean - Tbase);
+        ask Plot{
+        	if (self.associated_crop = nil){
+        		myself.tt[self] <- 0.0;
+        		myself.stage[self] <- 0;
+        	}else{
+        		myself.tt[self] <- myself.tt[self] + dTT;
+        		if (int(self) = 0){
+        			write "stage "+myself.stage[self]+": "+myself.tt[self]+"/"+P1;
+        		}
+        		if (myself.stage[self] = 0 and myself.tt[self] >= P1) { myself.stage[self] <- 1; }
+		        if (myself.stage[self] = 1 and myself.tt[self] >= (P1 + P5)) { myself.stage[self] <- 2; }
+		        if (myself.stage[self] = 2 and myself.tt[self] >= (P1 + 2 * P5)) { myself.stage[self] <- 3; }
+        	}
+        	
+        }
+    }
+	
+	
+	action day_biomass_growth(Crop c){
+//		write "stage "+stage;
+		if (stage[c.concerned_plot] < 3) {
+            float IPAR <- Ra * (1 - exp(-k * LAI));
+            float dBiomass <- IPAR * RUE_ceres;
+            write dBiomass;
+            c.B <- c.B + dBiomass;
+
+            // simple LAI expansion
+            LAI <- LAI + 0.01 * dBiomass;
+        }
+	}
+		
+	bool is_sowing_date (Crop_practice pr, int shift){	
+		return (current_date.day_of_year + shift) in pr.sowing_date ;
+	}
+	bool is_harvesting_date(Crop_practice pr, int shift) {
+		return (current_date.day_of_year + shift)  in pr.harvesting_date ;
+	}
+
+
+	
+}
 
 
 
@@ -146,6 +261,8 @@ species basicModel parent: Plant_growth_model {
 	    // Ra in MJ m-2 day-1
 	    return (24.0 * 60.0 / PI) * Gsc * dr * ( ws * sin(lat_rad) * sin(delta) + cos(lat_rad) * cos(delta) * sin(ws) );
 	}
+	
+	
 	float yield_computation(Crop c) {
 		
 		return c.B * c.concerned_plot.shape.area / 10000; // kg per ha ?
