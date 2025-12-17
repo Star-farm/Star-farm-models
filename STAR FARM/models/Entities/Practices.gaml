@@ -128,7 +128,7 @@ species Crop_practice virtual: true{
 			}
 			seasons_summary["Current season"] <+ new_season_index;
 			// add the crop area data
-			seasons_summary["Crop area"] <+ Plot where (each.the_farmer.practice = self) sum_of(each.shape.area); 
+			seasons_summary["Crop area"] <+ plot_species where (each.the_farmer.practice = self) sum_of(each.shape.area); 
 		 }
 		 if (PG_models[id].is_harvesting_date(self,-1)){
 		 	is_active_season <- false;
@@ -151,7 +151,7 @@ species Crop_practice virtual: true{
 	// compute indicators that will be used for the whole year, such as crop surface.
 	// computed on day 2 in order to prevent schedule errors (decisions made on day 1)
 	reflex compute_first_day_indicators when: cycle > 0 and current_date.day_of_year = init_day_of_year+1{
-		practice_area <- Plot where(each.the_farmer.practice = self) sum_of(each.shape.area);
+		practice_area <- plot_species where(each.the_farmer.practice = self) sum_of(each.shape.area);
 		year_summary["Crop area"][current_year - 1] <- practice_area;
 	}
 	

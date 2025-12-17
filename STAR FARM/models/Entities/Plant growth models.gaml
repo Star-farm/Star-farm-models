@@ -122,8 +122,8 @@ species ceresModel parent: Plant_growth_model {
 	float Ra update:  compute_Ra();
 	
 	action initialize{
-		 soil_water <- create_map(list<Plot>(Plot), list_with(length(Plot),200.0)) ;
-		 water_stress <- create_map(list<Plot>(Plot), list_with(length(Plot),1.0)) ;
+		 soil_water <- create_map(list<Plot>(plot_species), list_with(length(plot_species),200.0)) ;
+		 water_stress <- create_map(list<Plot>(plot_species), list_with(length(plot_species),1.0)) ;
 	}
 		
 	int compute_crop_duration(Crop c) {
@@ -176,7 +176,7 @@ species ceresModel parent: Plant_growth_model {
 	reflex phenology {
         float Tmean <- (tmax + tmin) / 2;
         float dTT <- max(0, Tmean - Tbase);
-        ask Plot{
+        ask plot_species{
         	if (self.associated_crop = nil){
         		myself.tt[self] <- 0.0;
         		myself.stage[self] <- 0;

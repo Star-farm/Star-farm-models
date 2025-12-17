@@ -25,6 +25,10 @@ global {
 	
 	geometry shape <- envelope(plots_shapefile);
 	int init_day_of_year <-  current_date.day_of_year;
+	
+	
+//	list<Plot> truc <- agents of_generic_species Plot;
+		
 	species<Plot> plot_species <- nil;
 	int current_year -> int(ceil(cycle/365));
 

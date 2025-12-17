@@ -252,8 +252,8 @@ experiment generic_exp type:gui virtual: true {
 			
 			chart "Income/expenses (per ha)" type: series size: {0.5,1} visible: current_indicator_family = "Economy" and scale = "Per ha" x_range: time_range(time_range_type)  {
 				loop p over: reverse(practices.values) {
-					data "Income of" + p.short_name + "Per ha" value: get_income_per_ha(p) color: p.color_farmer style: bar;
-					data "Expenses of" + p.short_name + "Per ha" value: - get_expenses_per_ha(p) color: p.color_farmer style: bar;
+					data "Income of " + p.short_name + " per ha" value: get_income_per_ha(p) color: p.color_farmer style: bar;
+					data "Expenses of " + p.short_name + " per ha" value: - get_expenses_per_ha(p) color: p.color_farmer style: bar;
 				}
 			}
 			
