@@ -11,17 +11,28 @@ import "../Parameters.gaml"
 
 import "../Global.gaml"   
 global{
-	// display parameters
+	
+	//--------------VISUAL CONSTANTS AND PARAMETERS-----------------------//
 	int overlay_font_size <- 12 const: true;
 	font overlay_font <- font("SansSerif", overlay_font_size, #bold) const: true;
 	int season_opacity <- 100 const: true;
 	
-	// variable used for display
+	bool display_background <- true;
+	image_file background_image_file <-display_background ?  image_file("../includes/Dong Thap/background.png") : image_file("../includes/Images/default_background.png");
+	
+	
+	//--------------variable used for display-----------------------------//
 	string current_indicator_family <- "Economy";
 	string show_season <- first(possible_practices.keys);
 	string time_range_type <- "All";
-	map<string,unknown> options <- [];
 	string scale <- "Total";
+	
+	//--------------Map VISUALIZATION PARAMETERS--------------------------//
+	point overlayPos <- {0.1, 0.1};
+	font titleFont<-font("Helvetica", 12,#bold);
+	rgb background_color<-#white;
+	rgb text_color<-#black;
+	bool show_overlay<-true;
 	
 	// List of the key indicators to be monitored
 	// the next list should be initialized using key_indicators from Practices.gaml, but presently there is a bug with Gama	
@@ -61,22 +72,27 @@ global{
 		list<list<float>> res <- [];
 		loop i from: 0 to: length(expense_categories.keys)-1{
 			list<float> vals;
+			int last_index <- length(first(practices.values).year_summary["Expense: "+expense_categories.keys[i]]) - 1;
+			int first_index;
+			
 			switch time_range_type{
+				
 				match "Last year" {
-					vals <- practices.values collect (last(each.year_summary["Expense: "+expense_categories.keys[i]])
-						/ (scale = "Total" ? 1 : max(0.001,each.practice_area))
-					);
+					first_index <- last_index;
+					
 				}
 				match "Last 3 years" {
-					int last_index <- length(first(practices.values).year_summary["Expense: "+expense_categories.keys[i]]) - 1;
-					vals <- practices.values collect (sum(copy_between(each.year_summary["Expense: "+expense_categories.keys[i]],last_index-2,last_index))
-						/ (scale = "Total" ? 1 : max(0.001,each.practice_area)));
+					first_index <- last_index - 2;
+				}
+				match "Last 5 years" {
+					first_index <- last_index - 4;
 				}
 				default {
-					vals <- practices.values collect (sum(each.year_summary["Expense: "+expense_categories.keys[i]])
-						/ (scale = "Total" ? 1 : max(0.001,each.practice_area)));
+					first_index <- 0;
 				}
-			}	 
+			}
+			vals <- practices.values collect (sum(copy_between(each.year_summary["Expense: "+expense_categories.keys[i]],first_index,last_index))
+						/ (scale = "Total" ? 1 : max(0.001,each.practice_area)));
 			res <+ vals;
 		}
 		return res;
@@ -93,6 +109,7 @@ global{
 		switch s {
 			match "Last year" {return min(365,range);}
 			match "Last 3 years" {return min(1095,range);}
+			match "Last 3 years" {return min(1825,range);}
 			default {return range;}
 		}
 	}
@@ -206,7 +223,7 @@ experiment generic_exp type:gui virtual: true {
 	parameter "Show practice seasons" var: show_season category: "Weather and practices" among: possible_practices.keys+"None";
 	
 	category  "Scale and time" expanded: true color: rgb(100, 100, 100);
-	parameter "Time range" var: time_range_type among: ["All","Last year","Last 3 years"] category: "Scale and time";
+	parameter "Time range" var: time_range_type among: ["All", "Last year", "Last 3 years", "Last 5 years"] category: "Scale and time";
 	parameter "Scale" var: scale init: "Total" category: "Scale and time" among: ["Total","Per ha"];
 	
 	output {

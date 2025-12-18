@@ -18,11 +18,7 @@ global {
 	image_file farmer_image <- image_file("../includes/Images/farmer.png");
 	
 	shape_file plots_shapefile <- shape_file("../includes/Dong Thap/2020/lu_dongthap2020_clean_2016_2023.shp");
-	
-	bool display_background <- true;
-	
-	image_file background_image_file <-display_background ?  image_file("../includes/Dong Thap/background.png") : image_file("../includes/Images/default_background.png");
- 
+	 
 	string weather_folder <- "../includes/An Bien/Weather";
 	
 	string innovation_diffusion_model <- NONE; //NONE, NEIGHBORS

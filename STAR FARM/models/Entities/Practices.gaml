@@ -68,6 +68,7 @@ species Crop_practice virtual: true{
 	
 	// key indicators regrouped by seasons (eg: ["harvest"::[21.0,23.4,19.9] is the total of crop produced for seasons 1 to 3.
  
+ 	// is season summary used or should it be removed ?
 	map<string, list<float>> seasons_summary <- map((key_indicators + (expense_categories.keys collect("Expense: "+each))) collect(each::list<float>([]))); 
 	
 	map<string, list<float>> year_summary <- map(
