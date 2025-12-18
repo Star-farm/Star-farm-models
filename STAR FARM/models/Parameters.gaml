@@ -17,7 +17,7 @@ global {
 	
 	image_file farmer_image <- image_file("../includes/Images/farmer.png");
 	
-	shape_file plots_shapefile <- shape_file("../includes/Dong Thap/2020/lu_dongthap2020-clean.shp");
+	shape_file plots_shapefile <- shape_file("../includes/Dong Thap/2020/lu_dongthap2020_clean_2016_2023.shp");
 	
 	bool display_background <- true;
 	
