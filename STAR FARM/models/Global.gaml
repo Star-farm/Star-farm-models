@@ -8,6 +8,8 @@
 
 model STARFARM
 
+import "Entities/Cultivar.gaml"
+
 //import "Entities/Parasite.gaml"
 
 import "Entities/Weather.gaml"
@@ -34,6 +36,7 @@ global {
 
 	
 	init {
+		do load_cultivars;
 		do create_practices;
 		do create_plant_growth_models;
 		do create_plots;	

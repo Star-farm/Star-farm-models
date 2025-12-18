@@ -33,6 +33,8 @@ global {
 		
 	map<string,string> plant_grow_models <-[RICE_AWD::CERES, RICE_CF::CERES];// ORYZA ; //POSSIBLE VALUES : BASIC/CERES/ORYZA
 	
+	csv_file cultivars_csv_file <- csv_file("../includes/cultivars.csv", true);
+
 	/******* PARAMETERS FOR ORYZA *********/
 	 
 	 map<string, string> data_files_practices <- [

@@ -1,0 +1,6 @@
+name,t_base,tt_emergence,tt_veg,tt_rep,photoperiod_sensitivity,max_LAI,phyllochron,max_height,max_tillers,root_max_depth,RUE,harvest_index_potential,grain_filling_duration,grain_weight,drought_tolerance,flood_tolerance,salinity_tolerance,heat_tolerance,lodging_resistance,nitrogen_response_eff,plant_density_opt,transplanting_suitability,direct_seeding_suitability
+OM5451,10,80,950,450,0.2,5.5,100,100,18,70,2.2,0.45,350,24,0.7,0.6,0.7,0.8,0.75,0.8,220,0.8,0.9
+OM4900,10,85,1000,470,0.25,5.3,105,105,17,68,2.1,0.44,360,24,0.65,0.6,0.75,0.75,0.7,0.78,210,0.85,0.85
+OM6976,10,90,1100,500,0.3,5.6,110,110,18,75,2.25,0.43,380,25,0.6,0.65,0.6,0.7,0.72,0.8,215,0.85,0.8
+IR64,10,90,1150,500,0.3,5.0,110,95,16,65,2.0,0.40,400,23,0.5,0.5,0.4,0.6,0.8,0.75,200,0.9,0.7
+JASMINE,10,100,1200,550,0.6,4.5,120,120,14,60,1.8,0.38,420,22,0.3,0.4,0.3,0.4,0.4,0.6,180,0.9,0.4
