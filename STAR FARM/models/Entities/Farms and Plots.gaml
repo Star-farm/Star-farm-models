@@ -172,7 +172,6 @@ species Plot {
 	
 
 		
-
 	/**
 	 * Reflex: harvesting
 	 * When the harvesting date is reached, the crop’s income is added to the farmer,

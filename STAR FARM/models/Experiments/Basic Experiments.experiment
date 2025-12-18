@@ -36,9 +36,7 @@ global{
 	
 	// List of the key indicators to be monitored
 	// the next list should be initialized using key_indicators from Practices.gaml, but presently there is a bug with Gama	
-	list<string> chart_list <- ["Harvest","Profit","Water consumption","Fertilizer consumption","Adoption rate","Expenses details"];
-	list<string> indicator_families_list <- ["Economy", "Practices seasons", "Biomass"];
-	string current_chart <- first(chart_list);
+	
 
 } 
 
@@ -50,9 +48,7 @@ global{
 
 experiment "Simple experiment" type:gui parent: generic_exp {	
 	
-	output {
-		layout value: horizontal([vertical([0::50,1::50])::50,vertical([2::50,3::50])::50]) tabs:false;
-		
+	output {		
 		display map axes: false toolbar: false parent: base_map{
 						overlay position:overlayPos size: {0.1, 0.1} background: background_color-10 transparency: 0.0 border: background_color rounded:true visible:show_overlay{			 
 			  point legendPos <- overlayPos + {10#px, 10#px};

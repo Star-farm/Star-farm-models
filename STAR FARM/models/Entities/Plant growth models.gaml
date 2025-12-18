@@ -259,7 +259,6 @@ species ceresModel parent: Plant_growth_model {
 		return (current_date.day_of_year + shift)  in pr.harvesting_date ;
 	}
 
-
 	
 }
 

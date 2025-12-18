@@ -22,8 +22,9 @@ global{
 	
 	// List of the key indicators to be monitored
 	// the next list should be initialized using key_indicators from Practices.gaml, but presently there is a bug with Gama	
-	list<string> chart_list;
-	string current_chart;
+	list<string> chart_list <- ["Harvest","Profit","Water consumption","Fertilizer consumption","Adoption rate","Expenses details"];
+	list<string> indicator_families_list <- ["Economy", "Practices seasons", "Biomass"];
+	string current_chart <- first(chart_list);
 	
 	
 	// ======================================================================
@@ -121,8 +122,13 @@ global{
 	
 	// build the histogram for a given indicator
 	list<float> yearly_histo(string indicator){
+		int data_length <- length(first(practices).year_summary["Current year"]);
+		if (!visibility()){
+			return list_with(length(practices) * data_length, 0.0);
+		}
+		write indicator;
 		list<float> tmp;
-		int last_index <- length(first(practices).year_summary["Current year"]) - 1;
+		int last_index <- data_length - 1;
 		loop i from: 0 to: last_index{
 			loop p over: practices{
 				tmp <+ scale = "Total" ? p.year_summary[indicator][i] :  (p.year_summary[indicator][i] / p.year_summary["Crop area"][i]);
@@ -182,7 +188,7 @@ global{
 experiment generic_exp type:gui virtual: true {
 	
 	category "Daily indicators" expanded: true color: rgb(243, 156, 18);
-	parameter "Indicators family" var: current_indicator_family among: ["Economy", "Practices seasons", "Biomass"] category: "Daily indicators";
+	parameter "Indicators family" var: current_indicator_family among: indicator_families_list category: "Daily indicators";
 	
 	category "Year evolution" expanded: true color: rgb(46, 204, 113);
 	parameter "Chart" var: current_chart init: "Total crop biomass per practice" category: "Year evolution" among: chart_list;
@@ -195,6 +201,8 @@ experiment generic_exp type:gui virtual: true {
 	parameter "Scale" var: scale init: "Total" category: "Scale and time" among: ["Total","Per ha"];
 	
 	output {
+		layout value: horizontal([vertical([0::50,1::50])::50,vertical([2::50,3::50])::50]) tabs:false;
+		
 		display base_map axes: false toolbar: false virtual: true{
 			image background_image_file refresh: false visible: display_background;
 			species species(plot_species);  
