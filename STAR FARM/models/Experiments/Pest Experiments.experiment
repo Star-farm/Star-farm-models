@@ -8,8 +8,7 @@
 model STARFARM  
 
 import "../Entities/Parasite.gaml"
-import "Basic Experiments.experiment"
-
+import "Generic Experiment.experiment"
  
 global{
 //	string economy_display_type <- "Income";
@@ -22,7 +21,7 @@ global{
 } 
 
 
-experiment "Simple experiment" type:gui parent: generic_exp {
+experiment "Pest experiment" type:gui parent: generic_exp {
 	category "Map" expanded: true color: rgb(143, 156, 180);
 	parameter "Display" var: map_display among: ["Current practice","Pest density"] category: "Map";
 	

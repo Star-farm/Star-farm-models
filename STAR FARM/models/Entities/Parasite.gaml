@@ -8,7 +8,6 @@
 model Parasite
 
 import "../Global.gaml"
-import "../Experiments/Basic Experiments.experiment"  
 
 import "Farms and Plots.gaml"
 import "../Parameters.gaml" 
