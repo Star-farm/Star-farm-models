@@ -19,7 +19,7 @@ global {
 	string map_display <- "Current practice";
 	list<rgb> pest_density_palette <- brewer_colors("OrRd");
 	int palette_size <- length(pest_density_palette);
-	float palette_ceiling_value <- 0.1;
+	float palette_ceiling_value <- 1.0;
 	
 	species<Plot> plot_species <- species<Plot>("Plot_with_pest");
 	
@@ -53,10 +53,8 @@ species Plot_with_pest parent: Plot{
 		if (map_display = "Current practice"){
 			draw shape color: associated_crop = nil ? #white : the_farmer.practice.color border: #black;
 		}else{
-			float pest_density <- length(Pest overlapping self)/self.shape.area;
-//			max_pest_density <- max(max_pest_density, pest_density);
+			float pest_density <- length(Pest overlapping self) / self.shape.area * 10000;
 			draw shape color: pest_density_palette[floor(min(pest_density/palette_ceiling_value,1)*(palette_size - 1))] border: #black;
-
 		}
 	}
 }
@@ -188,7 +186,9 @@ experiment "Pest experiment" parent: generic_exp virtual: false{
 	category "Map" expanded: true color: rgb(143, 156, 180);
 	parameter "Display" var: map_display among: ["Current practice","Pest density"] category: "Map";
 	
-	parameter "Chart" var: current_chart category: "General information" among: chart_list+["Pest"] init: "Pest";
+//	parameter "Chart" var: current_chart category: "General information" among: chart_list+["Pest"] init: "Pest";
+	parameter "Chart" var: current_chart category: "Year evolution" among: chart_list init: "Pest";
+	parameter "Indicators family" var: current_indicator_family among: indicator_families_list+["Pest"] category: "Daily indicators";
 	
 	
 	output{
@@ -200,17 +200,13 @@ experiment "Pest experiment" parent: generic_exp virtual: false{
 		}
 		
 		
-		display "Year evolution" type: 2d toolbar: false antialias: true parent: base_practices_information{
-			chart "Pest" type: series x_range: time_range(time_range_type) y2_range: [0,1] y2_tick_unit: 2 y_label: "¨Pest density" visible: (current_chart = "Pest") {
+		display Indicators type: 2d toolbar: false antialias: true parent: base_indicators{
+			chart "Pest" type: series x_range: time_range(time_range_type) y2_range: [0,1] y2_tick_unit: 2 y_label: "¨Pest density" visible: (current_indicator_family = "Pest") {
 				data "Pest population" value: length(Pest)  color: #red marker: false;
 				// season overlay
-				loop i from: 0 to: length(practices.values)-1 step: 1 {					
-					data practices.values[i].id+" seasons" value: practices.values[i].activity collect(each*int(show_season = practices.values[i].id)) color: rgb(practices.values[i].color_farmer,season_opacity) style: area line_visible: false marker: false use_second_y_axis: true;
-				}
+				datalist current_practices() collect(each.short_name+" seasons") legend: current_practices() collect(each.short_name) value: current_practices() collect(each.activity) color: current_practices() collect rgb(each.color_farmer,season_opacity) style: area line_visible: false marker: false use_second_y_axis: true;
 			}
 		}
-		
-		display Indicators type: 2d toolbar: false antialias: true parent: base_indicators{}
 		
 		display Weather type: 2d toolbar: false antialias: true parent: base_weather{}
 		

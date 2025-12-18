@@ -23,6 +23,7 @@ global{
 	// List of the key indicators to be monitored
 	// the next list should be initialized using key_indicators from Practices.gaml, but presently there is a bug with Gama	
 	list<string> chart_list <- ["Harvest","Profit","Water consumption","Fertilizer consumption","Adoption rate","Expenses details"];
+	list<string> indicator_families_list <- ["Economy", "Practices seasons", "Biomass"];
 	string current_chart <- first(chart_list);
 	
 	
@@ -75,7 +76,6 @@ global{
 			res <+ vals;
 		}
 		return res;
-
 	}
 	
 	
@@ -128,7 +128,7 @@ global{
 		int last_index <- length(first(practices).year_summary["Current year"]) - 1;
 		loop i from: 0 to: last_index{
 			loop p over: practices{
-				tmp <+ scale = "Total" ? p.year_summary[indicator][i] :  (p.year_summary[indicator][i] / p.year_summary["Crop area"][i]);
+				tmp <+ scale = "Total" ? p.year_summary[indicator][i] : (p.year_summary[indicator][i] / p.year_summary["Crop area"][i]);
 			}
 		}
 		return list<float>(truncate(tmp));
@@ -193,7 +193,7 @@ global{
 experiment generic_exp type:gui virtual: true {
 	
 	category "Daily indicators" expanded: true color: rgb(243, 156, 18);
-	parameter "Indicators family" var: current_indicator_family among: ["Economy", "Practices seasons", "Biomass"] category: "Daily indicators";
+	parameter "Indicators family" var: current_indicator_family among: indicator_families_list category: "Daily indicators";
 	
 	category "Year evolution" expanded: true color: rgb(46, 204, 113);
 	parameter "Chart" var: current_chart init: "Total crop biomass per practice" category: "Year evolution" among: chart_list;

@@ -177,7 +177,7 @@ species Crop_practice virtual: true{
 	
 	list<string> create_x_labels{
 		list<string> tmp <- [];
-		loop i from: 0 to: length(seasons_summary["Current season"]-1){
+		loop i from: 0 to: length(seasons_summary["Current season"] - 1){
 			tmp <+ 'Y'+seasons_summary["Current year"][i]+"S"+seasons_summary["Current season"][i];
 		}
 		return tmp;
