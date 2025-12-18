@@ -29,17 +29,21 @@ global {
 	action create_pests_and_predators{ 
 		
 		ask Farm {
-			create Pest number: rnd(init_pest_number - 10, init_pest_number + 10) {
+			create BrownPlanthopper number: gauss_rnd(init_pest_number, 10.0) {
 				farm_to_eat <- myself;
+
+				if flip(init_pest_resistant_rate) {
+					resistant <- true;
+				}
 			}
 		}
-		create Predator number: init_predator_number{
-			location <- any_location_in(any(Plot));
-		} 
+//		create Predator number: init_predator_number{
+//			location <- any_location_in(any(Plot));
+//		} 
 	}
 	
 	
-	reflex start_pest when: cycle = 450 {
+	reflex start_pest when: cycle = 50 {
 		do create_pests_and_predators;
 	}
 	
@@ -58,23 +62,47 @@ species Plot_with_pest parent: Plot{
 	}
 }
 
-species Pest {
+species Pest virtual: true {
 	bool resistant <- false;
-	float energy <- 0.0;
+	bool isFemale; // true == female
 	date date_of_birth;
+	
+	float days_to_adult;
+	float days_adult_lifespan;
+	float days_to_hatch;
+	
+	int daily_max_eggs min: 0;
+	
+	bool isEgg <- true;
+	bool isAdult <- false;
 	
 	Farm farm_to_eat;
 	Plot plot_to_eat <- nil;
 	Crop crop_to_eat <- nil;
 	
 	init {
-		if flip(init_pest_resistant_rate) {
-			resistant <- true;
-		}
+		isFemale <- flip(0.5);
 		date_of_birth <- current_date;
 	}
 	
-	reflex eat when: (crop_to_eat != nil and !dead(crop_to_eat)) {
+	//	==============================
+	//		Life cycle
+	//	==============================
+	
+	reflex hatching when: isEgg and (current_date > date_of_birth + days_to_hatch) {
+		isEgg <- false;
+		date_of_birth <- current_date;
+	}
+	
+	reflex becomeAdult when: !isAdult and (current_date > date_of_birth + days_to_adult) {
+		isAdult <- true;
+	}
+	
+	reflex age_to_die when: isAdult and (current_date > date_of_birth + days_to_adult + days_adult_lifespan){
+		do die;
+	}
+	
+	reflex eat when: (!isEgg and crop_to_eat != nil and !dead(crop_to_eat)) {
 		float biomass_eaten <- min(pest_quantity_B_to_eat, crop_to_eat.B);
 		crop_to_eat.B <- crop_to_eat.B - biomass_eaten;
 		
@@ -85,18 +113,15 @@ species Pest {
 			}
 			crop_to_eat <- nil;
 		}
-		
-		energy <- energy + biomass_eaten;
 	}
 	
-	reflex reproduction {
-		loop times: int(energy / pest_reprod_effi_rate) {
-			create Pest {
+	reflex reproduction when: isAdult and isFemale {
+		loop times: int(rnd(daily_max_eggs )) {
+			create species(self) {
 				farm_to_eat <- myself.farm_to_eat;
 				plot_to_eat <- myself.plot_to_eat;
 				resistant <- myself.resistant;
 			}
-			energy <- energy - pest_reprod_effi_rate;
 		}
 	}
 	
@@ -128,7 +153,15 @@ species Pest {
 	}
 }
 
-
+// Win, S. S., Muhamad, R., Ahmad, Z. A., & Adam, N. A. (2011). Life table and population parameters of Nilaparvata lugens Stal.(Homoptera: Delphacidae) on rice. Tropical Life Sciences Research, 22(1), 25-35.
+// https://apps.lucidcentral.org/pppw_v10/text/web_full/entities/rice_brown_planthopper_064.htm?utm_source=chatgpt.com
+species BrownPlanthopper parent: Pest {
+	float days_to_adult <- gauss_rnd(34,1)#days;
+	float days_adult_lifespan <- gauss_rnd(20,2)#days;
+	
+	int daily_max_eggs <- 9;
+	float days_to_hatch <- rnd(4,8)#days;
+}
  
 species Predator skills: [moving] {
 	float speed <- 15#m/#d;
@@ -152,7 +185,7 @@ species Predator skills: [moving] {
 	reflex hunting {
 		loop prey over: Pest at_distance hunting_radius {//Pest where (each at_distance self > hunting_radius) {
 			if flip(predator_hunting_rate) {
-				energy <- energy + (prey.energy*predator_eating_effi_rate);
+//				energy <- energy + (prey.energy*predator_eating_effi_rate);
 				ask prey {
 					do die;
 				}
