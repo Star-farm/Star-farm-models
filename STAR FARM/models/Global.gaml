@@ -62,9 +62,11 @@ global {
 		
 		ask plot_species {
 			map attributes <- shape.attributes;
-			loop att over: plots_to_keep.keys {
-				if not(att in attributes.keys) or not(string(attributes[att]) contains plots_to_keep[att]) {
-					do die;
+			if not empty(plots_to_keep) {
+				loop att over: plots_to_keep.keys {
+					if not(att in attributes.keys) or not(string(attributes[att]) contains plots_to_keep[att]) {
+						do die;
+					}
 				}
 			}
 			

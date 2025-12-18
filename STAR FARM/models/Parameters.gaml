@@ -17,7 +17,7 @@ global {
 	
 	image_file farmer_image <- image_file("../includes/Images/farmer.png");
 	
-	shape_file plots_shapefile <- shape_file("../includes/An Bien/an_bien_parcelles.shp");
+	shape_file plots_shapefile <- shape_file("../includes/Dong Thap/2020/lu_dongthap2020-clean.shp");
 	
 	string weather_folder <- "../includes/An Bien/Weather";
 	
@@ -25,7 +25,7 @@ global {
    
     map<string, float> possible_practices <- [RICE_AWD::0.1, RICE_CF::0.9];
    
-	map<string,string> plots_to_keep <- ["Lu05_en"::"Rice"];
+	map<string,string> plots_to_keep <- [];//["Lu05_en"::"Rice"];
 		
 	map<string,string> plant_grow_models <-[RICE_AWD::CERES, RICE_CF::CERES];// ORYZA ; //POSSIBLE VALUES : BASIC/CERES/ORYZA
 	
