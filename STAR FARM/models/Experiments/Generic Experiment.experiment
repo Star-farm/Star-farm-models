@@ -175,7 +175,7 @@ global{
 			}
 			default {return l;}
 		}	
-	}
+	} 
 }
 
 // virtual generic experiment with common charts. All experiments inherit for this one, so it is not necessary to rewrite common charts
