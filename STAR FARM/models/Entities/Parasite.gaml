@@ -8,7 +8,6 @@
 model Parasite
 
 import "../Global.gaml"
-import "../Experiments/Basic Experiments.experiment"  
 
 import "Farms and Plots.gaml"
 import "../Parameters.gaml" 
@@ -181,39 +180,6 @@ species Predator skills: [moving] {
 		}
 	}
 }
-
-experiment "Pest experiment" parent: generic_exp virtual: false{
-	category "Map" expanded: true color: rgb(143, 156, 180);
-	parameter "Display" var: map_display among: ["Current practice","Pest density"] category: "Map";
-	
-//	parameter "Chart" var: current_chart category: "General information" among: chart_list+["Pest"] init: "Pest";
-	parameter "Chart" var: current_chart category: "Year evolution" among: chart_list init: "Pest";
-	parameter "Indicators family" var: current_indicator_family among: indicator_families_list+["Pest"] category: "Daily indicators";
-	
-	
-	output{
-		display pest_map parent: base_map virtual: false{
-			species Pest;
-			species Predator;
-//			agents pest value: (plot_species != Plot?species("Pest"):nil);	
-//			agents predator value: (plot_species != Plot?species("Predator"):nil);
-		}
-		
-		
-		display Indicators type: 2d toolbar: false antialias: true parent: base_indicators{
-			chart "Pest" type: series x_range: time_range(time_range_type) y2_range: [0,1] y2_tick_unit: 2 y_label: "¨Pest density" visible: (current_indicator_family = "Pest") {
-				data "Pest population" value: length(Pest)  color: #red marker: false;
-				// season overlay
-				datalist current_practices() collect(each.short_name+" seasons") legend: current_practices() collect(each.short_name) value: current_practices() collect(each.activity) color: current_practices() collect rgb(each.color_farmer,season_opacity) style: area line_visible: false marker: false use_second_y_axis: true;
-			}
-		}
-		
-		display Weather type: 2d toolbar: false antialias: true parent: base_weather{}
-		
-	}
-}
-
-
 
 
 
