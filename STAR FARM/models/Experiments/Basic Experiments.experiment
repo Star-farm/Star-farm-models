@@ -5,7 +5,7 @@
 * Tags:  
 */ 
 
-model STARFARM   
+model STARFARM  
 
 import "Generic Experiment.experiment"
 
@@ -48,6 +48,7 @@ global{
 
 experiment "Simple experiment" type:gui parent: generic_exp {	
 	
+
 	output {		
 		display map axes: false toolbar: false parent: base_map{
 						overlay position:overlayPos size: {0.1, 0.1} background: background_color-10 transparency: 0.0 border: background_color rounded:true visible:show_overlay{			 
@@ -58,12 +59,13 @@ experiment "Simple experiment" type:gui parent: generic_exp {
 			  draw string(current_date) at: legendPos color: text_color font: titleFont;			
 			}
 		}
+
+		display pc name: "Year evolution" type: 2d antialias: true parent: base_practices_information{}
+
 		
-		display pc name: "Year evolution" type: 2d toolbar: false antialias: true parent: base_practices_information{}
+		display Indicators type: 2d antialias: true parent: base_indicators{}
 		
-		display Indicators type: 2d toolbar: false antialias: true parent: base_indicators{}
-		
-		display Weather type: 2d toolbar: false antialias: true parent: base_weather{}
+		display Weather type: 2d antialias: true parent: base_weather{}
 		
 	} 
 }

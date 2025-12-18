@@ -11,20 +11,25 @@ import "../Parameters.gaml"
 
 import "../Global.gaml"   
 global{
+	// display parameters
+	int overlay_font_size <- 12 const: true;
+	font overlay_font <- font("SansSerif", overlay_font_size, #bold) const: true;
+	int season_opacity <- 100 const: true;
+	
+	// variable used for display
 	string current_indicator_family <- "Economy";
-	int overlay_font_size <- 12;
-	font overlay_font <- font("SansSerif", overlay_font_size, #bold);
 	string show_season <- first(possible_practices.keys);
-	int season_opacity <- 100;
 	string time_range_type <- "All";
 	map<string,unknown> options <- [];
 	string scale <- "Total";
 	
 	// List of the key indicators to be monitored
 	// the next list should be initialized using key_indicators from Practices.gaml, but presently there is a bug with Gama	
+
 	list<string> chart_list <- ["Harvest","Profit","Water consumption","Fertilizer consumption","Adoption rate","Expenses details"];
 	list<string> indicator_families_list <- ["Economy", "Practices seasons", "Biomass"];
 	string current_chart <- first(chart_list);
+
 	
 	
 	// ======================================================================
@@ -122,11 +127,13 @@ global{
 	
 	// build the histogram for a given indicator
 	list<float> yearly_histo(string indicator){
+		// if the histogram is not visible, no need to compute the time series. The time series is replaced
+		// by a list with the same number of 0 to avoid bugs in Gama.
 		int data_length <- length(first(practices).year_summary["Current year"]);
 		if (!visibility()){
 			return list_with(length(practices) * data_length, 0.0);
 		}
-		write indicator;
+
 		list<float> tmp;
 		int last_index <- data_length - 1;
 		loop i from: 0 to: last_index{
@@ -142,7 +149,8 @@ global{
 		return scale = "Total" ? "Total " + current_chart : current_chart + " per ha";
 	}
 	
-	// compute the color of the bars of the histogram
+	// compute the color of the bars of the histogram. Get the color list of practices, and duplicates
+	// for each year that is displayed
 	list histo_colors {
 		list<rgb> cl <- practices collect (each.color_farmer);
 		return first(practices).year_summary["Current year"] accumulate(cl);
@@ -155,16 +163,17 @@ global{
 	
 	// returns the adoption rate
 	list<list<float>> get_adoption_rate {
+		// if the scale is the total adoption rate, display the surface for each practice
 		if (scale = "Total"){
 			return practices collect(each.year_summary["Crop area"]);
-		}else{
-			float total_area <- Plot sum_of (each.shape.area);
-			list<list<float>> l <- [];
-			loop p over: practices {
-				l <+ p.year_summary["Crop area"] collect (each/total_area*100);
-			}
-			return l;
 		}
+		// otherwise display the adoption rate as a percentage
+		float total_area <- Plot sum_of (each.shape.area);
+		list<list<float>> l <- [];
+		loop p over: practices {
+			l <+ p.year_summary["Crop area"] collect (each/total_area*100);
+		}
+		return l;
 	}
 	
 	
@@ -181,7 +190,7 @@ global{
 			}
 			default {return l;}
 		}	
-	} 
+	}
 }
 
 // virtual generic experiment with common charts. All experiments inherit for this one, so it is not necessary to rewrite common charts
@@ -215,7 +224,7 @@ experiment generic_exp type:gui virtual: true {
 //            }
 
 			chart histogram_info name: "" type: histogram y_label: y_label() visible: visibility(){
-				datalist yearly_histo_labels() value: yearly_histo(current_chart)  color: histo_colors() ;
+				datalist yearly_histo_labels() value: yearly_histo(current_chart)  color: histo_colors();
 			}
 			
 			chart "Adoption rate"  type: histogram  visible: current_chart = "Adoption rate" y_label: scale = "Total" ? "Area per practice":"Area (%)"{

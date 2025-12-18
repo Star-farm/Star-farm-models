@@ -10,23 +10,16 @@ model STARFARM
 import "../Entities/Parasite.gaml"
 import "Generic Experiment.experiment"
  
-global{
-//	string economy_display_type <- "Income";
-//	int overlay_font_size <- 12;
-//	font overlay_font <- font("SansSerif", overlay_font_size, #bold);
-////	list<string> practices_list <- practices.keys;
-//	string show_season <- "rice_awd";
-//	int season_opacity <- 100;
-//	string time_range_type <- "All";
-} 
 
 
-experiment "Pest experiment" type:gui parent: generic_exp {
+experiment "Pest experiment" parent: generic_exp virtual: false{
 	category "Map" expanded: true color: rgb(143, 156, 180);
 	parameter "Display" var: map_display among: ["Current practice","Pest density"] category: "Map";
 	
-	parameter "Chart" var: current_chart category: "General information" among: chart_list init: "Pest";
-	parameter "Indicators family" var: current_indicator_family among: indicator_families_list + "Pest" category: "Daily indicators";
+
+	parameter "Chart" var: current_chart category: "Year evolution" among: chart_list init: "Pest";
+	parameter "Indicators family" var: current_indicator_family among: indicator_families_list+["Pest"] category: "Daily indicators";
+
 	
 	
 
@@ -38,8 +31,8 @@ experiment "Pest experiment" type:gui parent: generic_exp {
 //			agents predator value: (plot_species != Plot?species("Predator"):nil);
 		}
 		
+		display pc name: "Year evolution" type: 2d toolbar: false antialias: true parent: base_practices_information{}
 		
-		display "Daily indicators" type: 2d toolbar: false antialias: true parent: base_practices_information{}
 		
 		display Indicators type: 2d toolbar: false antialias: true parent: base_indicators{
 			chart "Pest" type: series x_range: time_range(time_range_type) y2_range: [0,1] y2_tick_unit: 2 y_label: "¨Pest density" visible: (current_indicator_family = "Pest") {
@@ -53,3 +46,4 @@ experiment "Pest experiment" type:gui parent: generic_exp {
 		
 	}
 }
+
