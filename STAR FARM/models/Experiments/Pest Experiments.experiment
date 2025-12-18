@@ -9,16 +9,15 @@ model STARFARM
 
 import "../Entities/Parasite.gaml"
 import "Generic Experiment.experiment"
- 
 
 
 experiment "Pest experiment" parent: generic_exp virtual: false{
 	category "Map" expanded: true color: rgb(143, 156, 180);
 	parameter "Display" var: map_display among: ["Current practice","Pest density"] category: "Map";
-	
+
 
 	parameter "Chart" var: current_chart category: "Year evolution" among: chart_list init: "Pest";
-	parameter "Indicators family" var: current_indicator_family among: indicator_families_list+["Pest"] category: "Daily indicators";
+	parameter "Indicators family" var: current_indicator_family among: indicator_families_list+["Pest", "Predator", "BrownPlanthopper"] category: "Daily indicators";
 
 	
 	
@@ -26,9 +25,8 @@ experiment "Pest experiment" parent: generic_exp virtual: false{
 	output{
 		display pest_map parent: base_map virtual: false{
 			species Pest;
+			species BrownPlanthopper;
 			species Predator;
-//			agents pest value: (plot_species != Plot?species("Pest"):nil);	
-//			agents predator value: (plot_species != Plot?species("Predator"):nil);
 		}
 		
 		display pc name: "Year evolution" type: 2d toolbar: false antialias: true parent: base_practices_information{}
