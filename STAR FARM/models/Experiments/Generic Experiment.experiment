@@ -7,6 +7,8 @@
 
 model AbstractStarFarm
 
+import "../Parameters.gaml"
+
 import "../Global.gaml"   
 global{
 	string current_indicator_family <- "Economy";
@@ -194,9 +196,10 @@ experiment generic_exp type:gui virtual: true {
 	
 	output {
 		display base_map axes: false toolbar: false virtual: true{
+			image background_image_file refresh: false visible: display_background;
 			species species(plot_species);  
-			species Farmer;
-		}
+			species Farmer;    
+		} 
 		
 		display base_practices_information type: 2d toolbar: false antialias: true virtual: true{
 //			overlay position: {0, 0} size: {2000, 32#px} background: #white transparency: 0 rounded: false{
