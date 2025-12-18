@@ -120,7 +120,8 @@ global{
 	// build the histogram for a given indicator
 	list<float> yearly_histo(string indicator){
 		list<float> tmp;
-		loop i from: 0 to: length(first(practices).year_summary["Current year"]){
+		int last_index <- length(first(practices).year_summary["Current year"]) - 1;
+		loop i from: 0 to: last_index{
 			loop p over: practices{
 				tmp <+ scale = "Total" ? p.year_summary[indicator][i] :  (p.year_summary[indicator][i] / p.year_summary["Crop area"][i]);
 			}

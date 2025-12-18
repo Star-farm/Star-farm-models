@@ -167,7 +167,6 @@ species Plot {
 			crop_duration <- PG_models[the_farmer.practice.id].compute_crop_duration(self);
 
 		} 
-		write the_farmer.practice.practice_area;
 		ask the_farmer{do add_expenses(myself.associated_crop.sowing_cost_computation(),"Seed");}
 	}
 	
