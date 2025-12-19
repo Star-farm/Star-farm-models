@@ -17,7 +17,7 @@ global{
 	font overlay_font <- font("SansSerif", overlay_font_size, #bold) const: true;
 	int season_opacity <- 100 const: true;
 	
-	bool display_background <- true;
+	bool display_background <- false;
 	image_file background_image_file <-display_background ?  image_file("../includes/Dong Thap/background.png") : image_file("../includes/Images/default_background.png");
 	
 	
@@ -38,7 +38,7 @@ global{
 	// the next list should be initialized using key_indicators from Practices.gaml, but presently there is a bug with Gama	
 
 	list<string> chart_list <- ["Harvest","Profit","Water consumption","Fertilizer consumption","Adoption rate","Expenses details"];
-	list<string> indicator_families_list <- ["Economy", "Practices seasons", "Biomass"];
+	list<string> indicator_families_list <- ["Economy", "Practices seasons", "Biomass","GHG"];
 	string current_chart <- first(chart_list);
 
 	
@@ -46,6 +46,17 @@ global{
 	// ======================================================================
 	// indicators
 	// ======================================================================
+	
+	////WARNING: (Arno) WRONG FORMULA fro now it is attached to a crop should be plot
+	// computes the total biomass for a given type of crop and practice
+	float get_total_ghg(Crop_practice p){
+		return Crop where(each.the_farmer.practice = p) sum_of(each.B);
+	}
+	////WARNING: WRONG FORMULA
+	// computes the biomass per ha for a given type of crop and practice
+	float get_ghg_per_ha(Crop_practice p){
+		return p.practice_area = 0 ? 0 : get_total_biomass(p) / p.practice_area;
+	}
 	
 	// computes the total biomass for a given type of crop and practice
 	float get_total_biomass(Crop_practice p){
@@ -325,6 +336,21 @@ experiment generic_exp type:gui virtual: true {
 					data practices.values[i].short_name+" biomass" value: get_biomass_per_ha(practices.values[i]) color: practices.values[i].color marker: false;
 				}
 			} 	
+			
+			
+			//	GHG indicators	
+
+			chart totalCropGHG name: "Total crop GHG" visible: current_indicator_family = "GHG" and scale = "Total" type: series x_range: time_range(time_range_type)  {
+				loop i from: 0 to: length(practices.values)-1 step: 1 {
+					data practices.values[i].short_name+" ghg" value: get_total_ghg(practices.values[i]) color: practices.values[i].color marker: false;
+				}
+			}
+			
+			chart CropGHGPerHa name: "Crop biomass per ha" visible: current_indicator_family = "Biomass" and scale = "Per ha" type: series x_range: time_range(time_range_type)  {
+				loop i from: 0 to: length(practices.values)-1 step: 1 {
+					data practices.values[i].short_name+" ghg" value: get_ghg_per_ha(practices.values[i]) color: practices.values[i].color marker: false;
+				}
+			}
 		}
 		
 		display base_weather type: 2d toolbar: false antialias: true virtual: true {
