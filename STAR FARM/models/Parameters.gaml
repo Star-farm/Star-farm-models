@@ -76,7 +76,7 @@ global {
 
 	// Paramètres du modèle avec pest(à calibrer)
 	float init_pest_resistant_rate <- 0.25;
-	int init_pest_number <- 15 min: 0;
+	int init_pest_cluster_number <- 3 min: 0;
 	int init_predator_number <- 15 min: 0;
 	
 	int pest_day_lifespan <- 800;
