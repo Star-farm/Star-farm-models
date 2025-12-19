@@ -66,7 +66,7 @@ species Pest_Cluster virtual: true parallel: true {
 	
 	int daily_max_eggs min: 0;
 	
-	float energy <- 10000.0;
+	float energy <- 1000.0;
 	
 	// date_of_birth, isResistant
 	list<list> egg_population <- [];
@@ -110,10 +110,25 @@ species Pest_Cluster virtual: true parallel: true {
 		}
 	}
 	
-	reflex cluster_evolution when: energy > 0 {
+	reflex cluster_evolution when: energy >= 100 {
 		loop times: (population count (each[1] = true and each[3] = true)) * rnd(daily_max_eggs) {
-			do newEgg;
-			energy <- energy - 1;
+			if (energy > 0){
+				do newEgg;
+				energy <- energy - 15;	
+			}
+		}
+	}
+	
+	reflex eating {
+	
+		int nbrCropsToEat <- length(Plot_with_pest at_distance (length(population) + length(egg_population)));
+
+		ask Plot_with_pest at_distance (length(population) + length(egg_population)){
+			if (associated_crop != nil) {
+				float quantityEaten <- min((length(myself.population) / nbrCropsToEat), associated_crop.B);
+				myself.energy <- myself.energy + quantityEaten;
+				associated_crop.B <- associated_crop.B - quantityEaten;	
+			}
 		}
 	}
 	
