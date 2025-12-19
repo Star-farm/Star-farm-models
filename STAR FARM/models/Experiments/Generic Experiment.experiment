@@ -213,18 +213,17 @@ global{
 // virtual generic experiment with common charts. All experiments inherit for this one, so it is not necessary to rewrite common charts
 experiment generic_exp type:gui virtual: true {
 	
-	category "Daily indicators" expanded: true color: rgb(243, 156, 18);
-	parameter "Indicators family" var: current_indicator_family among: indicator_families_list category: "Daily indicators";
+	category "Daily indicators" expanded: true color: category_color["Daily indicators"];
+	parameter "Indicators family" var: current_indicator_family among: indicator_families_list category: "Daily indicators";	
 	
-	category "Year evolution" expanded: true color: rgb(46, 204, 113);
+	category "Year evolution" expanded: true color: category_color["Year evolution"];
 	parameter "Chart" var: current_chart init: "Total crop biomass per practice" category: "Year evolution" among: chart_list;
+
 	
-	category "Weather and practices" expanded: true color: rgb(52, 152, 219);
-	parameter "Show practice seasons" var: show_season category: "Weather and practices" among: possible_practices.keys+"None";
-	
-	category  "Scale and time" expanded: true color: rgb(100, 100, 100);
+	category  "Scale and time" expanded: true color: category_color["Scale and time"];
 	parameter "Time range" var: time_range_type among: ["All", "Last year", "Last 3 years", "Last 5 years"] category: "Scale and time";
 	parameter "Scale" var: scale init: "Total" category: "Scale and time" among: ["Total","Per ha"];
+	parameter "Show practice seasons" var: show_season category: "Scale and time" among: possible_practices.keys+"None";
 	
 	output {
 		layout value: horizontal([vertical([0::50,1::50])::50,vertical([2::50,3::50])::50]) tabs:false;
@@ -240,7 +239,7 @@ experiment generic_exp type:gui virtual: true {
 //				draw string("Seasons") at: {10 #px,10 #px}  anchor: #top_left color: #black font:overlay_font ; 
 //            }
 
-			chart histogram_info name: "" type: histogram y_label: y_label() visible: visibility(){
+			chart histogram_info name: "" type: histogram y_label: y_label() visible: visibility() {
 				datalist yearly_histo_labels() value: yearly_histo(current_chart)  color: histo_colors();
 			}
 			
@@ -268,7 +267,7 @@ experiment generic_exp type:gui virtual: true {
 			
 			// economy indicators
 			
-			chart "Income/expenses (total)" type: series size: {0.5,1} visible: current_indicator_family = "Economy" and scale = "Total" x_range: time_range(time_range_type) {
+			chart "Income/expenses (total)" type: series size: {0.5,1} visible: current_indicator_family = "Economy" and scale = "Total" x_range: time_range(time_range_type){
 				loop p over: reverse(practices.values) {
 					data "Total income of " + p.short_name value: p.day_income color: p.color_farmer style: bar;
 					data "Total expenses of " + p.short_name value: - p.day_expenses color: p.color_farmer style: bar;
@@ -282,7 +281,7 @@ experiment generic_exp type:gui virtual: true {
 				}
 			}
 			
-			chart "Balance (total)" type: series size: {0.5,1}  position: {0.5,0.0} visible: current_indicator_family = "Economy" and scale = "Total" x_range: time_range(time_range_type) {
+			chart "Balance (total)" type: series size: {0.5,1}  position: {0.5,0.0} visible: current_indicator_family = "Economy" and scale = "Total" x_range: time_range(time_range_type){
 				loop p over: reverse(practices.values) {
 					data "Balance " + p.short_name value: p.total_balance  color: p.color_farmer style: line marker: false accumulate_values: true;
 				}

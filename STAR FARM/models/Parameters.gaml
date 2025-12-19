@@ -8,7 +8,7 @@
 
 model STARFARM
 
-import "Constants.gaml"
+import "Visual_Parameters.gaml"
 
 global {
 	float step <- 1 #day;
