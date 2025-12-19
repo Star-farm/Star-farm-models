@@ -48,10 +48,7 @@ global {
 			Crop_practice ct <- Crop_practice(first(new_practices));
 			practices[ct.id] <- ct ;
 		}
-	}
-	
-	
-		
+	}	
 }
 
 
@@ -71,8 +68,10 @@ species Crop_practice virtual: true{
  	// is season summary used or should it be removed ?
 	map<string, list<float>> seasons_summary <- map((key_indicators + (expense_categories.keys collect("Expense: "+each))) collect(each::list<float>([]))); 
 	
+	// year summary for the set of indicators key_indicators and expenses.
 	map<string, list<float>> year_summary <- map(
-		((key_indicators-["Current season"]+ (expense_categories.keys collect("Expense: "+each))) collect(each::[each="Current year"?1.0:0.0]))
+		((key_indicators - ["Current season"] + (expense_categories.keys collect("Expense: "+each))) collect(each::[each="Current year"?current_date.year:0.0]))
+//		((key_indicators - ["Current season"] + (expense_categories.keys collect("Expense: "+each))) collect(each::list<float>([])))
 	); 
 	float practice_area <- 1.0; // total plot area dedicated to the practice. Updated at the beginning of each year (moment to decide for practices changes)
 	float day_income <- 0.0;// update: 0.0; // day income. Reinitialized at 0 the first day
@@ -110,7 +109,7 @@ species Crop_practice virtual: true{
 	 
 	
 	reflex active_season_update{
-		 if (PG_models[id].is_sowing_date(self,1)){
+		if (PG_models[id].is_sowing_date(self,1)){
 		 	is_active_season <- true;
 		 	// starts a new season
 		 	loop key over: seasons_summary.keys-["Current year","Current season"] {
@@ -118,7 +117,7 @@ species Crop_practice virtual: true{
 			}
 			// add indicators that are only updated at the first step of the season
 			// add the current year
-			seasons_summary["Current year"] <+ current_year;
+			seasons_summary["Current year"] <+ current_date.year;
 			//add the season number (reset at the beginning of the year)
 			float new_season_index;
 			int len <- length(seasons_summary["Current year"]);
@@ -133,45 +132,62 @@ species Crop_practice virtual: true{
 		 }
 		 if (PG_models[id].is_harvesting_date(self,-1)){
 		 	is_active_season <- false;
-		 	
-//			write seasons_summary;
 		 }
 		 activity << int(is_active_season);
 	}
 	
 	// Reset yearly key indicator monitors. 
-	// The first day of the Problem with the scheduler if sowing is the first day ?
-	reflex switch_to_new_year when: cycle > 0 and current_date.day_of_year = init_day_of_year{
-		// add monitor for the new year
-		loop key over: seasons_summary.keys-["Current year","Current season"] {
-			year_summary[key] <- year_summary[key]+0.0;
+	
+	action switch_to_new_year {
+		// add monitors for the new year
+		loop key over: seasons_summary.keys - ["Current year","Current season"] {
+			year_summary[key] <- year_summary[key] + 0.0;
 		}
-		year_summary["Current year"] <+ current_year;
+		year_summary["Current year"] <+ current_date.year;
+		do compute_practice_area;
 	}
 	
-	// compute indicators that will be used for the whole year, such as crop surface.
-	// computed on day 2 in order to prevent schedule errors (decisions made on day 1)
-	reflex compute_first_day_indicators when: cycle > 0 and current_date.day_of_year = init_day_of_year+1{
+	//  compute crop surface and store it in the yearly indicators.
+	action compute_practice_area{
 		practice_area <- plot_species where(each.the_farmer.practice = self) sum_of(each.shape.area);
-		year_summary["Crop area"][current_year - 1] <- practice_area;
+		year_summary["Crop area"][length(year_summary["Crop area"]) - 1] <- practice_area;
 	}
+
+
+
+//	action switch_to_new_year {
+//		// add monitor for the new year
+//		write "********* new year *********" + current_year+ " "+cycle;
+//		loop key over: seasons_summary.keys - ["Current year","Current season"] {
+//			year_summary[key] <- year_summary[key] + 0.0;
+//		}
+//		year_summary["Current year"] <+ current_year;
+//	}
+//	
+//	// compute indicators that will be used for the whole year, such as crop surface.
+//	// computed on day 2 in order to prevent schedule errors (decisions made on day 1)
+////	reflex compute_first_day_indicators when: cycle > 0 and current_date.day_of_year = init_day_of_year + 1{
+//	action compute_first_day_indicators {
+//		practice_area <- plot_species where(each.the_farmer.practice = self) sum_of(each.shape.area);
+//		year_summary["Crop area"][current_year - 1] <- practice_area;
+//	}
 	
 	// store actual value for a given indicator to build a yearly or season summary
 	action add_to_indicator(string indicator, float val){
 		// Error message to help debug when the indicator is not in the list
 		if !(indicator in year_summary.keys){
-			write "ERROR in year summary: "+indicator+" not in "+key_indicators;
+			write "ERROR in year summary: "+indicator+" not in "+year_summary.keys;
 		}
 		if !(indicator in seasons_summary.keys){
-			write "ERROR in seasons summary: "+indicator+" not in "+key_indicators;
+			write "ERROR in seasons summary: "+indicator+" not in "+year_summary.keys;
 		}
-		
 		list<float> l <- seasons_summary[indicator];
-		l[length(l)-1] <- last(l) + val;
+		l[length(l) - 1] <- last(l) + val;
 		seasons_summary[indicator] <- l;
 		
+		
 		list<float> l2 <- year_summary[indicator];
-		l2[current_year-1] <- last(l2) + val;
+		l2[length(l2) - 1] <- last(l2) + val;
 		year_summary[indicator] <- l2;
 	}
 	
@@ -182,7 +198,6 @@ species Crop_practice virtual: true{
 			tmp <+ 'Y'+seasons_summary["Current year"][i]+"S"+seasons_summary["Current season"][i];
 		}
 		return tmp;
-//		return list<string>(seasons_summary["Current season"]);
 	}
 	 
 }

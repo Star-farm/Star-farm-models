@@ -27,12 +27,8 @@ global {
 	
 	geometry shape <- envelope(plots_shapefile);
 	int init_day_of_year <-  current_date.day_of_year;
-	
-	
-//	list<Plot> truc <- agents of_generic_species Plot;
 		
 	species<Plot> plot_species <- nil;
-	int current_year -> int(ceil(cycle/365));
 
 	
 	init {
@@ -41,9 +37,19 @@ global {
 		do create_plant_growth_models;
 		do create_plots;	
 		do init_weather_data;
+		// compute the surface for each practice at the begining of the simulation
+		ask practices {do compute_practice_area;}
 		ask remove_duplicates(PG_models){
 			do initialize();
 		} 
+	}
+	
+	
+	// switch to new year, ask the farmers to decide if they change practices, and set a new
+	// yearly indicator.
+	reflex switch_to_new_year when: cycle > 0 and current_date.day_of_year = init_day_of_year {
+		ask Farmer {do decide_practice;}
+		ask practices {do switch_to_new_year;}
 	}
 	
 	// this reflex is used to reset variables to their initial values everyday, at the begining of each step. 

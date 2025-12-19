@@ -139,7 +139,7 @@ global{
 	
 	// generate the current histogram labels
 	list<string> yearly_histo_labels{
-		return first(practices).year_summary["Current year"] accumulate(add_ref_to_practice('y'+int(each)));
+		return first(practices).year_summary["Current year"] accumulate(add_ref_to_practice(string(int(each))));
 	}
 	
 	// build the histogram for a given indicator
@@ -147,12 +147,16 @@ global{
 		// if the histogram is not visible, no need to compute the time series. The time series is replaced
 		// by a list with the same number of 0 to avoid bugs in Gama.
 		int data_length <- length(first(practices).year_summary["Current year"]);
+		if (data_length = 0){
+			return list<float>([]);
+		}
 		if (!visibility()){
 			return list_with(length(practices) * data_length, 0.0);
 		}
 
 		list<float> tmp;
 		int last_index <- data_length - 1;
+//		write ""+indicator+" "+ first(practices).year_summary collect (length(each));
 		loop i from: 0 to: last_index{
 			loop p over: practices{
 				tmp <+ scale = "Total" ? p.year_summary[indicator][i] :  (p.year_summary[indicator][i] / p.year_summary["Crop area"][i]);

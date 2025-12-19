@@ -113,9 +113,9 @@ species Farmer {
 	 * Each year (on the same calendar day as initialization), farmers reconsider their practice.
 	 */
 
-	reflex change_practices when:cycle > 0 and current_date.day_of_year = init_day_of_year {
-		do decide_practice;
-	} 
+//	reflex change_practices when:cycle > 0 and current_date.day_of_year = init_day_of_year {
+//		do decide_practice;
+//	} 
 	
 	aspect default {
 		// Each farmer is drawn using an image colored by their current practice
