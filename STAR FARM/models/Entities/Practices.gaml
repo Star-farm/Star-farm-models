@@ -71,19 +71,18 @@ species Crop_practice virtual: true{
 	// year summary for the set of indicators key_indicators and expenses.
 	map<string, list<float>> year_summary <- map(
 		((key_indicators - ["Current season"] + (expense_categories.keys collect("Expense: "+each))) collect(each::[each="Current year"?current_date.year:0.0]))
-//		((key_indicators - ["Current season"] + (expense_categories.keys collect("Expense: "+each))) collect(each::list<float>([])))
 	); 
 	float practice_area <- 1.0; // total plot area dedicated to the practice. Updated at the beginning of each year (moment to decide for practices changes)
-	float day_income <- 0.0;// update: 0.0; // day income. Reinitialized at 0 the first day
-	float day_expenses <- 0.0;// update: 0.0; // day expense. Reinitialized at 0 the first day
+	float day_income <- 0.0; // day income. Reinitialized at 0 the first day
+	float day_expenses <- 0.0; // day expense. Reinitialized at 0 the first day
 	float total_balance <- 0.0;
 	float balance_per_ha <- 0.0;
 	
 
 	// Economic parameters (per hectare)
 	float market_price; // Market price per kilogram
-	float fert_cost;  // Fertilizer cost
-	float seed_cost;// Seed cost
+	float fert_cost;  // Fertilizer cost in currency per kg
+	float seed_cost;// Seed cost per ha
 	float other_cost ;// Other production costs
 	
  
@@ -149,7 +148,7 @@ species Crop_practice virtual: true{
 	
 	//  compute crop surface and store it in the yearly indicators.
 	action compute_practice_area{
-		practice_area <- plot_species where(each.the_farmer.practice = self) sum_of(each.shape.area);
+		practice_area <- plot_species where(each.the_farmer.practice = self) sum_of(each.surface_in_ha);
 		year_summary["Crop area"][length(year_summary["Crop area"]) - 1] <- practice_area;
 	}
 
@@ -222,7 +221,7 @@ species RiceCF parent: Crop_practice {
 	
 	
 	map<int,string> irrigation <- [0::CONTINUOUS, 91::NO_IRRIGATION];
-	map<int,float> fertilization <- [7::40.0, 20::40.0, 50::40.0];	// date::quantity per ha ??
+	map<int,float> fertilization <- [7::40.0, 20::40.0, 50::40.0];	// date::kg N/ha
 }
 
 

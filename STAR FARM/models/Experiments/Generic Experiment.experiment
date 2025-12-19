@@ -47,9 +47,9 @@ global{
 	// indicators
 	// ======================================================================
 	
-	// computes the total biomass for a given type of crop and practice
+	// computes the total biomass for a given type of crop and practice. Convert to kg/ha
 	float get_total_biomass(Crop_practice p){
-		return Crop where(each.the_farmer.practice = p) sum_of(each.B);
+		return (Crop where(each.the_farmer.practice = p) sum_of(each.B)) * 10;
 	}
 	
 	// computes the biomass per ha for a given type of crop and practice
@@ -189,7 +189,7 @@ global{
 			return practices collect(each.year_summary["Crop area"]);
 		}
 		// otherwise display the adoption rate as a percentage
-		float total_area <- Plot sum_of (each.shape.area);
+		float total_area <- Plot sum_of (each.surface_in_ha);
 		list<list<float>> l <- [];
 		loop p over: practices {
 			l <+ p.year_summary["Crop area"] collect (each/total_area*100);

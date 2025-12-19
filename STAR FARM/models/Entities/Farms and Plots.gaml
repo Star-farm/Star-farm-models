@@ -142,6 +142,16 @@ species Farm {
 species Plot { 
 	Farmer the_farmer;        // The farmer managing this plot
 	Crop associated_crop;     // The crop currently growing on the plot (if any)
+	float surface_in_ha;      // surface in ha
+	
+	// Soil parameters
+	float soil_water <- 200.0; 	     // water level in mm
+	float N_avail <- 6.0;    // Available nitrogen (g/m2) in the soil
+							  // value: BASIC: 2.0, CERES: 60.0
+	float N_uptake_eff <- 0.8;   // uptake efficiency
+	float theta_fc <- 0.32; // m3/m3
+	float theta_wp <- 0.15; // m3/m3
+	float Zr <- 50.0; // mm (initial)
 	
 	/**
 	 * Reflex: plantGrow
@@ -165,7 +175,6 @@ species Plot {
 			concerned_plot <- myself;
 
 			crop_duration <- PG_models[the_farmer.practice.id].compute_crop_duration(self);
-
 		} 
 		ask the_farmer{do add_expenses(myself.associated_crop.sowing_cost_computation(),"Seed");}
 	}
@@ -208,12 +217,16 @@ species Crop {
 
 	// Biophysical state variables
 	string irrigation_mode <- NO_IRRIGATION;
-	float B <- 0.0;          // Biomass (kg? per m²)
+	float B <- 0.0;          // Biomass (g per m2 to be consistent with CERES model)
+	float grain_biomass <- 0.0;  // g/m²
 	float S <- S_max * 0.9;  // Soil water storage (mm)
 	float PD <- PD_target;   // Ponding depth (mm)
-	float N_avail <- 2.0;    // Available nitrogen (kg/ha)
 	float irrigation_total;  // Cumulative irrigation (mm)
 	int irrigation_events;   // Number of irrigation events
+	
+	// Azote
+	float plant_N <- 0.0;	 // g N/m²
+//	float N_stress <- 1.0;   // plant stress factor
 	
 	/**
 	 * Reflex: fertilization
@@ -222,12 +235,11 @@ species Crop {
 	reflex fertilization when: lifespan in the_farmer.practice.fertilization.keys {
 
 		float quantity_per_ha <- the_farmer.practice.fertilization[lifespan];
-		float surface <- concerned_plot.shape.area/10000;
-		float cost <- fertilization_cost_computation(quantity_per_ha, surface);
+		float cost <- fertilization_cost_computation(quantity_per_ha, concerned_plot.surface_in_ha);
 		ask the_farmer {do add_expenses(cost,"Fertilizer");}
-		ask the_farmer.practice {do add_to_indicator("Fertilizer consumption", quantity_per_ha * surface);}
+		ask the_farmer.practice {do add_to_indicator("Fertilizer consumption", quantity_per_ha * myself.concerned_plot.surface_in_ha);}
 
-		N_avail <- N_avail + quantity_per_ha; // quantity per ha ?
+		concerned_plot.N_avail <- concerned_plot.N_avail + quantity_per_ha * 0.1; // quantity, expressed as g/m²
 	}
 	
 	/**
@@ -256,12 +268,12 @@ species Crop {
 	}
 	
 	// QUESTION what is the area unit (to convert to ha ?)
-	float fertilization_cost_computation(float quantity_per_ha, float surface) {
-		return  the_farmer.practice.fert_cost * quantity_per_ha * surface ;
+	float fertilization_cost_computation(float quantity_per_ha, float surface_in_ha) {
+		return  the_farmer.practice.fert_cost * quantity_per_ha * surface_in_ha ;
 	}
 	
 	float sowing_cost_computation{
-		return the_farmer.practice.seed_cost * concerned_plot.shape.area ;
+		return the_farmer.practice.seed_cost * concerned_plot.surface_in_ha ;
 	}
 	
 	

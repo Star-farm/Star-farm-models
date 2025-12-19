@@ -43,4 +43,10 @@ species Cultivar {
 	float plant_density_opt;   // plants / m²
 	float transplanting_suitability;   //  0–1
 	float direct_seeding_suitability;   //  0–1
+	
+	// for CERES
+	float N_max_conc <- 0.04;    // kg N / kg biomass (4%) (or g/g) : optimal N concentration of aerial biomass
+    float N_min_conc <- 0.01;    // kg N / kg biomass (or g/g) structural minimum under which the growth stops
+	float Zr_ini <- 50.0;    // root depth (mm)
+	float Zr_max <- 400.0; // mm (riz)
 }

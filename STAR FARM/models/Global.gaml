@@ -29,10 +29,13 @@ global {
 	int init_day_of_year <-  current_date.day_of_year;
 		
 	species<Plot> plot_species <- nil;
+	
+	Cultivar my_cultivar;
 
 	
 	init {
 		do load_cultivars;
+		my_cultivar <- first(Cultivar);
 		do create_practices;
 		do create_plant_growth_models;
 		do create_plots;	
@@ -71,6 +74,7 @@ global {
 		
 		ask plot_species {
 			map attributes <- shape.attributes;
+			surface_in_ha <- shape.area / 10000;
 			if not empty(plots_to_keep) {
 				loop att over: plots_to_keep.keys {
 					if not(att in attributes.keys) or not(string(attributes[att]) contains plots_to_keep[att]) {

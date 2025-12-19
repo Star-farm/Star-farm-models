@@ -42,14 +42,7 @@ global {
         RICE_AWD::("../includes/An Bien/Oryza/AWD_s1/awd_op.csv")
     ];
     
-    /**** PARAMETERS FOR CERES PLANT GROWTH MODEL *****/
-    float Tbase <- 8.0;
-    float Topt_ceres  <- 30.0; 
-    float k     <- 0.6;     // extinction coefficient 
-    float P1    <- 500.0;   // °C.day emergence → panicle initiation
-    float P5    <- 500.0;   // °C.day grain filling
-    float RUE_ceres   <- 3.0;     // g DM / MJ
-    
+   
     /**** PARAMETERS FOR BASIC PLANT GROWTH MODEL *****/
     
  	// Latitude pour ETo (en degrés)
@@ -57,7 +50,7 @@ global {
 
 	// Paramètres du modèle (à calibrer)
 	float alpha_par <- 0.48;    // fraction du rayonnement global converti en PAR
-	float RUE <- 1.8;           // g MS / MJ PAR
+//	float RUE <- 1.8;           // g MS / MJ PAR
 	float k_LAI <- 0.5;         // coefficient d'extinction
 	float aB <- 0.0025;         // m2 de feuille / g biomasse
 	float m_resp <- 0.003;      // respiration quotidienne
@@ -72,6 +65,18 @@ global {
 	float AWD_WTD_trigger <- 150.0; // seuil de ré-irrigation (mm)
 	float CF_min_PD <- 20.0;
 	
+	
+	 /**** PARAMETERS FOR CERES PLANT GROWTH MODEL *****/
+    float Tbase <- 8.0;
+    float Topt_ceres  <- 30.0; 
+    float k     <- 0.6;     // extinction coefficient 
+    float P1    <- 500.0;   // °C.day emergence → panicle initiation
+    float P5    <- 500.0;   // °C.day grain filling
+    float RUE   <- 3.0;     // g DM / MJ
+    
+    // Grain
+    float HI_max          <- 0.50;
+    float grain_fill_rate <- 0.03; // fraction/jour
 
 
 	// Paramètres du modèle avec pest(à calibrer)

@@ -23,7 +23,6 @@ global{
 
 
 experiment "Simple experiment" type:gui parent: generic_exp {	
-	
 
 	output {		
 		display map axes: false toolbar: false parent: base_map{

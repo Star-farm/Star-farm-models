@@ -56,7 +56,7 @@ species Plot_with_pest parent: Plot{
 		if (map_display = "Current practice"){
 			draw shape color: associated_crop = nil ? #white : the_farmer.practice.color border: #black;
 		}else{
-			float pest_density <- length(Pest overlapping self) / self.shape.area * 10000;
+			float pest_density <- length(Pest overlapping self) / self.surface_in_ha;
 			draw shape color: pest_density_palette[floor(min(pest_density/palette_ceiling_value,1)*(palette_size - 1))] border: #black;
 		}
 	}
