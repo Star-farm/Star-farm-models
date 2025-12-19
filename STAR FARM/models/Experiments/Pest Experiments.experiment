@@ -31,11 +31,11 @@ experiment "Pest experiment" parent: generic_exp virtual: false{
 		display pc name: "Year evolution" type: 2d toolbar: false antialias: true parent: base_practices_information{}
 		
 		
-		display Indicators type: 2d toolbar: false antialias: true parent: base_indicators{
+		display Indicators type: 2d toolbar: false antialias: true parent: base_daily_indicators{
 			chart "Pest" type: series x_range: time_range(time_range_type) y2_range: [0,1] y2_tick_unit: 2 y_label: "¨Pest density" visible: (current_indicator_family = "Pest") {
 				data "Pest population" value: length(BrownPlanthopper_Cluster)  color: #red marker: false;
 				// season overlay
-				datalist current_practices() collect(each.short_name+" seasons") legend: current_practices() collect(each.short_name) value: current_practices() collect(each.activity) color: current_practices() collect rgb(each.color_farmer,season_opacity) style: area line_visible: false marker: false use_second_y_axis: true;
+				datalist current_practices() collect(each.short_name+" seasons") legend: current_practices() collect(each.short_name) value: current_practices() collect(each.activity) color: current_practices() collect rgb(each.color,season_opacity) style: area line_visible: false marker: false use_second_y_axis: true;
 			}
 		}
 		
