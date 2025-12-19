@@ -104,10 +104,7 @@ species Farmer {
 			total_balance <- total_balance - expenses;
 			balance_per_ha <- balance_per_ha - expenses / practice_area; 
 		}
-	}
-	
-
-
+	}	
 	/**
 	 * Reflex: change_practices
 	 * Each year (on the same calendar day as initialization), farmers reconsider their practice.
@@ -119,7 +116,7 @@ species Farmer {
 	
 	aspect default {
 		// Each farmer is drawn using an image colored by their current practice
-		draw farmer_image size: {50, 50} color: practice.color_farmer;
+		draw farmer_image size: {50, 50} color: practice.color;
 	}
 }
 

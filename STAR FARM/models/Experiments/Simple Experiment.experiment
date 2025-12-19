@@ -23,7 +23,6 @@ global{
 
 
 experiment "Simple experiment" type:gui parent: generic_exp {	
-	
 
 	output {		
 		display map axes: false toolbar: false parent: base_map{
@@ -37,11 +36,10 @@ experiment "Simple experiment" type:gui parent: generic_exp {
 		}
 
 		display pc name: "Year evolution" type: 2d antialias: true parent: base_practices_information{}
-
+	
+		display daily_indicators type: 2d antialias: true parent: base_daily_indicators{}
 		
-		display Indicators type: 2d antialias: true parent: base_indicators{}
-		
-		display Weather type: 2d antialias: true parent: base_weather{}
+		display weather type: 2d antialias: true parent: base_weather{}
 		
 	} 
 }
