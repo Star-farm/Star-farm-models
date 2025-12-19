@@ -61,7 +61,7 @@ species Crop_practice virtual: true{
 	string id;  // Unique identifier for the practice
 	string short_name; // Short name used for displays
 	rgb color;  // Color used for visual representation
-	rgb color_farmer;  // Color used for the farmer representation (UI or visualization)
+	//rgb color_farmer;  // Color used for the farmer representation (UI or visualization)
 	
 	// key indicators regrouped by seasons (eg: ["harvest"::[21.0,23.4,19.9] is the total of crop produced for seasons 1 to 3.
  
@@ -205,12 +205,10 @@ species Crop_practice virtual: true{
 // ======================================================================
 // CONTINUOUS FLOODING PRACTICE (RICE_CF)
 // ======================================================================
-
 species RiceCF parent: Crop_practice {
 	string id <- RICE_CF;
 	string short_name <- "Rice (CF)";
-	rgb color <- rgb(198, 219, 239);
-	rgb color_farmer <- rgb(33, 113, 181); // dark mode: rgb(102, 157, 246)
+	rgb color <- practices_color[short_name];
 	list<int> sowing_date <- [120, 300];
 	list<int> harvesting_date <- [210,70];
 	
@@ -218,7 +216,6 @@ species RiceCF parent: Crop_practice {
 	float fert_cost <- 400000.0; // VND/per ha
 	float seed_cost <- 600000.0; // VND/per ha
 	float other_cost <- 300000.0; // VND/per ha 
-	
 	
 	map<int,string> irrigation <- [0::CONTINUOUS, 91::NO_IRRIGATION];
 	map<int,float> fertilization <- [7::40.0, 20::40.0, 50::40.0];	// date::kg N/ha
@@ -232,8 +229,7 @@ species RiceCF parent: Crop_practice {
 species RiceAWD parent: Crop_practice {
 	string id <- RICE_AWD;
 	string short_name <- "Rice (AWD)";
-	rgb color <- rgb(199, 233, 192);
-	rgb color_farmer <- rgb(67, 176, 105); // dark mode
+	rgb color <- practices_color[short_name];
 	list<int> sowing_date <- [120, 300];
 	list<int> harvesting_date <- [70,210];
 	

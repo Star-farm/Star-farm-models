@@ -17,7 +17,7 @@ global{
 	font overlay_font <- font("SansSerif", overlay_font_size, #bold) const: true;
 	int season_opacity <- 100 const: true;
 	
-	bool display_background <- true;
+	bool display_background <- false;
 	image_file background_image_file <-display_background ?  image_file("../includes/Dong Thap/background.png") : image_file("../includes/Images/default_background.png");
 	
 	
@@ -38,7 +38,7 @@ global{
 	// the next list should be initialized using key_indicators from Practices.gaml, but presently there is a bug with Gama	
 
 	list<string> chart_list <- ["Harvest","Profit","Water consumption","Fertilizer consumption","Adoption rate","Expenses details"];
-	list<string> indicator_families_list <- ["Economy", "Practices seasons", "Biomass"];
+	list<string> indicator_families_list <- ["Economy", "Practices seasons", "Biomass","GHG"];
 	string current_chart <- first(chart_list);
 
 	
@@ -47,7 +47,19 @@ global{
 	// indicators
 	// ======================================================================
 	
+	////WARNING: (Arno) WRONG FORMULA fro now it is attached to a crop should be plot
+	// computes the total biomass for a given type of crop and practice
+	float get_total_ghg(Crop_practice p){
+		return Crop where(each.the_farmer.practice = p) sum_of(each.B);
+	}
+	////WARNING: WRONG FORMULA
+	// computes the biomass per ha for a given type of crop and practice
+	float get_ghg_per_ha(Crop_practice p){
+		return p.practice_area = 0 ? 0 : get_total_biomass(p) / p.practice_area;
+	}
+	
 	// computes the total biomass for a given type of crop and practice. Convert to kg/ha
+
 	float get_total_biomass(Crop_practice p){
 		return (Crop where(each.the_farmer.practice = p) sum_of(each.B)) * 10;
 	}
@@ -66,7 +78,6 @@ global{
 	float get_expenses_per_ha(Crop_practice p){
 		return p.practice_area = 0 ? 0 : p.day_expenses / p.practice_area;
 	}
-	
 	// detail the expenses per categories
 	list<list<float>> get_expenses_by_category{
 		list<list<float>> res <- [];
@@ -173,7 +184,7 @@ global{
 	// compute the color of the bars of the histogram. Get the color list of practices, and duplicates
 	// for each year that is displayed
 	list histo_colors {
-		list<rgb> cl <- practices collect (each.color_farmer);
+		list<rgb> cl <- practices collect (each.color);
 		return first(practices).year_summary["Current year"] accumulate(cl);
 	}
 	
@@ -233,11 +244,23 @@ experiment generic_exp type:gui virtual: true {
 		layout value: horizontal([vertical([0::50,1::50])::50,vertical([2::50,3::50])::50]) tabs:false;
 		
 		display base_map axes: false toolbar: false virtual: true{
+			overlay position:overlayPos size: {0.1, 0.1} background: background_color-10 transparency: 0.0 border: background_color rounded:true visible:show_overlay{			 
+			  point legendPos <- overlayPos + {10#px, 10#px};
+			  float spaceY <- 50#px;
+			  draw string("STAR FARM - AI") at: legendPos color: text_color font: titleFont;	
+			  legendPos <- {legendPos.x, legendPos.y + spaceY};
+			  draw string(current_date) at: legendPos color: text_color font: titleFont;
+			  legendPos <- {legendPos.x, legendPos.y + spaceY};
+			  loop p over: practices_color.keys {
+				draw square(10 #px) at: legendPos color: practices_color[p] border: #white;
+				draw p  at: legendPos + {20 #px, 5 #px} color: practices_color[p]  font: font("Helvetica", 72, #plain) perspective:false;
+				legendPos <- {legendPos.x, legendPos.y + spaceY/2};
+			  }			
+			}
 			image background_image_file refresh: false visible: display_background;
 			species species(plot_species);  
 			species Farmer;    
 		} 
-		
 		display base_practices_information type: 2d toolbar: false antialias: true virtual: true{
 //			overlay position: {0, 0} size: {2000, 32#px} background: #white transparency: 0 rounded: false{
 //				draw string("Seasons") at: {10 #px,10 #px}  anchor: #top_left color: #black font:overlay_font ; 
@@ -248,9 +271,8 @@ experiment generic_exp type:gui virtual: true {
 			}
 			
 			chart "Adoption rate"  type: histogram  visible: current_chart = "Adoption rate" y_label: scale = "Total" ? "Area per practice":"Area (%)"{
-				datalist practices collect(each.short_name) value:  get_adoption_rate() color: practices collect(each.color_farmer) style: stack;
+				datalist practices collect(each.short_name) value:  get_adoption_rate() color: practices collect(each.color) style: stack;
 			}
-
 
 			chart "Expenses details"  type: histogram  visible: current_chart = "Expenses details" y_label: scale = "Total" ? "Expenses per practice":"Expenses per ha"{
 				datalist expense_categories.keys value:   get_expenses_by_category() color: expense_categories.values style: stack;
@@ -260,7 +282,7 @@ experiment generic_exp type:gui virtual: true {
 
 		}
 		
-		display base_indicators type: 2d toolbar: false antialias: true virtual: true {
+		display base_daily_indicators type: 2d toolbar: false antialias: true virtual: true {
 			
 // overlay requires bug fix
 //
@@ -268,32 +290,31 @@ experiment generic_exp type:gui virtual: true {
 //				draw string("Daily indicators") at: {10 #px,10 #px}  anchor: #top_left color: #black font:overlay_font ; 
 //          }
 
-			
 			// economy indicators
 			
 			chart "Income/expenses (total)" type: series size: {0.5,1} visible: current_indicator_family = "Economy" and scale = "Total" x_range: time_range(time_range_type){
 				loop p over: reverse(practices.values) {
-					data "Total income of " + p.short_name value: p.day_income color: p.color_farmer style: bar;
-					data "Total expenses of " + p.short_name value: - p.day_expenses color: p.color_farmer style: bar;
+					data "Total income of " + p.short_name value: p.day_income color: p.color style: bar;
+					data "Total expenses of " + p.short_name value: - p.day_expenses color: p.color style: bar;
 				}
 			}
 			
 			chart "Income/expenses (per ha)" type: series size: {0.5,1} visible: current_indicator_family = "Economy" and scale = "Per ha" x_range: time_range(time_range_type)  {
 				loop p over: reverse(practices.values) {
-					data "Income of " + p.short_name + " per ha" value: get_income_per_ha(p) color: p.color_farmer style: bar;
-					data "Expenses of " + p.short_name + " per ha" value: - get_expenses_per_ha(p) color: p.color_farmer style: bar;
+					data "Income of " + p.short_name + " per ha" value: get_income_per_ha(p) color: p.color style: bar;
+					data "Expenses of " + p.short_name + " per ha" value: - get_expenses_per_ha(p) color: p.color style: bar;
 				}
 			}
 			
 			chart "Balance (total)" type: series size: {0.5,1}  position: {0.5,0.0} visible: current_indicator_family = "Economy" and scale = "Total" x_range: time_range(time_range_type){
 				loop p over: reverse(practices.values) {
-					data "Balance " + p.short_name value: p.total_balance  color: p.color_farmer style: line marker: false accumulate_values: true;
+					data "Balance " + p.short_name value: p.total_balance  color: p.color style: line marker: false accumulate_values: true;
 				}
 			}
 			
 			chart "Balance (per ha)" type: series size: {0.5,1}  position: {0.5,0.0} visible: current_indicator_family = "Economy" and scale = "Per ha" x_range: time_range(time_range_type) {
 				loop p over: reverse(practices.values) {
-					data "Balance " + p.short_name value: p.balance_per_ha  color: p.color_farmer style: line marker: false accumulate_values: true;
+					data "Balance " + p.short_name value: p.balance_per_ha  color: p.color style: line marker: false accumulate_values: true;
 				}
 			}
 			
@@ -312,7 +333,7 @@ experiment generic_exp type:gui virtual: true {
 			chart SeasonsChart name: "Seasons" visible: current_indicator_family = "Practices seasons" type: series  lines: false y_range: [0, max(2.5,length(practices.values)+0.5)] y_tick_values_visible: false x_range: time_range(time_range_type)  {
 				loop i from: 0 to: length(practices.values)-1 step: 1 {
 					data ""+i value: (i+0.5) color: #white style: area line_visible: false marker: false;
-					data practices.values[i].short_name+" seasons" value: (i+1)*int(practices.values[i].is_active_season) color: practices.values[i].color_farmer style: area line_visible: false marker: false;
+					data practices.values[i].short_name+" seasons" value: (i+1)*int(practices.values[i].is_active_season) color: practices.values[i].color style: area line_visible: false marker: false;
 				}
 			}
 			
@@ -320,15 +341,30 @@ experiment generic_exp type:gui virtual: true {
 
 			chart totalCropBiomass name: "Total crop biomass" visible: current_indicator_family = "Biomass" and scale = "Total" type: series x_range: time_range(time_range_type)  {
 				loop i from: 0 to: length(practices.values)-1 step: 1 {
-					data practices.values[i].short_name+" biomass" value: get_total_biomass(practices.values[i]) color: practices.values[i].color_farmer marker: false;
+					data practices.values[i].short_name+" biomass" value: get_total_biomass(practices.values[i]) color: practices.values[i].color marker: false;
 				}
 			}
 			
 			chart CropBiomassPerHa name: "Crop biomass per ha" visible: current_indicator_family = "Biomass" and scale = "Per ha" type: series x_range: time_range(time_range_type)  {
 				loop i from: 0 to: length(practices.values)-1 step: 1 {
-					data practices.values[i].short_name+" biomass" value: get_biomass_per_ha(practices.values[i]) color: practices.values[i].color_farmer marker: false;
+					data practices.values[i].short_name+" biomass" value: get_biomass_per_ha(practices.values[i]) color: practices.values[i].color marker: false;
 				}
 			} 	
+			
+			
+			//	GHG indicators	
+
+			chart totalCropGHG name: "Total crop GHG" visible: current_indicator_family = "GHG" and scale = "Total" type: series x_range: time_range(time_range_type)  {
+				loop i from: 0 to: length(practices.values)-1 step: 1 {
+					data practices.values[i].short_name+" ghg" value: get_total_ghg(practices.values[i]) color: practices.values[i].color marker: false;
+				}
+			}
+			
+			chart CropGHGPerHa name: "Crop biomass per ha" visible: current_indicator_family = "Biomass" and scale = "Per ha" type: series x_range: time_range(time_range_type)  {
+				loop i from: 0 to: length(practices.values)-1 step: 1 {
+					data practices.values[i].short_name+" ghg" value: get_ghg_per_ha(practices.values[i]) color: practices.values[i].color marker: false;
+				}
+			}
 		}
 		
 		display base_weather type: 2d toolbar: false antialias: true virtual: true {
@@ -340,22 +376,22 @@ experiment generic_exp type:gui virtual: true {
 				data "temperature min" value: the_weather.temp_min[current_date]  color: rgb(49, 130, 189) marker: false style: spline;
 				data "temperature max" value: the_weather.temp_max[current_date]  color: rgb(230, 85, 13) marker: false style: spline;
 				// season overlay
-				datalist current_practices() collect(each.short_name+" seasons") legend: current_practices() collect(each.short_name) value: current_practices() collect(each.activity) color: current_practices() collect rgb(each.color_farmer,season_opacity) style: area line_visible: false marker: false use_second_y_axis: true;
+				datalist current_practices() collect(each.short_name+" seasons") legend: current_practices() collect(each.short_name) value: current_practices() collect(each.activity) color: current_practices() collect rgb(each.color,season_opacity) style: area line_visible: false marker: false use_second_y_axis: true;
 			}
 			chart "Solar radiation" type: series size: {0.5,0.5} position: {0.5,0.0} x_range: time_range(time_range_type) {
 				data "Solar radiation" value: the_weather.solar_radiation[current_date]  color: rgb(255, 191, 0) marker: false style: spline;
 				// season overlay
-				datalist current_practices() collect(each.short_name+" seasons") legend: current_practices() collect(each.short_name) value: current_practices() collect(each.activity) color: current_practices() collect rgb(each.color_farmer,season_opacity) style: area line_visible: false marker: false use_second_y_axis: true;
+				datalist current_practices() collect(each.short_name+" seasons") legend: current_practices() collect(each.short_name) value: current_practices() collect(each.activity) color: current_practices() collect rgb(each.color,season_opacity) style: area line_visible: false marker: false use_second_y_axis: true;
 			}
 			chart "Humidity" type: series size: {0.5,0.5} position: {0.0,0.5} x_range: time_range(time_range_type) {
 				data "Humidity" value: the_weather.humidity[current_date]  color: rgb(102, 194, 255) marker: false style: spline ;
 				// season overlay		
-				datalist current_practices() collect(each.short_name+" seasons") legend: current_practices() collect(each.short_name) value: current_practices() collect(each.activity) color: current_practices() collect rgb(each.color_farmer,season_opacity) style: area line_visible: false marker: false use_second_y_axis: true;
+				datalist current_practices() collect(each.short_name+" seasons") legend: current_practices() collect(each.short_name) value: current_practices() collect(each.activity) color: current_practices() collect rgb(each.color,season_opacity) style: area line_visible: false marker: false use_second_y_axis: true;
 			}
 			chart "Rainfall" type: series size: {0.5,0.5} position: {0.5,0.5} x_range: time_range(time_range_type) {
 				data "Rainfall" value: the_weather.rainfall[current_date]  color: rgb(33, 113, 181) style: bar;
 				// season overlay
-				datalist current_practices() collect(each.short_name+" seasons") legend: current_practices() collect(each.short_name) value: current_practices() collect(each.activity) color: current_practices() collect rgb(each.color_farmer,season_opacity) style: area line_visible: false marker: false use_second_y_axis: true;
+				datalist current_practices() collect(each.short_name+" seasons") legend: current_practices() collect(each.short_name) value: current_practices() collect(each.activity) color: current_practices() collect rgb(each.color,season_opacity) style: area line_visible: false marker: false use_second_y_axis: true;
 			}
 		}
 		
