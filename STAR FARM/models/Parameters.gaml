@@ -23,11 +23,11 @@ global {
 	
 	string innovation_diffusion_model <- NONE; //NONE, NEIGHBORS
    
-    map<string, float> possible_practices <- [RICE_AWD::0.1, RICE_CF::0.9];
+    map<string, float> possible_practices <- [BAU::0.5, AWD:: 0.5];
    
 	map<string,string> plots_to_keep <- [];//["Lu05_en"::"Rice"];
 		
-	map<string,string> plant_grow_models <-[RICE_AWD::CERES, RICE_CF::CERES];// ORYZA ; //POSSIBLE VALUES : BASIC/CERES/ORYZA
+	map<string,string> plant_grow_models <-[BAU::CERES, AWD::CERES];// ORYZA ; //POSSIBLE VALUES : BASIC/CERES/ORYZA
 	
 	csv_file cultivars_csv_file <- csv_file("../includes/cultivars.csv", true);
 

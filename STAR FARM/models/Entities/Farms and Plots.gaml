@@ -7,16 +7,16 @@
 * Author: Patrick Taillandier
 */
 
-model STARFARM
+model STARFARM 
 
 // Import external modules containing crop growth models, farming practices, and parameters
-import "Plant growth models.gaml"
+//import "Plant growth models.gaml"
 import "Practices.gaml"
-import "../Parameters.gaml"
+import "../Parameters.gaml" 
 
 
 /**
- * SPECIES Farmer
+ * SPECIES Farmer 
  * Represents an individual farmer managing one farm and making decisions about practices.
  */
 species Farmer skills:[moving]{
@@ -24,7 +24,7 @@ species Farmer skills:[moving]{
 	
 	// The current agricultural practice followed by the farmer
 	Crop_practice practice <- practices[possible_practices.keys[rnd_choice(possible_practices.values)]];
-
+ 
 	float money; // Economic capital of the farmer
 	float day_revenue update: 0.0;
 	float day_expenses update: 0.0;
@@ -81,7 +81,7 @@ species Farmer skills:[moving]{
 	}
 	
 	// add income to the farmer and to the practice global indicator
-	action add_income(float income){
+	action add_income(float income){ 
 		day_revenue <- day_revenue + income;
 		money <- money + income;
 		ask practice {
@@ -103,7 +103,7 @@ species Farmer skills:[moving]{
 			day_expenses <- day_expenses + expenses;
 			total_balance <- total_balance - expenses;
 			balance_per_ha <- balance_per_ha - expenses / practice_area; 
-		}
+		} 
 	}	
 	/**
 	 * Reflex: change_practices
@@ -159,11 +159,6 @@ species Plot {
 	 * Reflex: plantGrow
 	 * Invokes the crop growth model each day if a crop is present.
 	 */
-	reflex plantGrow when: associated_crop != nil {
-		ask  PG_models[the_farmer.practice.id] {
-			do day_biomass_growth(myself.associated_crop);
-		}
-	}
 	
 	/**
 	 * Reflex: sowing
@@ -171,7 +166,23 @@ species Plot {
 	 * and creates a new crop on the plot if conditions are met.
 	 * Computes the expenses 
 	 */
-	reflex sowing when: PG_models[the_farmer.practice.id].is_sowing_date(the_farmer.practice,0){
+	reflex sowing when: the_farmer.practice.sowing.to_apply(current_date.day_of_year){
+		 ask the_farmer.practice {
+		 	do sowing_season_update;
+		 }
+		 
+		 ask the_farmer.practice.sowing {
+			do effect(myself);
+		} 
+		 
+	}
+	/**
+	 * Reflex: sowing
+	 * Checks whether sowing should occur according to the practice calendar
+	 * and creates a new crop on the plot if conditions are met.
+	 * Computes the expenses 
+	 */
+	/*reflex sowing when: PG_models[the_farmer.practice.id].is_sowing_date(the_farmer.practice,0){
 		create Crop with:(the_farmer:the_farmer) {
 			myself.associated_crop <- self;
 			concerned_plot <- myself;
@@ -179,7 +190,7 @@ species Plot {
 			crop_duration <- PG_models[the_farmer.practice.id].compute_crop_duration(self);
 		} 
 		ask the_farmer{do add_expenses(myself.associated_crop.sowing_cost_computation(),"Seed");}
-	}
+	}*/
 	
 
 		
@@ -188,16 +199,16 @@ species Plot {
 	 * When the harvesting date is reached, the crop’s income is added to the farmer,
 	 * and the crop is removed from the plot.
 	 */
-	reflex harvesting when: PG_models[the_farmer.practice.id].is_harvesting_date(the_farmer.practice,0){
+	/*reflex harvesting when: PG_models[the_farmer.practice.id].is_harvesting_date(the_farmer.practice,0){
 		ask the_farmer{do add_income(myself.associated_crop.harvest_income_computation());}
 //		float harvested_biomass <- 
 		ask the_farmer.practice{do add_to_indicator("Harvest",myself.associated_crop.harvest_biomass_computation());}	
 
 		ask associated_crop { 
 			do die; 
-		} 
+		}  
 		associated_crop <- nil;
-	}
+	}*/
 	
 	aspect default {
 		// Visual representation: empty plots are white; cultivated plots take the color of the practice
@@ -230,29 +241,48 @@ species Crop {
 	float plant_N <- 0.0;	 // g N/m²
 //	float N_stress <- 1.0;   // plant stress factor
 	
-	/**
-	 * Reflex: fertilization
-	 * Adds nitrogen to the system on fertilization days defined by the farmer’s practice.
-	 */
-	reflex fertilization when: lifespan in the_farmer.practice.fertilization.keys {
-
-		float quantity_per_ha <- the_farmer.practice.fertilization[lifespan];
-		float cost <- fertilization_cost_computation(quantity_per_ha, concerned_plot.surface_in_ha);
-		ask the_farmer {do add_expenses(cost,"Fertilizer");}
-		ask the_farmer.practice {do add_to_indicator("Fertilizer consumption", quantity_per_ha * myself.concerned_plot.surface_in_ha);}
-
-		concerned_plot.N_avail <- concerned_plot.N_avail + quantity_per_ha * 0.1; // quantity, expressed as g/m²
+	
+	reflex plantGrow  {
+		ask  PG_models[the_farmer.practice.id] {
+			do day_biomass_growth(myself);
+		} 
 	}
 	
-	/**
+	reflex harvesting when: the_farmer.practice.harvesting.to_apply(current_date.day_of_year){
+		ask the_farmer.practice {
+		 	do harvesting_season_update;
+		}
+		ask the_farmer.practice{
+			do add_to_indicator("Harvest",myself.harvest_biomass_computation());
+			do add_to_indicator("Water consumption", myself.concerned_plot.soil_water);
+		}	
+		
+		ask the_farmer.practice.harvesting {
+			do effect(myself.concerned_plot);
+		} 
+		
+		 
+	}
+	
+	reflex apply_practices {
+		ask the_farmer.practice.other_practices {
+			if (to_apply(myself.lifespan)) {
+			 	do effect(myself.concerned_plot);
+	 		} 
+		}
+	}  
+	 
+	
+
+	/** 
 	 * Reflex: change_irrigation 
 	 * Updates the irrigation mode according to the management schedule.
 	 */
-	reflex change_irrigation when: lifespan in the_farmer.practice.irrigation.keys {
+	/*reflex change_irrigation when: lifespan in the_farmer.practice.irrigation.keys {
 		irrigation_mode <- the_farmer.practice.irrigation[lifespan];
-	} 
+	} */
 	
-	/**
+	/** 
 	 * Function: harvest_income_computation
 	 * Computes the economic return of the crop based on its final biomass
 	 * and the market price defined by the farmer’s practice.
@@ -260,7 +290,7 @@ species Crop {
 	float harvest_income_computation {
 		return harvest_biomass_computation() * the_farmer.practice.market_price;
 	}
-	
+	 
 	/**
 	 * Function: harvest_biomass_computation
 	 * Computes the harvested quantity for the crop
@@ -272,7 +302,7 @@ species Crop {
 	// QUESTION what is the area unit (to convert to ha ?)
 	float fertilization_cost_computation(float quantity_per_ha, float surface_in_ha) {
 		return  the_farmer.practice.fert_cost * quantity_per_ha * surface_in_ha ;
-	}
+	} 
 	
 	float sowing_cost_computation{
 		return the_farmer.practice.seed_cost * concerned_plot.surface_in_ha ;

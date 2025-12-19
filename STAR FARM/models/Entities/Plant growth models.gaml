@@ -21,9 +21,9 @@
  */
 
 
-model STARFARM
+model STARFARM 
 
-import "../Parameters.gaml"
+import "../Parameters.gaml" 
 
 import "../Constants.gaml"
 
@@ -78,18 +78,26 @@ species Plant_growth_model virtual: true{
 	// Virtual methods to be implemented in derived models
 	float yield_computation(Crop c) virtual: true;	
 	action day_biomass_growth(Crop c) virtual: true;	
-	bool is_sowing_date(Crop_practice pr, int shift) virtual: true; // used a shift to compute the end of a season just one day after the harvest. Need to properly define when a season starts and ends.
-	bool is_harvesting_date(Crop_practice pr, int shift) virtual: true; // used a shift to compute the end of a season just one day after the harvest. Need to properly define when a season starts and ends.
+	//bool is_sowing_date(Crop_practice pr, int shift) virtual: true; // used a shift to compute the end of a season just one day after the harvest. Need to properly define when a season starts and ends.
+	//bool is_harvesting_date(Crop_practice pr, int shift) virtual: true; // used a shift to compute the end of a season just one day after the harvest. Need to properly define when a season starts and ends.
 //	bool move_to_next_season(Crop_practice pr)
 
 
 	
 	action initialize;
 	int compute_crop_duration(Crop c) {
-		return 0;
+		int start <- current_date.day_of_year;
+		int index_start <- c.the_farmer.practice.sowing.implementation_days index_of start;
+		int harvesting_date <-  c.the_farmer.practice.harvesting.implementation_days[index_start];
+		if (harvesting_date < start) {
+			harvesting_date <- harvesting_date + 365;
+		}
+		return harvesting_date - start; 
 	}
 	
-		float compute_Ra {
+	
+	
+	float compute_Ra {
     // constants
     
     	float lat_deg <- CRS_transform(world.location, "4326").location.y;
@@ -159,16 +167,6 @@ species ceresModel parent: Plant_growth_model {
 		water_stress <- create_map(list<Plot>(plot_species), list_with(length(plot_species), 1.0)) ;
 	}
 	
-	int compute_crop_duration(Crop c) {
-		int start <- current_date.day_of_year;
-		int index_start <- c.the_farmer.practice.sowing_date index_of start;
-		int harvesting_date <-  c.the_farmer.practice.harvesting_date[index_start];
-		if (harvesting_date < start) {
-			harvesting_date <- harvesting_date + 365;
-		}
-		return harvesting_date - start;
-	}
-	
 	
 	// compute the yield in kg based on grain biomass
 	float yield_computation(Crop c){
@@ -221,16 +219,20 @@ species ceresModel parent: Plant_growth_model {
 		float FC_mm <- c.concerned_plot.theta_fc * Zr[c];
 		float WP_mm <- c.concerned_plot.theta_wp * Zr[c];
 		
-	    if (c.the_farmer.practice.id = RICE_CF) {
-	    	if (p.soil_water < FC_mm) {
+		
+		 if (c.the_farmer.practice.has_practice(AWD)) {
+	    	AWD_Irrigating_practice awd <- AWD_Irrigating_practice(c.the_farmer.practice.get_practice(AWD));
+	    	  if (p.soil_water < awd.AWD_threshold * FC_mm) {
+	            inflow <- precip + awd.irrigation_amount;
+	        }
+	    	
+	    }else{
+	       if (p.soil_water < FC_mm) {
 	        	inflow <- precip + (FC_mm - p.soil_water);
 	        }
-	    }else{
-	        if (p.soil_water < RiceAWD(c.the_farmer.practice).AWD_threshold * FC_mm) {
-	            inflow <- precip + RiceAWD(c.the_farmer.practice).irrigation_amount;
-	        }
 	    }
-	
+	    
+	   
 	    // --- Outflows
 	    float transpiration <- ETo * water_stress[p];
 	    float drainage <- max(0, p.soil_water + inflow - FC_mm);
@@ -311,12 +313,12 @@ species ceresModel parent: Plant_growth_model {
         }
 	}
 		
-	bool is_sowing_date (Crop_practice pr, int shift){	
+	/*bool is_sowing_date (Crop_practice pr, int shift){	
 		return (current_date.day_of_year + shift) in pr.sowing_date ;
 	}
 	bool is_harvesting_date(Crop_practice pr, int shift) {
 		return (current_date.day_of_year + shift)  in pr.harvesting_date ;
-	}
+	}*/
 	
 	// =========================================================
     // GRAIN FILLING (HI dynamique)
@@ -356,16 +358,6 @@ species basicModel parent: Plant_growth_model {
 	float sw update:  the_weather.solar_radiation[current_date];
 	float Ra update:  compute_Ra();
 		
-	int compute_crop_duration(Crop c) {
-		int start <- current_date.day_of_year;
-		int index_start <- c.the_farmer.practice.sowing_date index_of start;
-		int harvesting_date <-  c.the_farmer.practice.harvesting_date[index_start];
-		if (harvesting_date < start) {
-			harvesting_date <- harvesting_date + 365;
-		}
-		return harvesting_date - start;
-	}
-	
 	
 	float yield_computation(Crop c) {
 		
@@ -457,99 +449,13 @@ species basicModel parent: Plant_growth_model {
 
 		c.concerned_plot.N_avail <- max(0.0, c.concerned_plot.N_avail - 0.3 * max(0.0, deltaB));
 	}
-	bool is_sowing_date (Crop_practice pr, int shift){	
+/*	bool is_sowing_date (Crop_practice pr, int shift){	
 		return (current_date.day_of_year + shift) in pr.sowing_date ;
 	}
 	bool is_harvesting_date(Crop_practice pr, int shift) {
 		return (current_date.day_of_year + shift)  in pr.harvesting_date ;
-	}
+	} */
 	
 	
 }
  
-  
-// ======================================================================
-// ORYZA-BASED MODEL
-// ======================================================================
- 
-species Oryza parent: Plant_growth_model {
-	string id <- ORYZA;
-	
-	map<Crop_practice, bool> need_update ;
-
-	reflex update_practice_data when: not empty(need_update.values collect each){
-		loop p over: practices.values {
-			if (need_update[p]) {
-				do update_data(p);
-				need_update[p] <- false;
-			}
-		}
-	}
-	int compute_crop_duration(Crop c) {
-		return c.the_farmer.practice.current_oryza.key[1] - c.the_farmer.practice.current_oryza.key[0];
-	}
-			
-	action initialize {
-		loop p over: data_files_yields.keys {
-			Crop_practice pract <- practices[p];
-			matrix<string> yieldsP <- matrix(csv_file(data_files_yields[p], true)); 
-			matrix<string> dataP <- matrix(csv_file(data_files_practices[p], true)); 
-			
-			int rs_ <- 1; 
-			int rs;
-			int r <- 0;
-			int de <- -1;
-			
-			int cy_  ;
-			loop i from: 0 to: dataP.rows -1 {
-				rs <- int(dataP[0,i]);
-				int cy <- int(dataP[1,i]) + 365 * (rs -1) ;
-				if (de = -1) {
-					de <- cy;
-				}
-				if (rs > rs_) {
-					float y <- float(yieldsP[1,rs_ -1]);
-					pract.oryza_data[[de,cy_]] <- y;
-					rs_ <- rs;
-					de <- cy;
-				}
-				if (i = dataP.rows -1) {
-					float y <- float(yieldsP[1,rs -1]);
-					pract.oryza_data[[de,cy]] <- y;	
-				}
-				cy_ <- cy;
-			}
-			need_update[pract] <- false;
-			do update_data(pract);
-			
-		}
-		
-	}
-	
-	action update_data(Crop_practice pr) {
-		if (empty(pr.oryza_data)) {
-			ask world {do pause;}
-		} else { 
-			pr.current_oryza <- first(pr.oryza_data.pairs); 
-			remove key: pr.current_oryza.key from: pr.oryza_data;
-		}
-	}
-	
-	action day_biomass_growth(Crop c)  {
-		c.B <- c.the_farmer.practice.current_oryza.value * c.lifespan / c.crop_duration * c.concerned_plot.shape.area;
-	}
-	
-	float yield_computation (Crop c) {
-		need_update[c.the_farmer.practice] <- true;
-		return c.B * c.concerned_plot.surface_in_ha; // kg per ha
-	}
-	
-	bool is_sowing_date (Crop_practice pr, int shift){
-		return cycle + shift = pr.current_oryza.key[0];
-	}
-	
-	bool is_harvesting_date(Crop_practice pr, int shift) {
-		return cycle + shift = pr.current_oryza.key[1];
-		
-	}
-}

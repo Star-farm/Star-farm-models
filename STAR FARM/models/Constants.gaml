@@ -24,10 +24,13 @@ global {
 	string RICE_AWD <- "Rice (Alt. Wetting and Drying)" const: true;
 	string RICE_CF <- "Rice (Continuous Flooding)" const: true;
 	
+	string BAU <- "BAU" const: true;
 	/******* RICE IRRIGATION *******/
-	string CONTINUOUS <- "continuous" const: true;
-	string ALTERNATE <- "alternate" const: true;
+	string CF <- "CF" const: true;
+	string AWD <- "AWD" const: true;
 	string NO_IRRIGATION <- "no_irrigation" const: true;
 	
+	string INPUT <- "input" const: true;
+	string PESTICIDE <- "pesticide" const: true;
 }
 

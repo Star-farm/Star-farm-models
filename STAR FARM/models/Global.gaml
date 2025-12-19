@@ -23,7 +23,7 @@ import "Parameters.gaml"
 import "Constants.gaml"
 
 
-global {
+global { 
 	
 	geometry shape <- envelope(plots_shapefile);
 	int init_day_of_year <-  current_date.day_of_year;

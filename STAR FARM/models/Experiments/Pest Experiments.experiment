@@ -7,7 +7,7 @@
 
 model STARFARM  
 
-import "../Entities/Parasite.gaml"
+import "../Entities/Parasite.gaml" 
 import "Generic Experiment.experiment"
 
 global {
