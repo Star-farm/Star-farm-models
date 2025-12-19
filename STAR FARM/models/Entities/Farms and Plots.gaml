@@ -116,7 +116,7 @@ species Farmer skills:[moving]{
 
 
     reflex work{
-    	//do wander speed:1#ms;
+    	do wander speed:0.1#ms bounds:first(my_farm.plots).shape;
     }
 	
 	aspect default {

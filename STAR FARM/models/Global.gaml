@@ -83,7 +83,7 @@ global {
 				plots << myself; 
 				create Farmer returns: f{
 					my_farm <- myself;
-					shape <-  union(myself.plots);
+					shape <-  copy(union(myself.plots));
 					
 				}
 				myself.the_farmer <- first(f);
