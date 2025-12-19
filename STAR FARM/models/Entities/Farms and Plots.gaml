@@ -19,7 +19,7 @@ import "../Parameters.gaml"
  * SPECIES Farmer
  * Represents an individual farmer managing one farm and making decisions about practices.
  */
-species Farmer {
+species Farmer skills:[moving]{
 	Farm my_farm;  // Reference to the farm owned by this farmer
 	
 	// The current agricultural practice followed by the farmer
@@ -113,6 +113,11 @@ species Farmer {
 //	reflex change_practices when:cycle > 0 and current_date.day_of_year = init_day_of_year {
 //		do decide_practice;
 //	} 
+
+
+    reflex work{
+    	//do wander speed:1#ms;
+    }
 	
 	aspect default {
 		// Each farmer is drawn using an image colored by their current practice
