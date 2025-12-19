@@ -10,6 +10,10 @@ model STARFARM
 import "../Entities/Parasite.gaml"
 import "Generic Experiment.experiment"
 
+global {
+	int init_pest_cluster_number <- 4;
+	int init_predator_number <- 2;
+}
 
 experiment "Pest experiment" parent: generic_exp virtual: false{
 	category "Map" expanded: true color: rgb(143, 156, 180);

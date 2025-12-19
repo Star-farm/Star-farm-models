@@ -37,6 +37,10 @@ global {
 			}
 			
 		}
+		
+		create Predator number: init_predator_number{
+			location <- any_location_in(first(any(Farm).plots));
+		}
 	}
 	
 	
@@ -132,6 +136,10 @@ species Pest_Cluster virtual: true parallel: true {
 		}
 	}
 	
+	reflex deleteCluster when: length(population) + length(egg_population) = 0 {
+		do die;
+	}
+	
 	action newEgg {
 		add [time, false] to: egg_population ;
 	}
@@ -154,12 +162,14 @@ species BrownPlanthopper_Cluster parent: Pest_Cluster {
 }
  
 species Predator skills: [moving] {
-	float speed <- 15#m/#d;
+	float speed <- 150#m/#d;
 	
 	bool resistant <- false;
-	float hunting_radius <- 40.0;
+	float hunting_radius <- 400.0;
 	float energy <- 0.0;
 	date date_of_birth; 
+	
+	int daily_eating_pest <- 50;
 	 
 	init {
 		if flip(init_predator_resistant_rate){
@@ -169,19 +179,21 @@ species Predator skills: [moving] {
 	}
 	
 	reflex move {
-		do wander; 
+		if ( length(BrownPlanthopper_Cluster) > 0 or length(BrownPlanthopper_Cluster overlapping self) > 0 ) {
+			do goto target: BrownPlanthopper_Cluster closest_to(self);
+		} else {
+			do wander;
+		}
 	}
 	 
-	reflex hunting {
-		loop prey over: Pest_Cluster at_distance hunting_radius {//Pest_Cluster where (each at_distance self > hunting_radius) {
-			if flip(predator_hunting_rate) {
-//				energy <- energy + (prey.energy*predator_eating_effi_rate);
-				ask prey {
-					do die;
-				}
+	reflex hunting when: length(BrownPlanthopper_Cluster overlapping self) > 0 {
+		ask one_of(BrownPlanthopper_Cluster overlapping self) {
+			loop times: myself.daily_eating_pest {
+				remove any(population) from: population;
 			}
 		}
 	}
+	
 	reflex reproduction {
 		loop times: int(energy / predator_reprod_effi_rate ) {
 			create Predator {
@@ -197,10 +209,10 @@ species Predator skills: [moving] {
 	}
 		
 	aspect default {
-		if (map_display = "Normal"){
+//		if (map_display = "Normal"){
 			draw circle(hunting_radius) color: #lightgreen border: #darkgreen;
-			draw triangle(20) color: #green;
-		}
+			draw triangle(2000) color: #green;
+//		}
 	}
 }
 
