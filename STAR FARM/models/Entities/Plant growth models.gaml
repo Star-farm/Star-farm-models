@@ -8,14 +8,13 @@
  *
  *   Two specific submodels are currently implemented:
  *     1. basicModel – A simple generic crop growth model based on climatic and water balance factors.
- *     2. Oryza – A model interfacing with external data files (from the ORYZA crop model) to simulate 
- *                rice growth based on precomputed yield data.
- *
+ *     2. CERES 
+ * 
  *   The models are designed to be called by each crop agent to compute daily biomass increments 
  *   and determine key phenological dates (sowing, harvesting, etc.).
  * 
  * Author: Patrick Taillandier
- * Tags: crop growth, irrigation, rice, Oryza, STARFARM
+ * Tags: crop growth, irrigation, rice, STARFARM
  *
  * ================================================================================================
  */
@@ -56,12 +55,6 @@ global {
 		loop pract over: plant_grow_models.keys {
 			PG_models[pract] <- models[plant_grow_models[pract]];
 		}
-
-// moved after the creation of every agents
-//
-//		ask remove_duplicates(PG_models){
-//			do initialize();
-//		} 
 	}	
 }
 
@@ -78,10 +71,6 @@ species Plant_growth_model virtual: true{
 	// Virtual methods to be implemented in derived models
 	float yield_computation(Crop c) virtual: true;	
 	action day_biomass_growth(Crop c) virtual: true;	
-	//bool is_sowing_date(Crop_practice pr, int shift) virtual: true; // used a shift to compute the end of a season just one day after the harvest. Need to properly define when a season starts and ends.
-	//bool is_harvesting_date(Crop_practice pr, int shift) virtual: true; // used a shift to compute the end of a season just one day after the harvest. Need to properly define when a season starts and ends.
-//	bool move_to_next_season(Crop_practice pr)
-
 
 	
 	action initialize;
@@ -141,11 +130,6 @@ species ceresModel parent: Plant_growth_model {
     map<Plot,int> stage;         // 0=veg, 1=repro, 2=grain fill, 3=mat
     float LAI <- 0.1;
 
-// // --- SOIL WATER PARAMETERS ??? To move to PLOT  ?
-//    float FC <- 200.0;    // field capacity (mm)
-//    float WP <- 80.0;     // wilting point (mm)
-   
-
     // --- STATE VARIABLES
     float soil_water_init <- 200.0; //mm
     map<Plot, float> water_stress;  // 0–1
@@ -171,7 +155,6 @@ species ceresModel parent: Plant_growth_model {
 	// compute the yield in kg based on grain biomass
 	float yield_computation(Crop c){
 		return c.grain_biomass * 10 * c.concerned_plot.surface_in_ha ; // g/m² * 10 * ha
-		//return c.B * 10 * c.concerned_plot.surface_in_ha ; // g/m² * 10 * ha
 	}
 	
 	// update phenology. Remark: all plots (and crops) share the same variables (temperature,
@@ -256,9 +239,6 @@ species ceresModel parent: Plant_growth_model {
     }
     
     float compute_stress(Crop c){
-    	// compute azote absorption
-//    	float dBiomass_potential <- last_growth[c.concerned_plot];
-    	// compute demand in g/m²
         float N_demand <- compute_N_demand(c);
         float N_uptake <- min(c.concerned_plot.N_avail, N_demand) * c.concerned_plot.N_uptake_eff;
         c.concerned_plot.N_avail <- c.concerned_plot.N_avail - N_uptake;
@@ -299,26 +279,18 @@ species ceresModel parent: Plant_growth_model {
 
 		if (stage[c.concerned_plot] < 3) {
             float IPAR <- Ra * (1 - exp(-k * LAI));
-//            float stress <- min(water_stress[c.concerned_plot], N_stress);
             float stress <- water_stress[c.concerned_plot];
             float dBiomass <- IPAR * RUE * stress;
 
             c.B <- c.B + dBiomass;
-//            last_growth[c.concerned_plot] <- dBiomass;
 
-            // simple LAI expansion
             LAI <- LAI + 0.01 * dBiomass;
             
             do grain_filling(c, dBiomass, stress);
         }
 	}
 		
-	/*bool is_sowing_date (Crop_practice pr, int shift){	
-		return (current_date.day_of_year + shift) in pr.sowing_date ;
-	}
-	bool is_harvesting_date(Crop_practice pr, int shift) {
-		return (current_date.day_of_year + shift)  in pr.harvesting_date ;
-	}*/
+	
 	
 	// =========================================================
     // GRAIN FILLING (HI dynamique)
@@ -424,38 +396,14 @@ species basicModel parent: Plant_growth_model {
 		  : (c.S <= S_wp ? 0.0
 		  : (c.S - S_wp) / (S_opt - S_wp)));
 		
-		//float fN <- min(1.0, c.N_avail / 20.0);
-		
-		// --- Dynamique de l'azote --- //
-	//	if (c.lifespan = c.crop_duration * 0.5) { c.N_avail <- c.N_avail + 5.0; }
-		/*float Topt <- 29.0;
-		float Trange <- 12.0;
-		float fT <- max(0.0, 1.0 - abs(tmean - Topt) / Trange);
-
-		float S_opt <- S_max * S_opt_frac;
-		float S_wp <- S_max * S_wp_frac;
-		float fW <- (c.PD > 0) ? 1.0 : (c.S >= S_opt ? 1.0 : (c.S <= S_wp ? 0.0 : (c.S - S_wp) / (S_opt - S_wp)));
-*/
+	
 		float fN <- min(1.0, c.concerned_plot.N_avail / N_opt);
 		float deltaB <- RUE * PAR * fPAR * fT * fW * fN - m_resp * c.B;
 		deltaB <- max(deltaB, -0.05 * c.B);
-		if ((length(Crop) > 0) and (c =(Crop first_with (each.the_farmer.practice.id = RICE_CF)) )) {
-		//	write "CF " + c.name + " " + cycle + " -> " + sample(sw) + " " + sample(c.PD)+ " " + sample(fT) + " " +sample(fW) + " "+ sample(fN)+ " " + sample(PAR)+" " + sample(fPAR) +" "+ sample(RUE) + " "+ sample(deltaB) + sample(c.B);
-		}
-		if ((length(Crop) > 0) and (c =(Crop first_with (each.the_farmer.practice.id = RICE_AWD)) )) {
-		//	write "AWD " +c.name + " " + cycle + " -> " + sample(sw) + " " + sample(c.PD)+ " " + sample(fT) + " " +sample(fW) + " "+ sample(fN)+ " " + sample(PAR)+" " + sample(fPAR) +" "+ sample(RUE) + " "+ sample(deltaB) + sample(c.B);
-		}
+	
 		c.B <- c.B + deltaB; 
 
 		c.concerned_plot.N_avail <- max(0.0, c.concerned_plot.N_avail - 0.3 * max(0.0, deltaB));
-	}
-/*	bool is_sowing_date (Crop_practice pr, int shift){	
-		return (current_date.day_of_year + shift) in pr.sowing_date ;
-	}
-	bool is_harvesting_date(Crop_practice pr, int shift) {
-		return (current_date.day_of_year + shift)  in pr.harvesting_date ;
-	} */
-	
-	
+	}	
 }
  

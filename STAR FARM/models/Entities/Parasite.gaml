@@ -74,9 +74,7 @@ species Pest_Cluster virtual: true parallel: true {
 	
 	float energy <- 1000.0;
 	
-	// date_of_birth, isResistant
 	list<list> egg_population <- [];
-	// date_of_birth, isFemale, isEgg, isAdult
 	list<list> population <- [];
 	
 	init {
@@ -211,10 +209,8 @@ species Predator skills: [moving] {
 	}
 		
 	aspect default {
-//		if (map_display = "Normal"){
-			draw circle(hunting_radius) color: #lightgreen border: #darkgreen;
-			draw triangle(2000) color: #green;
-//		}
+		draw circle(hunting_radius) color: #lightgreen border: #darkgreen;
+		draw triangle(2000) color: #green;
 	}
 }
 

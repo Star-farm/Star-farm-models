@@ -40,6 +40,7 @@ global {
 		do create_plant_growth_models;
 		do create_plots;	
 		do init_weather_data;
+		
 		// compute the surface for each practice at the begining of the simulation
 		ask practices {do compute_practice_area;}
 		ask remove_duplicates(PG_models){
@@ -70,7 +71,6 @@ global {
 			plot_species <- species<Plot>("Plot");
 		}
 		create plot_species from: plots_shapefile; 
-//		create first(Plot.subspecies) from: plots_shapefile; 
 		
 		ask plot_species {
 			map attributes <- shape.attributes;

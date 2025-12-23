@@ -22,26 +22,18 @@ global {
 	string weather_folder <- "../includes/An Bien/Weather";
 	
 	string innovation_diffusion_model <- NONE; //NONE, NEIGHBORS
+	
+	float neighbor_distance <- 10.0;
    
     map<string, float> possible_practices <- [BAU::0.5, AWD:: 0.5];
    
 	map<string,string> plots_to_keep <- [];//["Lu05_en"::"Rice"];
 		
-	map<string,string> plant_grow_models <-[BAU::CERES, AWD::CERES];// ORYZA ; //POSSIBLE VALUES : BASIC/CERES/ORYZA
+	map<string,string> plant_grow_models <-[BAU::CERES, AWD::CERES]; //POSSIBLE VALUES : BASIC/CERES
 	
 	csv_file cultivars_csv_file <- csv_file("../includes/cultivars.csv", true);
 
-	/******* PARAMETERS FOR ORYZA *********/
-	 
-	 map<string, string> data_files_practices <- [
-        RICE_CF::("../includes/An Bien/Oryza/CF_s1/cf_res.csv"),
-        RICE_AWD::("../includes/An Bien/Oryza/AWD_s1/awd_res.csv")
-    ];
-     map<string, string> data_files_yields <- [
-        RICE_CF::("../includes/An Bien/Oryza/CF_s1/cf_op.csv"),
-        RICE_AWD::("../includes/An Bien/Oryza/AWD_s1/awd_op.csv")
-    ];
-    
+	
    
     /**** PARAMETERS FOR BASIC PLANT GROWTH MODEL *****/
     
@@ -50,7 +42,6 @@ global {
 
 	// Paramètres du modèle (à calibrer)
 	float alpha_par <- 0.48;    // fraction du rayonnement global converti en PAR
-//	float RUE <- 1.8;           // g MS / MJ PAR
 	float k_LAI <- 0.5;         // coefficient d'extinction
 	float aB <- 0.0025;         // m2 de feuille / g biomasse
 	float m_resp <- 0.003;      // respiration quotidienne

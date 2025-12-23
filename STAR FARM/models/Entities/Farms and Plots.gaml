@@ -10,7 +10,6 @@
 model STARFARM 
 
 // Import external modules containing crop growth models, farming practices, and parameters
-//import "Plant growth models.gaml"
 import "Practices.gaml"
 import "../Parameters.gaml" 
 
@@ -42,7 +41,7 @@ species Farmer skills:[moving]{
 	 * This allows social interactions and practice diffusion between farmers.
 	 */
 	action define_neighbors {
-		neighbors <- Farmer at_distance 1.0;
+		neighbors <- Farmer at_distance neighbor_distance;
 	}
 	 
 	/**
@@ -73,7 +72,6 @@ species Farmer skills:[moving]{
 				practice_candidates[p] <- p_farmers mean_of (each.money);
 			} 
 		}
-		
 		// If there are viable candidates, adopt one probabilistically
 		if sum(practice_candidates.values) > 0.0 {
 			practice <- practices[practice_candidates.keys[rnd_choice(practice_candidates.values)]];
@@ -110,9 +108,9 @@ species Farmer skills:[moving]{
 	 * Each year (on the same calendar day as initialization), farmers reconsider their practice.
 	 */
 
-//	reflex change_practices when:cycle > 0 and current_date.day_of_year = init_day_of_year {
-//		do decide_practice;
-//	} 
+	reflex change_practices when:cycle > 0 and current_date.day_of_year = init_day_of_year {
+		do decide_practice;
+	} 
 
 
     reflex work{
@@ -155,11 +153,7 @@ species Plot {
 	float theta_wp <- 0.15; // m3/m3
 	float Zr <- 50.0; // mm (initial)
 	
-	/**
-	 * Reflex: plantGrow
-	 * Invokes the crop growth model each day if a crop is present.
-	 */
-	
+
 	/**
 	 * Reflex: sowing
 	 * Checks whether sowing should occur according to the practice calendar
@@ -176,39 +170,6 @@ species Plot {
 		} 
 		 
 	}
-	/**
-	 * Reflex: sowing
-	 * Checks whether sowing should occur according to the practice calendar
-	 * and creates a new crop on the plot if conditions are met.
-	 * Computes the expenses 
-	 */
-	/*reflex sowing when: PG_models[the_farmer.practice.id].is_sowing_date(the_farmer.practice,0){
-		create Crop with:(the_farmer:the_farmer) {
-			myself.associated_crop <- self;
-			concerned_plot <- myself;
-
-			crop_duration <- PG_models[the_farmer.practice.id].compute_crop_duration(self);
-		} 
-		ask the_farmer{do add_expenses(myself.associated_crop.sowing_cost_computation(),"Seed");}
-	}*/
-	
-
-		
-	/**
-	 * Reflex: harvesting
-	 * When the harvesting date is reached, the crop’s income is added to the farmer,
-	 * and the crop is removed from the plot.
-	 */
-	/*reflex harvesting when: PG_models[the_farmer.practice.id].is_harvesting_date(the_farmer.practice,0){
-		ask the_farmer{do add_income(myself.associated_crop.harvest_income_computation());}
-//		float harvested_biomass <- 
-		ask the_farmer.practice{do add_to_indicator("Harvest",myself.associated_crop.harvest_biomass_computation());}	
-
-		ask associated_crop { 
-			do die; 
-		}  
-		associated_crop <- nil;
-	}*/
 	
 	aspect default {
 		// Visual representation: empty plots are white; cultivated plots take the color of the practice
@@ -239,7 +200,6 @@ species Crop {
 	
 	// Azote
 	float plant_N <- 0.0;	 // g N/m²
-//	float N_stress <- 1.0;   // plant stress factor
 	
 	
 	reflex plantGrow  {
@@ -260,8 +220,6 @@ species Crop {
 		ask the_farmer.practice.harvesting {
 			do effect(myself.concerned_plot);
 		} 
-		
-		 
 	}
 	
 	reflex apply_practices {
@@ -272,16 +230,6 @@ species Crop {
 		}
 	}  
 	 
-	
-
-	/** 
-	 * Reflex: change_irrigation 
-	 * Updates the irrigation mode according to the management schedule.
-	 */
-	/*reflex change_irrigation when: lifespan in the_farmer.practice.irrigation.keys {
-		irrigation_mode <- the_farmer.practice.irrigation[lifespan];
-	} */
-	
 	/** 
 	 * Function: harvest_income_computation
 	 * Computes the economic return of the crop based on its final biomass
@@ -307,7 +255,5 @@ species Crop {
 	float sowing_cost_computation{
 		return the_farmer.practice.seed_cost * concerned_plot.surface_in_ha ;
 	}
-	
-	
 }
 

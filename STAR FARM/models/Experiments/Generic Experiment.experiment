@@ -280,7 +280,7 @@ experiment generic_exp type:gui virtual: true {
 			}
 
 
-		}
+		} 
 		
 		display base_daily_indicators type: 2d toolbar: false antialias: true virtual: true {
 			
