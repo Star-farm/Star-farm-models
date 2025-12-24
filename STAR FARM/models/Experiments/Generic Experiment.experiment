@@ -244,16 +244,19 @@ experiment generic_exp type:gui virtual: true {
 		layout value: horizontal([vertical([0::50,1::50])::50,vertical([2::50,3::50])::50]) tabs:false;
 		
 		display base_map axes: false toolbar: false virtual: true{
-			overlay position:overlayPos size: {0.1, 0.1} background: background_color-10 transparency: 0.0 border: background_color rounded:true visible:show_overlay{			 
+			overlay position:overlayPos size: {0.1, 0.1} background: background_color transparency: 0.0 border: background_color rounded:true visible:show_overlay{			 
 			  point legendPos <- overlayPos + {10#px, 10#px};
-			  float spaceY <- 50#px;
-			  draw string("STAR FARM - AI") at: legendPos color: text_color font: titleFont;	
+			  float spaceY <- 25#px;
+			  string day_str <- (current_date.day < 10 ? "0" + current_date.day : "" + current_date.day);
+			  string month_str <- (current_date.month < 10 ? "0" + current_date.month : "" + current_date.month);
+			  string date_str<-day_str + "/" + month_str + "/"   + string(current_date.year);
+			  draw string("STAR FARM: " + date_str) at: legendPos color: text_color font: titleFont;	
 			  legendPos <- {legendPos.x, legendPos.y + spaceY};
-			  draw string(current_date) at: legendPos color: text_color font: titleFont;
+			  draw string("Nb Famers: " + length(Farmer)) at: legendPos color: text_color font: titleFont;	
 			  legendPos <- {legendPos.x, legendPos.y + spaceY};
 			  loop p over: practices_color.keys {
 				draw square(10 #px) at: legendPos color: practices_color[p] border: #white;
-				draw p  at: legendPos + {20 #px, 5 #px} color: practices_color[p]  font: font("Helvetica", 72, #plain) perspective:false;
+				draw p + ": "+ length(Farmer where (each.practice.short_name = p)) at: legendPos + {20 #px, 5 #px} color: practices_color[p]  font:titleFont;
 				legendPos <- {legendPos.x, legendPos.y + spaceY/2};
 			  }			
 			}

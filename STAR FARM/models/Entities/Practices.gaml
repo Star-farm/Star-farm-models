@@ -340,7 +340,7 @@ species Crop_practice virtual: true {
 species BAU_rice parent:Crop_practice {
 	string id <- BAU ; // Unique identifier for the practice
 	string short_name <- "Business as usual"; // Short name used for displays
-	rgb color <- practices_color["BAU"];  // Color used for visual representation	
+	rgb color <- practices_color[short_name];  // Color used for visual representation	
 	float market_price <- 6500.0 ; //VND/kg
 	float fert_cost <- 400000.0; // VND/per ha
 	float seed_cost <- 600000.0; // VND/per ha
@@ -363,7 +363,7 @@ species BAU_rice parent:Crop_practice {
 species AWD_rice parent:Crop_practice {
 	string id <- AWD ; // Unique identifier for the practice
 	string short_name <- "AWD"; // Short name used for displays
-	rgb color <- practices_color["AWD"];  // Color used for visual representation	
+	rgb color <- practices_color[short_name];  // Color used for visual representation	
 	float market_price <- 6500.0 ; //VND/kg
 	float fert_cost <- 400000.0; // VND/per ha
 	float seed_cost <- 600000.0; // VND/per ha
