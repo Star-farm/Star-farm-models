@@ -9,27 +9,44 @@
 
 model STARFARM 
 
+import "Environment.gaml"
+
 // Import external modules containing crop growth models, farming practices, and parameters
 import "Practices.gaml"
 import "../Parameters.gaml" 
 
 
+global {
+	bool new_season <- false;
+} 
+
 /**
  * SPECIES Farmer 
  * Represents an individual farmer managing one farm and making decisions about practices.
  */
-species Farmer skills:[moving]{
+species Farmer {
+	bool is_active <- false;
+	
 	Farm my_farm;  // Reference to the farm owned by this farmer
 	
 	// The current agricultural practice followed by the farmer
 	Crop_practice practice <- practices[possible_practices.keys[rnd_choice(possible_practices.values)]];
  
 	float money; // Economic capital of the farmer
-	float day_revenue update: 0.0;
+	float day_revenue update: 0.0; 
 	float day_expenses update: 0.0;
 	
 	
+	float profit_margin <- 0.0;
+    
+    float profit_net;
+    float total_costs;
+    float revenue <- 0.0;
+	float plot_area;
 	// Compute total water usage as the sum of irrigation water applied to all crops
+
+	float accumulated_labor_hours <- 0.0;
+    float mechanization_costs <- 0.0;
 
 	float water_usage update: my_farm.plots sum_of (each.associated_crop = nil ? 0.0 : each.associated_crop.irrigation_total);
 	
@@ -113,19 +130,16 @@ species Farmer skills:[moving]{
 	} 
 
 
-    reflex work{
-    	do wander speed:0.1#ms bounds:first(my_farm.plots).shape;
-    }
-	
+   
 	aspect default {
 		// Each farmer is drawn using an image colored by their current practice
 		draw farmer_image size: {50, 50} color: practice.color;
-	}
+	} 
 }
 
 
 /**
- * SPECIES Farm
+ * SPECIES Farm 
  * Represents a set of plots managed by a single farmer.
  */
 species Farm { 
@@ -134,12 +148,13 @@ species Farm {
 
 
 
-/**
+/** 
  * SPECIES Plot
  * Represents a unit of land where one crop can be cultivated.
  */
 
 species Plot { 
+	bool is_active <- false;
 	Farmer the_farmer;        // The farmer managing this plot
 	Crop associated_crop;     // The crop currently growing on the plot (if any)
 	float surface_in_ha;      // surface in ha
@@ -153,20 +168,46 @@ species Plot {
 	float theta_wp <- 0.15; // m3/m3
 	float Zr <- 50.0; // mm (initial)
 	
+	unit_cell my_cell <-unit_cell(location) ;
 
+ 	float final_yield_ton_ha;
+   	float straw_yield_ton_ha <- 0.0;
+   	float methane_emissions_kg_ha;
+     // Climate Stress Counters (For Star Farm KPIs)
+    int stress_days_salinity <- 0; 
+    int stress_days_drought <- 0;
+    int stress_days_flood <- 0;
+    int stress_days_flood_continuous <- 0;
+    int max_stress_days_flood_continuous <- 0;
+   
+    float total_water_pumped <- 0.0; // <--- COMPTEUR EAU (mm)
+    float local_salinity;
+    int pesticide_count <- 0;        //SPRAY COUNTER
+   
 	/**
 	 * Reflex: sowing
 	 * Checks whether sowing should occur according to the practice calendar
 	 * and creates a new crop on the plot if conditions are met.
 	 * Computes the expenses 
 	 */
-	reflex sowing when: the_farmer.practice.sowing.to_apply(current_date.day_of_year){
+	reflex sowing when: the_farmer.practice.sowing.to_apply(self,current_date.day_of_year){
+		 if (not new_season) {
+		 	new_season <- true;
+		 	ask Farmer {
+		 		is_active <- false;
+		 	}
+		 	ask Plot {
+		 		is_active <- false;
+		 	}
+		 }
+		 the_farmer.is_active <- true;
+		 is_active <- true;
 		 ask the_farmer.practice {
 		 	do sowing_season_update;
 		 }
 		 
 		 ask the_farmer.practice.sowing {
-			do effect(myself);
+			do effect_with_labor(myself);
 		} 
 		 
 	}
@@ -183,6 +224,7 @@ species Plot {
  * Represents an individual crop growing on a plot.
  */
 species Crop {
+	Cultivar variety;
 	Farmer the_farmer;     // The farmer who owns the crop
 	Plot concerned_plot;   // The plot where the crop is located
 	int lifespan <- 0 update: lifespan + 1;  // Number of days since sowing
@@ -193,67 +235,99 @@ species Crop {
 	string irrigation_mode <- NO_IRRIGATION;
 	float B <- 0.0;          // Biomass (g per m2 to be consistent with CERES model)
 	float grain_biomass <- 0.0;  // g/m²
-	float S <- S_max * 0.9;  // Soil water storage (mm)
-	float PD <- PD_target;   // Ponding depth (mm)
 	float irrigation_total;  // Cumulative irrigation (mm)
 	int irrigation_events;   // Number of irrigation events
 	
-	// Azote
+	float water_level <- 50.0;
+    float nitrogen_stock; 
+    float biomass <- 0.0;     
+    float harvest_index <- 0.5;  
+    float growth_stage <- 0.0;  
+    float accumulated_heat <- 0.0;
+    bool is_harvested <- false;
+    bool is_dead <- false;
+    int stress_count <- 0; 
+    
+    
+       // computed variables
+    float thermal_units_total;         // number of total cycle required
+    float potential_rue_calibrated;    // RUE 
+    float salt_threshold_val;          
+    
+    float total_fertilizer_applied <- 0.0; // fertilizer counter (kg)
+   
+    float current_harvest_index;       // HI that decrease with stress
+    
+    float harvest_index_potential <- 0.5;
+     
+	// PESTICIDES & PESTS
+    float pest_load <- 0.0;          // 0.0 (not infected) à 1.0 (Infected)
+    
+    
+    float straw_yield_ton_ha <- 0.0;
+    float profit_margin <- 0.0;
+    float water_pumped_today;
+  	
+    float profit_net;
+    float revenue <- 0.0;
+    
+    float k_salt min: 0.0 max: 1.0;
+ 	float k_pest max: 0.2; 
+  	
+	// Azote 
 	float plant_N <- 0.0;	 // g N/m²
 	
-	
+	float seed_density_kg_ha;       
+   
 	reflex plantGrow  {
 		ask  PG_models[the_farmer.practice.id] {
 			do day_biomass_growth(myself);
-		} 
+		}  
+		pest_load <- pest_load + (concerned_plot.my_cell.pollution_level * pest_pollution_feedback);
+  
+	}
+	reflex track_stress_days when: !is_harvested and !is_dead {
+    
+	    // 1. SALINITY STRESS: Applied if salinity exceeds the cultivar tolerance threshold
+	    if (concerned_plot.my_cell.salinity_level > variety.salinity_tolerance) {
+	        concerned_plot.stress_days_salinity <- concerned_plot.stress_days_salinity + 1;
+	    }
+	    
+	    // 2. DROUGHT STRESS: applied when water depth falls below a critical threshold (e.g., −200 mm)
+		if (water_level < drought_stress_threshold) {
+	        concerned_plot.stress_days_drought <- concerned_plot.stress_days_drought + 1;
+	    }
+	    
+	     // 3. FLOODING STRESS (SUBMERGENCE): if the water level exceeds a critical threshold, non-floating rice starts to suffocate {
+	    if (water_level > flood_stress_threshold) {
+	        concerned_plot.stress_days_flood <- concerned_plot.stress_days_flood + 1;
+	        concerned_plot.stress_days_flood_continuous <- concerned_plot.stress_days_flood_continuous + 1;
+	        concerned_plot.max_stress_days_flood_continuous <- max( concerned_plot.stress_days_flood_continuous,concerned_plot.max_stress_days_flood_continuous );
+	    } else {
+	    	 concerned_plot.stress_days_flood_continuous <-  0;
+	    }
 	}
 	
-	reflex harvesting when: the_farmer.practice.harvesting.to_apply(current_date.day_of_year){
+	reflex harvesting when: the_farmer.practice.harvesting.to_apply(concerned_plot,current_date.day_of_year){
 		ask the_farmer.practice {
 		 	do harvesting_season_update;
 		}
-		ask the_farmer.practice{
+		/*ask the_farmer.practice{
 			do add_to_indicator("Harvest",myself.harvest_biomass_computation());
 			do add_to_indicator("Water consumption", myself.concerned_plot.soil_water);
-		}	
+		}	*/
 		
 		ask the_farmer.practice.harvesting {
-			do effect(myself.concerned_plot);
+			do effect_with_labor(myself.concerned_plot);
 		} 
-	}
+	} 
 	
 	reflex apply_practices {
 		ask the_farmer.practice.other_practices {
-			if (to_apply(myself.lifespan)) {
-			 	do effect(myself.concerned_plot);
+			if (to_apply(myself.concerned_plot, myself.lifespan)) {
+			 	do effect_with_labor(myself.concerned_plot);
 	 		} 
 		}
 	}  
-	 
-	/** 
-	 * Function: harvest_income_computation
-	 * Computes the economic return of the crop based on its final biomass
-	 * and the market price defined by the farmer’s practice.
-	 */
-	float harvest_income_computation {
-		return harvest_biomass_computation() * the_farmer.practice.market_price;
-	}
-	 
-	/**
-	 * Function: harvest_biomass_computation
-	 * Computes the harvested quantity for the crop
-	 */
-	float harvest_biomass_computation {
-		return PG_models[the_farmer.practice.id].yield_computation(self) * 1000.0; // why * 1000 ?
-	}
-	
-	// QUESTION what is the area unit (to convert to ha ?)
-	float fertilization_cost_computation(float quantity_per_ha, float surface_in_ha) {
-		return  the_farmer.practice.fert_cost * quantity_per_ha * surface_in_ha ;
-	} 
-	
-	float sowing_cost_computation{
-		return the_farmer.practice.seed_cost * concerned_plot.surface_in_ha ;
-	}
 }
 

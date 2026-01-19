@@ -31,7 +31,7 @@ import "Weather.gaml"
  
 import "Farms and Plots.gaml"
 
- 
+  
  
 
 // ======================================================================
@@ -69,12 +69,11 @@ species Plant_growth_model virtual: true{
 	string id; // Unique identifier for the model
 	
 	// Virtual methods to be implemented in derived models
-	float yield_computation(Crop c) virtual: true;	
 	action day_biomass_growth(Crop c) virtual: true;	
 
 	
 	action initialize;
-	int compute_crop_duration(Crop c) {
+	/*int compute_crop_duration(Crop c) {
 		int start <- current_date.day_of_year;
 		int index_start <- c.the_farmer.practice.sowing.implementation_days index_of start;
 		int harvesting_date <-  c.the_farmer.practice.harvesting.implementation_days[index_start];
@@ -82,8 +81,8 @@ species Plant_growth_model virtual: true{
 			harvesting_date <- harvesting_date + 365;
 		}
 		return harvesting_date - start; 
-	}
-	
+	}*/
+	 
 	
 	
 	float compute_Ra {
@@ -140,10 +139,6 @@ species ceresModel parent: Plant_growth_model {
 	
 	// weather
 	
-	float tmax update: the_weather.temp_max[current_date];
-	float tmin update: the_weather.temp_min[current_date];
-	float precip update:  the_weather.rainfall[current_date];
-	float sw update:  the_weather.solar_radiation[current_date];
 	float Ra update:  compute_Ra();
 	
 	action initialize{
@@ -153,7 +148,7 @@ species ceresModel parent: Plant_growth_model {
 	
 	
 	// compute the yield in kg based on grain biomass
-	float yield_computation(Crop c){
+	float yield_computation(Crop c){ 
 		return c.grain_biomass * 10 * c.concerned_plot.surface_in_ha ; // g/m² * 10 * ha
 	}
 	
@@ -162,16 +157,15 @@ species ceresModel parent: Plant_growth_model {
 	
 	action root_growth(Crop c) {
 		if (Zr[c] = nil){
-			Zr[c] <- my_cultivar.Zr_ini;
+			Zr[c] <- c.variety.Zr_ini;
 		}else{
-			Zr[c] <- min(my_cultivar.Zr_max, Zr[c] + 5.0); // 5 mm / jour
+			Zr[c] <- min(c.variety.Zr_max, Zr[c] + 5.0); // 5 mm / jour
 		}
 	}
 	
 	
 	reflex phenology {
-        float Tmean <- (tmax + tmin) / 2;
-        float dTT <- max(0, Tmean - Tbase);
+        float dTT <- max(0, the_weather.t_mean - Tbase);
         ask plot_species{
         	if (self.associated_crop = nil){
         		myself.tt[self] <- 0.0;
@@ -186,7 +180,7 @@ species ceresModel parent: Plant_growth_model {
         }
     }
     
-    // update soil water balance
+    // update soil water balance 
     // Water balance will be moved out of plant growth (precipitation, drainage)
     
     action soil_water_balance(Crop c)  {
@@ -195,8 +189,7 @@ species ceresModel parent: Plant_growth_model {
 		float inflow;
 		
 		// ETo (Hargreaves)
-		float tmean <- (tmax + tmin) / 2.0;
-		float ETo <- 0.0023 * (tmean + 17.8) * sqrt(max(0.0, tmax - tmin)) * Ra;
+		float ETo <- 0.0023 * (the_weather.t_mean + 17.8) * sqrt(max(0.0, the_weather.t_max - the_weather.t_min)) * Ra;
 		
 		// --- Irrigation logic
 		float FC_mm <- c.concerned_plot.theta_fc * Zr[c];
@@ -206,12 +199,12 @@ species ceresModel parent: Plant_growth_model {
 		 if (c.the_farmer.practice.has_practice(AWD)) {
 	    	AWD_Irrigating_practice awd <- AWD_Irrigating_practice(c.the_farmer.practice.get_practice(AWD));
 	    	  if (p.soil_water < awd.AWD_threshold * FC_mm) {
-	            inflow <- precip + awd.irrigation_amount;
+	            inflow <- the_weather.rain + awd.irrigation_amount;
 	        }
 	    	
 	    }else{
 	       if (p.soil_water < FC_mm) {
-	        	inflow <- precip + (FC_mm - p.soil_water);
+	        	inflow <- the_weather.rain + (FC_mm - p.soil_water);
 	        }
 	    }
 	    
@@ -227,7 +220,7 @@ species ceresModel parent: Plant_growth_model {
 	     
 	    
 	    // update water stress
-	    if (p.soil_water <= WP_mm) {
+	    if (p.soil_water <= WP_mm) { 
             water_stress[p] <- 0.0;
         }
         else if (p.soil_water < FC_mm) {
@@ -237,7 +230,7 @@ species ceresModel parent: Plant_growth_model {
             water_stress[p] <- 1.0;
         }
     }
-    
+     
     float compute_stress(Crop c){
         float N_demand <- compute_N_demand(c);
         float N_uptake <- min(c.concerned_plot.N_avail, N_demand) * c.concerned_plot.N_uptake_eff;
@@ -252,11 +245,11 @@ species ceresModel parent: Plant_growth_model {
             N_stress <- 1.0;
         } else {
             N_conc <- c.plant_N / c.B; // g/g
-            if (N_conc <= my_cultivar.N_min_conc) {
+            if (N_conc <= c.variety.N_min_conc) {
                 N_stress <- 0.0;
             } else {
                 N_stress <- min(1.0,
-                    (N_conc - my_cultivar.N_min_conc) / (my_cultivar.N_max_conc - my_cultivar.N_min_conc)
+                    (N_conc - c.variety.N_min_conc) / (c.variety.N_max_conc - c.variety.N_min_conc)
                 );
             }
         }
@@ -266,9 +259,9 @@ species ceresModel parent: Plant_growth_model {
     
     // compute the azote demand
     float compute_N_demand(Crop c) {
-        float N_opt_CERES <- c.B * my_cultivar.N_max_conc;
+        float N_opt_CERES <- c.B * c.variety.N_max_conc;
         float demand <- max(0, N_opt_CERES - c.plant_N);
-        return demand;
+        return demand; 
     }
 	
 	
@@ -289,7 +282,7 @@ species ceresModel parent: Plant_growth_model {
             do grain_filling(c, dBiomass, stress);
         }
 	}
-		
+		 
 	
 	
 	// =========================================================
@@ -317,93 +310,66 @@ species ceresModel parent: Plant_growth_model {
 
 
 // ======================================================================
-// BASIC CROP GROWTH MODEL
+// LUA-MD model
 // ======================================================================
 
 
-species basicModel parent: Plant_growth_model {
-	string id <- BASIC;
+species lua_mdModel parent: Plant_growth_model {
+	string id <- LUA_MD;
 	
-	float tmax update: the_weather.temp_max[current_date];
-	float tmin update: the_weather.temp_min[current_date];
-	float precip update:  the_weather.rainfall[current_date];
-	float sw update:  the_weather.solar_radiation[current_date];
-	float Ra update:  compute_Ra();
-		
 	
-	float yield_computation(Crop c) {
-		
-		return c.B * c.concerned_plot.surface_in_ha; // kg per ha
-	}
 
 	action day_biomass_growth(Crop c) {
-		
-		float tmean <- (tmax + tmin) / 2.0;
-
-	
-		// ETo (Hargreaves)
-		float ETo <- 0.0023 * (tmean + 17.8) * sqrt(max(0.0, tmax - tmin)) * Ra;
-		// Coeff Kc selon stade
-		float frac <- c.lifespan / (c.crop_duration);
-		float Kc <- (frac < 0.35) ? 0.9 : (frac < 0.8 ? 1.05 : 0.95);
-		float ETc <- Kc * ETo;
-
-		// Gestion irrigation
-		float I <- 0.0;
-		c.PD <- c.PD + precip;
-
-		if (c.the_farmer.practice.id = RICE_CF) {
-			if (c.PD < CF_min_PD) {
-				I <- PD_target - c.PD;
-				c.PD <- c.PD + I;
-			}
-		} else { // AWD
-			if (c.PD <= 0 and c.S < AWD_WTD_trigger) {
-				I <- PD_target - c.PD;
-				c.PD <- c.PD + I;
-			}
-		}
-		
-		
-		if (I > 0) {
-			c.irrigation_total <- c.irrigation_total + I;
-			c.irrigation_events <- c.irrigation_events + 1;
-		}
-
-		// ET -> perte d'eau
-		if (c.PD > 0) {
-			c.PD <- max(0.0, c.PD - ETc);
-		} else {
-			c.S <- max(0.0, c.S - ETc);
-		}
-
-		// Biomasse
-		float PAR <- alpha_par * sw / 1000.0;
-		float LAI <- aB * c.B;
-		float fPAR <- max(0.1, 1.0 - exp(-k_LAI * LAI));
-	
-	
+		if (not c.is_dead) {
+       	
+	        if (the_weather.humidity > pest_humidity_limit and the_weather.t_mean > pest_temp_limit and flip(pest_infection_prob)) { 
+	        	c.pest_load <- c.pest_load + pest_daily_increment;
+	        } 
+	        
+			float daily_heat <- (the_weather.t_mean - c.variety.t_base);
 			
-		float Topt <- 30.0;
-		float Trange <- 8.0;
-		float fT <- max(0.0, 1.0 - ((tmean - Topt) / Trange)^2);
-		
-		float S_opt <- S_max * 0.6;
-		float S_wp  <- S_max * 0.2;
-		float fW <- (c.PD > 0)
-		  ? 1.0
-		  : (c.S >= S_opt ? 1.0
-		  : (c.S <= S_wp ? 0.0
-		  : (c.S - S_wp) / (S_opt - S_wp)));
-		
+			if(daily_heat<0){daily_heat<-0.0;} 
+	        c.accumulated_heat <- c.accumulated_heat + daily_heat;
+	        c.growth_stage <- c.accumulated_heat / c.thermal_units_total;
+		    float k_water <- (c.water_level < awd_pumping_threshold) ? drought_growth_reduction_factor : 1.0;
+	        
+	        c.concerned_plot.local_salinity <- c.concerned_plot.my_cell.salinity_level;
+	        float k_salt <- 1.0;
+	        if ( c.concerned_plot.local_salinity > c.salt_threshold_val) { k_salt <- 1.0 - (salinity_sensitivity_slope * max(0, c.concerned_plot.local_salinity - c.salt_threshold_val)); }
+	        
+	        if (k_salt < 0) { k_salt <- 0.0; c.is_dead <- true;c.biomass <- 0.0; }
 	
-		float fN <- min(1.0, c.concerned_plot.N_avail / N_opt);
-		float deltaB <- RUE * PAR * fPAR * fT * fW * fN - m_resp * c.B;
-		deltaB <- max(deltaB, -0.05 * c.B);
-	
-		c.B <- c.B + deltaB; 
-
-		c.concerned_plot.N_avail <- max(0.0, c.concerned_plot.N_avail - 0.3 * max(0.0, deltaB));
+	        float n_consumption <- daily_n_consumption; 
+	        if (c.nitrogen_stock > 0) { c.nitrogen_stock <- c.nitrogen_stock - n_consumption; }
+	        
+	        float k_pest <- max(0.2,1.0 - c.pest_load); // Impact direct des pestes
+	       	
+	     	
+	    	// 3. FLOOD IMPACT (Progressive Mode / Decay)
+			float k_flood <- 1.0;
+    
+    		if (c.water_level > flood_stress_threshold) {  
+		        // Phase 1: Growth stop (Asphyxia / Dormancy)
+		        k_flood <- 0.0; 
+		        
+		        // Phase 2: Rotting if duration exceeds genetic tolerance
+		        if (c.concerned_plot.stress_days_flood_continuous > c.variety.max_flood_tolerance_days) {
+		            //we reduce biomass
+		            c.biomass <- c.biomass * (1.0 - flood_biomass_decay_rate);
+		            // Safety check: If biomass becomes too small (< 50 g/m2), the plant actually dies
+		            if (c.biomass < min_biomass_survival_threshold) { 
+		               	c. is_dead <- true; 
+		                c.biomass <- 0.0;
+		                
+		            }
+        		}
+    		} 
+	   		float daily_growth <- c.potential_rue_calibrated * the_weather.solar_rad * k_water * k_salt * k_pest * k_flood;
+	   
+	        c.biomass <- c.biomass + daily_growth;
+	        
+        }
+		
 	}	
 }
  

@@ -10,7 +10,7 @@ model STARFARM
 
 global {
 	/******* RICE GROTWH MODEL ********/
-	string BASIC <- "basic" const: true;
+	string LUA_MD <- "lua md" const: true;
 	string ORYZA <- "oryza" const: true;
 	string CERES <- "ceres" const: true;
 	
@@ -24,7 +24,9 @@ global {
 	string RICE_AWD <- "Rice (Alt. Wetting and Drying)" const: true;
 	string RICE_CF <- "Rice (Continuous Flooding)" const: true;
 	
-	string BAU <- "BAU" const: true;
+	string BAU <- "BAU" const: true; //BUSINESS AS USUAL
+	string OMRH <- "OMRH" const: true; //ONE MILLION RICE HECTARES 
+	 
 	/******* RICE IRRIGATION *******/
 	string CF <- "CF" const: true;
 	string AWD <- "AWD" const: true;

@@ -1,6 +1,7 @@
-name,t_base,tt_emergence,tt_veg,tt_rep,photoperiod_sensitivity,max_LAI,phyllochron,max_height,max_tillers,root_max_depth,RUE,harvest_index_potential,grain_filling_duration,grain_weight,drought_tolerance,flood_tolerance,salinity_tolerance,heat_tolerance,lodging_resistance,nitrogen_response_eff,plant_density_opt,transplanting_suitability,direct_seeding_suitability
-OM5451,10,80,950,450,0.2,5.5,100,100,18,70,2.2,0.45,350,24,0.7,0.6,0.7,0.8,0.75,0.8,220,0.8,0.9
-OM4900,10,85,1000,470,0.25,5.3,105,105,17,68,2.1,0.44,360,24,0.65,0.6,0.75,0.75,0.7,0.78,210,0.85,0.85
-OM6976,10,90,1100,500,0.3,5.6,110,110,18,75,2.25,0.43,380,25,0.6,0.65,0.6,0.7,0.72,0.8,215,0.85,0.8
-IR64,10,90,1150,500,0.3,5.0,110,95,16,65,2.0,0.40,400,23,0.5,0.5,0.4,0.6,0.8,0.75,200,0.9,0.7
-JASMINE,10,100,1200,550,0.6,4.5,120,120,14,60,1.8,0.38,420,22,0.3,0.4,0.3,0.4,0.4,0.6,180,0.9,0.4
+name,t_base,tt_emergence,tt_veg,tt_rep,photoperiod_sensitivity,max_LAI,phyllochron,max_height,max_tillers,root_max_depth,RUE,harvest_index_potential,grain_filling_duration,grain_weight,drought_tolerance,flood_tolerance,salinity_tolerance,heat_tolerance,lodging_resistance,nitrogen_response_eff,plant_density_opt,transplanting_suitability,direct_seeding_suitability,rice_market_price,seed_unit_cost,max_flood_tolerance_days
+OM5451,10.0,60.0,650.0,350.0,0.2,6.0,4.0,1.0,18.0,0.4,2.4,0.52,350.0,0.024,0.7,0.6,3.0,35.0,0.8,1.1,220.0,0.8,0.9,0.35,0.60,14
+OM4900,10.0,65.0,700.0,380.0,0.25,5.8,4.0,1.05,17.0,0.4,2.3,0.50,360.0,0.024,0.65,0.6,2.5,35.0,0.7,1.0,210.0,0.85,0.85,0.35,0.60,15
+OM6976,10.0,70.0,720.0,400.0,0.3,6.2,4.0,1.1,18.0,0.45,2.4,0.51,380.0,0.025,0.6,0.7,4.0,36.0,0.85,1.1,215.0,0.85,0.8,0.35,0.65,22
+IR64,10.0,70.0,750.0,400.0,0.3,5.0,4.0,0.95,16.0,0.4,2.0,0.45,400.0,0.023,0.5,0.5,2.0,34.0,0.8,0.9,200.0,0.9,0.7,0.28,0.45,10
+JASMINE,10.0,80.0,950.0,450.0,0.6,4.5,4.0,1.2,14.0,0.4,1.8,0.40,420.0,0.022,0.3,0.4,1.5,34.0,0.3,0.7,180.0,0.9,0.4,0.55,0.75,12
+ST25,10.0,60.0,850.0,400.0,0.0,6.5,4.0,1.15,12.0,0.35,2.2,0.48,450.0,0.026,0.6,0.4,4.0,34.0,0.5,0.9,100.0,1.0,0.8,0.55,1.20,18

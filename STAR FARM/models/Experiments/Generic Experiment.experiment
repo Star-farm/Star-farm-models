@@ -1,4 +1,4 @@
-/**
+/** 
 * Name: GenericExperiment
 * This wizard creates a new experiment file. 
 * Author: roiarthurb
@@ -40,7 +40,7 @@ global{
 	list<string> chart_list <- ["Harvest","Profit","Water consumption","Fertilizer consumption","Adoption rate","Expenses details"];
 	list<string> indicator_families_list <- ["Economy", "Practices seasons", "Biomass","GHG"];
 	string current_chart <- first(chart_list);
-
+ 
 	
 	
 	// ======================================================================
@@ -200,7 +200,7 @@ global{
 			return practices collect(each.year_summary["Crop area"]);
 		}
 		// otherwise display the adoption rate as a percentage
-		float total_area <- Plot sum_of (each.surface_in_ha);
+		float total_area <- Plot sum_of (each.surface_in_ha); 
 		list<list<float>> l <- [];
 		loop p over: practices {
 			l <+ p.year_summary["Crop area"] collect (each/total_area*100);
@@ -239,7 +239,7 @@ experiment generic_exp type:gui virtual: true {
 	parameter "Time range" var: time_range_type among: ["All", "Last year", "Last 3 years", "Last 5 years"] category: "Scale and time";
 	parameter "Scale" var: scale init: "Total" category: "Scale and time" among: ["Total","Per ha"];
 	parameter "Show practice seasons" var: show_season category: "Scale and time" among: possible_practices.keys+"None";
-	
+	 
 	output {
 		layout value: horizontal([vertical([0::50,1::50])::50,vertical([2::50,3::50])::50]) tabs:false;
 		
@@ -376,23 +376,23 @@ experiment generic_exp type:gui virtual: true {
 //            }
 
 			chart "Temperature" type: series size: {0.5,0.5} x_range: time_range(time_range_type) {
-				data "temperature min" value: the_weather.temp_min[current_date]  color: rgb(49, 130, 189) marker: false style: spline;
-				data "temperature max" value: the_weather.temp_max[current_date]  color: rgb(230, 85, 13) marker: false style: spline; 
+				data "temperature min" value: the_weather.t_min  color: rgb(49, 130, 189) marker: false style: spline;
+				data "temperature max" value: the_weather.t_max color: rgb(230, 85, 13) marker: false style: spline; 
 				// season overlay
 				datalist current_practices() collect(each.short_name+" seasons") legend: current_practices() collect(each.short_name) value: current_practices() collect(each.activity) color: current_practices() collect rgb(each.color,season_opacity) style: area line_visible: false marker: false use_second_y_axis: true;
 			}
 			chart "Solar radiation" type: series size: {0.5,0.5} position: {0.5,0.0} x_range: time_range(time_range_type) {
-				data "Solar radiation" value: the_weather.solar_radiation[current_date]  color: rgb(255, 191, 0) marker: false style: spline;
+				data "Solar radiation" value: the_weather.solar_rad color: rgb(255, 191, 0) marker: false style: spline;
 				// season overlay
 				datalist current_practices() collect(each.short_name+" seasons") legend: current_practices() collect(each.short_name) value: current_practices() collect(each.activity) color: current_practices() collect rgb(each.color,season_opacity) style: area line_visible: false marker: false use_second_y_axis: true;
 			}
 			chart "Humidity" type: series size: {0.5,0.5} position: {0.0,0.5} x_range: time_range(time_range_type) {
-				data "Humidity" value: the_weather.humidity[current_date]  color: rgb(102, 194, 255) marker: false style: spline ;
+				data "Humidity" value: the_weather.humidity  color: rgb(102, 194, 255) marker: false style: spline ;
 				// season overlay		
 				datalist current_practices() collect(each.short_name+" seasons") legend: current_practices() collect(each.short_name) value: current_practices() collect(each.activity) color: current_practices() collect rgb(each.color,season_opacity) style: area line_visible: false marker: false use_second_y_axis: true;
 			}
 			chart "Rainfall" type: series size: {0.5,0.5} position: {0.5,0.5} x_range: time_range(time_range_type) {
-				data "Rainfall" value: the_weather.rainfall[current_date]  color: rgb(33, 113, 181) style: bar;
+				data "Rainfall" value: the_weather.rain  color: rgb(33, 113, 181) style: bar;
 				// season overlay
 				datalist current_practices() collect(each.short_name+" seasons") legend: current_practices() collect(each.short_name) value: current_practices() collect(each.activity) color: current_practices() collect rgb(each.color,season_opacity) style: area line_visible: false marker: false use_second_y_axis: true;
 			}
