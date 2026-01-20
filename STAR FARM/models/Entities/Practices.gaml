@@ -464,7 +464,7 @@ species BAU_rice parent:Crop_practice {
 
 	list<Practice> other_practices;
 	init {
-		 	sowing <- world.create_sowing_practice(Cultivar first_with (each.name = "OM5451"),[105,215, 330], false);
+		 	sowing <- world.create_sowing_practice(Cultivar first_with (each.name = "OM5451"),[320,95, 215], false);
 		 	harvesting <- world.create_harvesting_practice(false);
 			ask world {
 				do add_CF_practice(myself);
@@ -484,7 +484,7 @@ species OMH_rice parent:Crop_practice {
 	list<Practice> other_practices;
 	
 	init {
-		 	sowing <- world.create_sowing_practice(Cultivar first_with (each.name = "ST25"),[105, 330], true);
+		 	sowing <- world.create_sowing_practice(Cultivar first_with (each.name = "ST25"),[305, 115], true);
 		 	harvesting <- world.create_harvesting_practice(true);
 			ask world {
 				do add_AWD_practice(myself);

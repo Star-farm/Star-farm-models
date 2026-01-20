@@ -23,7 +23,7 @@ global {
 	
 	shape_file plots_shapefile <- shape_file("../includes/Dong Thap/2020/lu_dongthap2020_clean_2016_2023.shp");
 	
-	string weather_scenario <- "Optimistic" among: ["Optimistic", "Pessimistic", "Baseline"];
+	string weather_scenario <- "Optimistic" among: ["Optimistic", "Pessimistic"];//, "Baseline"];
 	string weather_folder <- "../includes/weather_generated/" + weather_scenario;
 	
 	string innovation_diffusion_model <- NONE; //NONE, NEIGHBORS
@@ -79,7 +79,7 @@ global {
     // 4. BIOLOGICAL & CROP MANAGEMENT PARAMETERS
     // =========================================================
     float rue_field_correction_factor <- 0.4; // Correction factor to adjust theoretical RUE to field conditions (0.0 to 1.0)
-    float rue_efficiency_factor <- 0.35;  // Radiation Use Efficiency correction (calibration factor)
+    float rue_efficiency_factor <- 0.4;  // Radiation Use Efficiency correction (calibration factor)
     float daily_water_loss_mm <- 10.0;     // Sum of evapotranspiration and deep percolation (mm/day)
     float methane_base_emission <- 2.5;   // Daily CH4 emission for continuously flooded fields (kg CH4/ha/day)
     float ch4_reduction_factor <- 0.1; // Emission multiplier during dry AWD phases (10% of base)
