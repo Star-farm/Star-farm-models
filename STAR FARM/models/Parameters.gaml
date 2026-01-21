@@ -17,7 +17,10 @@ global {
 	
 	bool save_results <- false;
 	
-	date starting_date <- date([2026,8,1]);
+	int day_start_of_year <- 300;
+	
+	date starting_date <- date([2026,1,1]) add_days (day_start_of_year -1);
+	
 	
 	image_file farmer_image <- image_file("../includes/Images/farmer.png");
 	
@@ -29,20 +32,22 @@ global {
 	string innovation_diffusion_model <- NONE; //NONE, NEIGHBORS
 	
 	float neighbor_distance <- 10.0;
+	
+	
    
     map<string, float> possible_practices <- [OMRH::1.0];//[BAU::0.5, OMRH:: 0.5];
    
 	map<string,string> plots_to_keep <- [];//["Lu05_en"::"Rice"];
 		
-	map<string,string> plant_grow_models <-[BAU::LUA_MD, OMRH::LUA_MD]; //POSSIBLE VALUES : BASIC/CERES
+	map<string,string> plant_grow_models <-["BAU-3seasons"::LUA_MD, "BAU-2seasons"::LUA_MD, OMRH::LUA_MD]; //POSSIBLE VALUES : BASIC/CERES
 	
 	csv_file cultivars_csv_file <- csv_file("../includes/cultivars.csv", true);
 	
 	string output_folder <- "../../includes/results";
 	string id_xp ;
      
+    
     int grid_resolution <- 20; // Number of cells per side for the salinity/pollution grid (20x20 grid)
-   
    	bool mode_batch <- false;
    
     // =========================================================

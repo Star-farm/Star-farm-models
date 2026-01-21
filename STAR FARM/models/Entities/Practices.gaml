@@ -188,8 +188,9 @@ species Harvesting_practice parent:Practice {
         plot.the_farmer.total_costs <- cost_fert + cost_pest + cost_water + cost_seed  + cost_meca;
         
         plot.the_farmer.profit_net <- plot.the_farmer.revenue - plot.the_farmer.total_costs;
-
-     
+		
+       plot.the_farmer.yearly_profit <- plot.the_farmer.yearly_profit + plot.the_farmer.profit_net;
+		
 		ask plot.associated_crop { 
 			do die; 
 		}  
@@ -207,6 +208,12 @@ species Irrigating_practice parent: Practice virtual: true{
 		 
 		 plot.associated_crop.water_level <- plot.associated_crop.water_level + the_weather.rain - daily_water_loss_mm;
        
+        if (plot.associated_crop.water_level <= 0) {  
+        	plot.methane_emissions_kg_ha <- plot.methane_emissions_kg_ha + (methane_base_emission * ch4_reduction_factor);
+        } 
+        else { 
+        	plot.methane_emissions_kg_ha <- plot.methane_emissions_kg_ha + methane_base_emission;
+        }
         float water_needed <- max(0,manage_water_needed(plot));
        
         bool water_is_good_quality <- plot.my_cell.salinity_level < max_pumping_salinity;
@@ -215,12 +222,7 @@ species Irrigating_practice parent: Practice virtual: true{
         float water_pumped <- (water_is_good_quality and water_is_available) ? water_needed: 0.0;
        
  		plot.associated_crop.water_level <- plot.associated_crop.water_level + water_pumped;
-        if (plot.associated_crop.water_level < 0) {  
-        	plot.methane_emissions_kg_ha <- plot.methane_emissions_kg_ha + (methane_base_emission * ch4_reduction_factor);
-        } 
-        else { 
-        	plot.methane_emissions_kg_ha <- plot.methane_emissions_kg_ha + methane_base_emission;
-        }
+       
         plot.associated_crop.water_pumped_today <-  water_pumped; 
         if (water_pumped > 0) {  
         	plot.total_water_pumped <- plot.total_water_pumped + water_pumped;
@@ -253,7 +255,7 @@ species CF_Irrigating_practice parent: Irrigating_practice{
 			water_needed <- water_target_flooded - plot.associated_crop.water_level; 
 		}
 	   	return water_needed;
-	}
+	} 
 }
 
 species AWD_Irrigating_practice parent: Irrigating_practice{
@@ -457,14 +459,32 @@ species Crop_practice virtual: true {
 }
  
  
-species BAU_rice parent:Crop_practice {
-	string id <- BAU ; // Unique identifier for the practice
-	string short_name <- "Business as usual"; // Short name used for displays
+species BAU_rice_3_season parent:Crop_practice {
+	string id <-  "BAU-3seasons"  ; // Unique identifier for the practice
+	string short_name <- "Business as usual - 3 seasons"; // Short name used for displays
 	rgb color <- practices_color[short_name];  // Color used for visual representation	
 
 	list<Practice> other_practices;
 	init {
 		 	sowing <- world.create_sowing_practice(Cultivar first_with (each.name = "OM5451"),[320,95, 215], false);
+		 	harvesting <- world.create_harvesting_practice(false);
+			ask world {
+				do add_CF_practice(myself);
+				do add_input_use_practice(myself, bau_nitrogen_goal, false);
+				do add_pesticide_practice(myself, bau_pesticide_threshold, false); 
+			} 
+	}
+} 
+
+ 
+species BAU_rice_2_season parent:Crop_practice {
+	string id <- "BAU-2seasons" ; // Unique identifier for the practice
+	string short_name <- "Business as usual - 2 seasons"; // Short name used for displays
+	rgb color <- practices_color[short_name];  // Color used for visual representation	
+
+	list<Practice> other_practices;
+	init {
+		 	sowing <- world.create_sowing_practice(Cultivar first_with (each.name = "OM5451"),[305, 115], false);
 		 	harvesting <- world.create_harvesting_practice(false);
 			ask world {
 				do add_CF_practice(myself);

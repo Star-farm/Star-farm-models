@@ -34,10 +34,12 @@ global {
 	
 	float rain_last_days <- 0.0;
 	
-	string output_file;
+	string output_file_season;
+	string output_file_year;
 	
 	bool end_of_sim <- false;
-   
+	
+    
 	
 	  // Total provincial capacity (updates automatically based on agent count)
     float max_province_pumping_capacity ;
@@ -45,13 +47,19 @@ global {
   
 	init {
 		if mode_batch {
-			string pr <- possible_practices.keys = ["BAU"] ? "BAU" :(possible_practices.keys = ["OMRH"] ? "OMRH" : "BAU-OMRH"  )  ;
+			string pr <- string(possible_practices.keys) replace("[","") replace("]","")replace("'","")  ;
 			id_xp <- pr + "-" + weather_scenario;
 		}
-		output_file <- output_folder + "/results_" + int(self)+ "_" + id_xp+".csv" ;
+		output_file_season <- output_folder + "/results_season_" + int(self)+ "_" + id_xp+".csv" ;
+		
 		save "id sim,seed,year,month,day,(CTU 12) Avg Rice Yield (t/ha),Methane emissions (kg CH4/ha),GHG Emission Intensity (kg CH4/kg),AWD Adoption Level (% of area),Water Reliability (< tolerance) (% of plots without salinity stress),Area under climate-resilient varieties (%),Crop Diversification Index (distinct varieties),(CTU 31) Risk Response (Avg Stress Days per plot): Salinity Stress (days),(CTU 31) Risk Response (Avg Stress Days per plot): Drought Stress (days),(CTU 31) Risk Response (Avg Stress Days per plot): Flood Stress (days), (CTU 13) Value of By-products (Straw) ($/ha),(CTU 4) Avg Production Costs ($/ha),(CTU 5) Net Farm Income ($/ha),(CTU 8) Profit Margin (%),Avg Labor Intensity (hours/ha/season),(CTU 19/38) Avg Salinity Exposure (g/l),(CTU 39) Irrigation Water Usage (mm/ha),Avg number of pesticide applications\n"
-		format: "text" to: output_file rewrite: true;
-			 
+		format: "text" to: output_file_season rewrite: true;
+		
+		output_file_year <- output_folder + "/results_year_" + int(self)+ "_" + id_xp+".csv" ;
+		
+		save "id sim,seed,year,month,day,gini index,Bankruptcy risk(%),Top 20 vs bottom 20 income ratio,Coefficient of variation\n"
+		format: "text" to: output_file_year rewrite: true;
+		
 		do load_cultivars;
 		do create_practices;
 		do create_plant_growth_models;
@@ -65,6 +73,9 @@ global {
 		}  
 	}
 	
+	reflex end_of_year when: cycle > 1 and current_date.day_of_year =  day_start_of_year{
+		do write_year_report;
+	}
 	
 	reflex end_of_season when: ready_to_end_season and empty(Crop) {
 		do write_season_report;
@@ -88,6 +99,40 @@ global {
     	rain_last_days <- rain_last_days * rainfall_memory_decay + the_weather.rain; 
     }
     
+    
+    action write_year_report { 
+    	list<float> farmer_profit <- (Farmer collect (each.yearly_profit )) sort_by each;
+		float gini_index <- gini(farmer_profit);
+    	float bankruptcy_risk <- (farmer_profit count (each < 0.0)) / length(Farmer) * 100.0;
+    	int number <- round(0.2 * length(Farmer));
+		float top_20_vs_bottom_20_income_ratio <- mean(number first farmer_profit) = 0.0 ? 0.0 : (mean(number last farmer_profit) / mean(number first farmer_profit));
+		float coefficient_of_variation <- mean(farmer_profit) = 0.0 ? 0.0 : (mean_deviation(farmer_profit)/ mean(farmer_profit));
+		ask Farmer {
+    		yearly_profit <- 0.0;
+    	}
+    	if (write_results) { 
+    		write "\n################################################################";
+		   	write "#        YEARLY INDICATORS    #";
+		    write "################################################################\n";
+		
+			   // =========================================================
+			    // SECTION 1: ECONOMIC EQUALITY 
+			    // =========================================================
+			write "\n>>> SECTION 3: AGRO-ECONOMIC PERFORMANCE <<<";
+			write "   * gini index: " + gini_index with_precision 2;
+			write "   * Bankruptcy risk: $" + bankruptcy_risk with_precision 1 + "%";
+			write "   * Top 20 vs bottom 20 income ratio: " + top_20_vs_bottom_20_income_ratio with_precision 2;
+			write "   * Coefficient of variation: " +  coefficient_of_variation with_precision 2 ;
+		    write "\n================================================================"; 
+    			
+    	}
+    	if (save_results) {
+	  		save "" + int(self)+ "," + seed + "," + current_date.year + "," + current_date.month + "," + current_date.day + ","
+		  	+ gini_index +","+bankruptcy_risk +","+top_20_vs_bottom_20_income_ratio +","+coefficient_of_variation + "\n"
+		  	format: "text" to: output_file_year rewrite: false;
+		}
+	  
+    }
 	action write_season_report { 
 		new_season <- false;
 		list<Plot> active_plots <- Plot where (each.is_active);
@@ -185,7 +230,7 @@ global {
 	  		+ avg_yield +","+avg_ch4_ha +","+emission_intensity +","+awd_adoption
 	  		+","+safe_water_perc +","+adapted_area_perc +"," + num_varieties + ","+avg_stress_salinity +","+avg_stress_drought +","+avg_stress_flood +","+avg_straw_val
 	  		+","+avg_cost +","+avg_net_profit +","+avg_margin +","+avg_labor +","+avg_salinity_exp +","+avg_water_pumped +"," + avg_pesticide_count+"\n"
-	  		format: "text" to: output_file rewrite: false;
+	  		format: "text" to: output_file_season rewrite: false;
 	  	}
 	  
 	  	 

@@ -13,7 +13,7 @@ import "Environment.gaml"
 
 // Import external modules containing crop growth models, farming practices, and parameters
 import "Practices.gaml"
-import "../Parameters.gaml" 
+import "../Parameters.gaml"  
 
 
 global {
@@ -24,7 +24,7 @@ global {
  * SPECIES Farmer 
  * Represents an individual farmer managing one farm and making decisions about practices.
  */
-species Farmer {
+species Farmer  {
 	bool is_active <- false;
 	
 	Farm my_farm;  // Reference to the farm owned by this farmer
@@ -39,6 +39,7 @@ species Farmer {
 	
 	float profit_margin <- 0.0;
     
+    float yearly_profit;
     float profit_net;
     float total_costs;
     float revenue <- 0.0;
@@ -223,7 +224,7 @@ species Plot {
  * SPECIES Crop
  * Represents an individual crop growing on a plot.
  */
-species Crop {
+species Crop  {
 	Cultivar variety;
 	Farmer the_farmer;     // The farmer who owns the crop
 	Plot concerned_plot;   // The plot where the crop is located
