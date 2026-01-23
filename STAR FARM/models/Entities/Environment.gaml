@@ -11,7 +11,7 @@ import "Plant growth models.gaml"
 
  
 global {
-	 float total_province_pumping <- 0.0; 
+	 float total_province_pumping <- 0.0;  
 	 
 	  
 	 reflex environmental_dynamics {

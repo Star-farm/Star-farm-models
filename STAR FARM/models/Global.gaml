@@ -49,7 +49,7 @@ global {
 		do init_action;
 		if mode_batch {
 			string pr <- string(possible_practices.keys) replace("[","") replace("]","")replace("'","")  ;
-			id_xp <- pr + "-" + weather_id;
+			id_xp <- pr + "-" + weather_id +"-"+market_id;
 		} 
 		output_file_season <- output_folder + "/results_season_" + int(self)+ "_" + id_xp+".csv" ;
 		
@@ -66,7 +66,7 @@ global {
 		do create_plant_growth_models;
 		do create_plots;	
 		do init_weather_data;
-		
+		do init_market;
 		// compute the surface for each practice at the begining of the simulation
 		ask practices {do compute_practice_area;}
 		ask remove_duplicates(PG_models){
@@ -78,6 +78,12 @@ global {
 	
 	reflex end_of_year when: cycle > 1 and current_date.day_of_year =  day_start_of_year{
 		do write_year_report;
+		if use_dynamic_market {
+			ask the_market {
+				do annual_update;
+			}
+		}
+		
 	}
 	
 	reflex end_of_season when: ready_to_end_season and empty(Crop) {

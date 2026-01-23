@@ -23,7 +23,7 @@ global{
 	
 	//--------------variable used for display-----------------------------//
 	string current_indicator_family <- "Economy";
-	string show_season <- first(possible_practices.keys);
+	string show_season <- first(possible_practices.keys) ;
 	string time_range_type <- "All";
 	string scale <- "Total";
 	

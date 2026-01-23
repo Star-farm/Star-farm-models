@@ -74,7 +74,7 @@ global {
             float current_typhoon_prob <- typhoon_probability_max * progress;
 
             string filename <- output_folder + scen_name + "/dongthap_" + year + "_" + scen_name + ".csv";
-           	
+           	 
             loop doy from: 1 to: date([year]).days_in_year {
             	  bool is_wet_season <- (doy > 120) and (doy < 330);
                 

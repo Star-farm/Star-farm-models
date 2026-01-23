@@ -30,6 +30,10 @@ global {
 	string weather_id <- "Pessimistic";
 	string weather_folder <- "../includes/weather_generated/Pessimistic" ;
 	
+	bool use_dynamic_market <- false;
+	string market_id <- "neutral";
+  
+	
 	string innovation_diffusion_model <- NONE; //NONE, NEIGHBORS
 	
 	float neighbor_distance <- 10.0;

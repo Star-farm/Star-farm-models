@@ -20,6 +20,8 @@
 
 model STARFARM
 
+import "Market.gaml"
+
 import "../Global.gaml" 
 
 import "../Constants.gaml" 
@@ -184,7 +186,7 @@ species Harvesting_practice parent:Practice {
 	float labor <- labor_harvest_supervision;
 		
 	bool collect_straw;             //false (Slash-and-burn) vs 1M: true (Sale)
-   
+    
 	
 	bool to_apply(Plot plot, int current_day) {
 		return plot.associated_crop != nil and (plot.associated_crop.growth_stage >= 1 or plot.associated_crop.is_dead);
@@ -203,18 +205,19 @@ species Harvesting_practice parent:Practice {
         plot.final_yield_ton_ha <- (dry_yield * biomass_to_ton_conv) / harvest_moisture_adjust;
         plot.straw_yield_ton_ha <- (plot.associated_crop.biomass * biomass_to_ton_conv) -  plot.final_yield_ton_ha; 
  
-        float rice_rev <- (plot.final_yield_ton_ha * 1000) * plot.associated_crop.variety.rice_market_price;
+        float rice_rev <- (plot.final_yield_ton_ha * 1000) * plot.associated_crop.variety.rice_market_price * the_market.r_for_crop(plot.associated_crop.variety);
         float straw_rev <- 0.0; 
         
-        if (collect_straw) { straw_rev <- (plot.straw_yield_ton_ha * 1000) * straw_market_price; }
+        if (collect_straw) { straw_rev <- (plot.straw_yield_ton_ha * 1000) * straw_market_price * the_market.r_straw ; }
         
         plot.the_farmer.revenue <- rice_rev + straw_rev;
          
-        float cost_fert <- plot.associated_crop.total_fertilizer_applied * fertilizer_unit_price;
-        float cost_pest <- plot.pesticide_count * pesticide_unit_cost;
-        float cost_water <- plot.total_water_pumped * pumping_cost_per_mm;
-        float cost_seed <- plot.associated_crop.seed_density_kg_ha * plot.associated_crop.variety.seed_unit_cost; 
-        float cost_meca <- plot.the_farmer.mechanization_costs; 
+         
+        float cost_fert <- plot.associated_crop.total_fertilizer_applied * fertilizer_unit_price * the_market.r_fertilizer;
+        float cost_pest <- plot.pesticide_count * pesticide_unit_cost * the_market.r_pesticides;
+        float cost_water <- plot.total_water_pumped * pumping_cost_per_mm * the_market.r_water; 
+        float cost_seed <- plot.associated_crop.seed_density_kg_ha * plot.associated_crop.variety.seed_unit_cost * the_market.r_for_seed(plot.associated_crop.variety); 
+        float cost_meca <- plot.the_farmer.mechanization_costs * the_market.r_mech;  
     
         plot.the_farmer.total_costs <- cost_fert + cost_pest + cost_water + cost_seed  + cost_meca;
         
