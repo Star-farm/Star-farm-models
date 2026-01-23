@@ -18,7 +18,7 @@ import "../Parameters.gaml"
 
 global {
 	bool new_season <- false;
-} 
+}  
 
 /**
  * SPECIES Farmer 
@@ -185,6 +185,12 @@ species Plot {
     float local_salinity;
     int pesticide_count <- 0;        //SPRAY COUNTER
    
+   // 1.0 = Perfect soil, 0.6 = Highly degraded soil
+    float soil_health <- 1.0 min: min_soil_health max: 1.0;
+    
+    // PESTICIDES & PESTS
+    float pest_load <- 0.0;          // 0.0 (not infected) à 1.0 (Infected)
+  
 	/**
 	 * Reflex: sowing
 	 * Checks whether sowing should occur according to the practice calendar
@@ -212,6 +218,26 @@ species Plot {
 		} 
 		 
 	}
+	
+	reflex apply_practices {
+		ask the_farmer.practice.other_practices {
+			if (to_apply(myself, current_date.day_of_year)) {
+			 	do effect_with_labor(myself);
+	 		} 
+		}
+	}
+	
+	action update_soil_status(bool is_fallow) {
+        if (is_fallow) {
+            // Regeneration (Scenario 1M_HA: Fallow period)
+            soil_health <- soil_health + regeneration_rate;
+          
+        } else {
+            // Degradation (Scenario BAU: Continuous cropping)
+            // Logic: Soil degrades slightly after every intensive crop
+            soil_health <- soil_health - degradation_rate;
+        }
+    }
 	
 	aspect default {
 		// Visual representation: empty plots are white; cultivated plots take the color of the practice
@@ -260,10 +286,7 @@ species Crop  {
     float current_harvest_index;       // HI that decrease with stress
     
     float harvest_index_potential <- 0.5;
-     
-	// PESTICIDES & PESTS
-    float pest_load <- 0.0;          // 0.0 (not infected) à 1.0 (Infected)
-    
+       
     
     float straw_yield_ton_ha <- 0.0;
     float profit_margin <- 0.0;
@@ -284,7 +307,7 @@ species Crop  {
 		ask  PG_models[the_farmer.practice.id] {
 			do day_biomass_growth(myself);
 		}  
-		pest_load <- pest_load + (concerned_plot.my_cell.pollution_level * pest_pollution_feedback);
+		concerned_plot.pest_load <- concerned_plot.pest_load + (concerned_plot.my_cell.pollution_level * pest_pollution_feedback);
   
 	}
 	reflex track_stress_days when: !is_harvested and !is_dead {
@@ -323,12 +346,6 @@ species Crop  {
 		} 
 	} 
 	
-	reflex apply_practices {
-		ask the_farmer.practice.other_practices {
-			if (to_apply(myself.concerned_plot, myself.lifespan)) {
-			 	do effect_with_labor(myself.concerned_plot);
-	 		} 
-		}
-	}  
+	  
 }
 

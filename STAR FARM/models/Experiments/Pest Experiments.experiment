@@ -24,7 +24,7 @@ experiment "Pest experiment" parent: generic_exp virtual: false{
 	parameter "Indicators family" var: current_indicator_family among: indicator_families_list+["Pest_Cluster", "Predator", "BrownPlanthopper_Cluster"] category: "Daily indicators";
 
 	
-	
+	 
 	output{
 		display pest_map parent: base_map virtual: false{
 			species species(Pest_Cluster);

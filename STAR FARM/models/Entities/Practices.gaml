@@ -29,7 +29,7 @@ import "../Constants.gaml"
 // ======================================================================
 
 
-
+ 
 global {
 	// Map storing all crop practices available in the model, keyed by their ID
 	map<string,Crop_practice> practices;
@@ -67,6 +67,13 @@ global {
 			pract.irrigation <- self;
 			pract.other_practices << self;
 		}
+	}
+	
+	action add_fallow_practice(Crop_practice pract, int doy_end) {
+		create Fallow  {
+			day_end_fallow <- doy_end;
+			pract.other_practices << self;	
+		} 
 	}
 	
 	action add_CF_practice(Crop_practice pract) {
@@ -109,6 +116,23 @@ species Practice virtual: true {
 	
 	action effect(Plot plot) virtual: true; 
 } 
+
+species Fallow parent: Practice {
+	
+	int day_end_fallow;
+	bool to_apply(Plot plot, int current_day) {
+		return (current_day = day_end_fallow);
+	}
+	action effect(Plot plot) {
+		// 1. Pest Break : Les pestes meurent de faim
+    	plot.pest_load<- plot.pest_load * (1.0 - pest_reduction_fallow); 
+    
+    	// 2. Soil Regeneration : Le sol se repose (si vous utilisez le module soil_health)
+   		 ask plot { do update_soil_status(true); }
+    
+	}
+	
+}
 
 species Sowing_practice parent:Practice { 
 	list<int> implementation_days ;
@@ -169,6 +193,13 @@ species Harvesting_practice parent:Practice {
 	
 	action effect(Plot plot) { 
 	  float dry_yield <- plot.associated_crop.biomass * plot.associated_crop.variety.harvest_index_potential;
+	  
+	  	// Applying the Soil Fatigue Factor ---
+        dry_yield <- dry_yield * plot.soil_health;
+       
+        // Update soil status: "False" because we just harvested a crop (it was not fallow)
+        ask plot { do update_soil_status(false); }
+        
         plot.final_yield_ton_ha <- (dry_yield * biomass_to_ton_conv) / harvest_moisture_adjust;
         plot.straw_yield_ton_ha <- (plot.associated_crop.biomass * biomass_to_ton_conv) -  plot.final_yield_ton_ha; 
  
@@ -191,6 +222,7 @@ species Harvesting_practice parent:Practice {
 		
        plot.the_farmer.yearly_profit <- plot.the_farmer.yearly_profit + plot.the_farmer.profit_net;
 		
+		
 		ask plot.associated_crop { 
 			do die; 
 		}  
@@ -203,6 +235,9 @@ species Irrigating_practice parent: Practice virtual: true{
 	float manage_water_needed(Plot plot)  virtual: true;
 	float pumping_capacity;
 	float pumping_energy_cost;
+	bool to_apply(Plot plot, int current_day) {
+		return plot.associated_crop != nil;
+	}
 	
 	action effect(Plot plot) {
 		 
@@ -284,12 +319,15 @@ species Pesticide_application_practice parent:Practice {
 	float labor <- mechanical ? labor_spray_drone_hours : labor_spray_manual_hours;
 	
 	bool to_apply(Plot plot, int current_day) {
+		if (plot.associated_crop = nil) {
+			return false;
+		}
 		days_since_last_spray <- days_since_last_spray + 1;
-    	return plot.associated_crop.pest_load > pesticide_threshold and days_since_last_spray >= pest_spray_cooldown_days;
+    	return plot.pest_load > pesticide_threshold and days_since_last_spray >= pest_spray_cooldown_days;
 	}
 	action effect(Plot plot) {
 		days_since_last_spray <-0;
-		plot.associated_crop.pest_load <- 0.0; 
+		plot.pest_load <- 0.0;  
         plot.my_cell.pollution_level <- plot.my_cell.pollution_level + pesticide_pollution_add;
        	plot.pesticide_count <- plot.pesticide_count + 1; 
     	if (mechanical) {
@@ -305,13 +343,27 @@ species Input_use_practice parent:Practice {
 	float labor <- mechanical ? labor_fertilizer_machine_hours : labor_fertilizer_manual_hours;
 	
 	bool to_apply(Plot plot, int current_day) {
-		return plot.associated_crop.nitrogen_stock < n_stock_low_threshold and plot.associated_crop.total_fertilizer_applied < target_nitrogen and plot.associated_crop.growth_stage < n_late_stage_limit;
+		
+		return plot.associated_crop != nil and plot.associated_crop.nitrogen_stock < n_stock_low_threshold and plot.associated_crop.total_fertilizer_applied < target_nitrogen and plot.associated_crop.growth_stage < n_late_stage_limit;
 	}
 	
 	action effect(Plot plot) {
-		float amount <- n_application_dose; 
+		
+		// 1. Calculate the degradation gap (e.g., 1.0 - 0.8 = 0.2)
+        float degradation_gap <- 1.0 - plot.soil_health;
+        
+        // 2. Define a compensatory factor (Simple linear compensation)
+        // If soil is perfect (1.0), factor is 1.0. 
+        // If soil is degraded (0.8), factor becomes 1.2 (+20% fertilizer)
+        float compensatory_factor <- 1.0 + degradation_gap;
+        
+        // 3. Calculate the actual amount needed
+        float amount <- n_application_dose * compensatory_factor; 
+        
+        // 4. Apply to the crop (The crop receives the nitrogen)
         plot.associated_crop.nitrogen_stock <- plot.associated_crop.nitrogen_stock + amount;
-        plot.associated_crop.total_fertilizer_applied <- plot.associated_crop.total_fertilizer_applied + amount;	    
+        plot.associated_crop.total_fertilizer_applied <- plot.associated_crop.total_fertilizer_applied + amount;
+
 	} 
 } 
 
@@ -490,6 +542,7 @@ species BAU_rice_2_season parent:Crop_practice {
 				do add_CF_practice(myself);
 				do add_input_use_practice(myself, bau_nitrogen_goal, false);
 				do add_pesticide_practice(myself, bau_pesticide_threshold, false); 
+				do add_fallow_practice(myself,290);
 			} 
 	}
 } 
@@ -509,7 +562,8 @@ species OMH_rice parent:Crop_practice {
 			ask world {
 				do add_AWD_practice(myself);
 				do add_input_use_practice(myself, sust_nitrogen_goal, true);
-				do add_pesticide_practice(myself,sust_pesticide_threshold, true); 
+				do add_pesticide_practice(myself,sust_pesticide_threshold, true);
+				do add_fallow_practice(myself,290); 
 			} 
 	}
 }

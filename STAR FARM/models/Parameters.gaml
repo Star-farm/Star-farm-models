@@ -121,13 +121,20 @@ global {
     int pest_spray_cooldown_days <- 7;    // Minimum required delay between spray treatments (days)
     float pest_pollution_feedback <- 0.05;// Pollution impact on pest resurgence (killing natural predators)
     float pesticide_pollution_add <- 0.2; // Pollution units added to the cell per spray event
-    
+    float pest_reduction_fallow <- 0.9; //reduction factor of the pest for Fallow activity;
     // Yield Calibration
     float biomass_to_ton_conv <- 0.01;    // Unit conversion: g/m² to t/ha
     float harvest_moisture_adjust <- 0.86; // Adjustment for 14% commercial moisture content
 
 	float drought_growth_reduction_factor <- 0.5; // Growth multiplier during drought stress (0.5 = 50% reduction)
     float salinity_sensitivity_slope <- 0.2;      // Yield reduction rate per unit of salinity above tolerance (e.g., 0.2 = 20% loss per g/L)
+    
+    
+    float degradation_rate <- 0.01; // Loss of 1% potential per cultivation season
+    float regeneration_rate <- 0.02; // Gain of 2% per fallow/flood season
+    float min_soil_health <- 0.6;   // Soil never drops below 60% of its potential
+    
+    
     // =========================================================
     // 5. STRATEGY-SPECIFIC CONSTANTS
     // =========================================================

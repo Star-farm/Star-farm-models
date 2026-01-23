@@ -37,7 +37,7 @@ global {
 	string output_file_season;
 	string output_file_year;
 	
-	bool end_of_sim <- false;
+	bool end_of_sim <- false; 
 	
     
 	

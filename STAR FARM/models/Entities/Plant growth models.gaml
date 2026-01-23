@@ -323,7 +323,7 @@ species lua_mdModel parent: Plant_growth_model {
 		if (not c.is_dead) {
        	
 	        if (the_weather.humidity > pest_humidity_limit and the_weather.t_mean > pest_temp_limit and flip(pest_infection_prob)) { 
-	        	c.pest_load <- c.pest_load + pest_daily_increment;
+	        	c.concerned_plot.pest_load <- c.concerned_plot.pest_load + pest_daily_increment;
 	        } 
 	        
 			float daily_heat <- (the_weather.t_mean - c.variety.t_base);
@@ -342,7 +342,7 @@ species lua_mdModel parent: Plant_growth_model {
 	        float n_consumption <- daily_n_consumption; 
 	        if (c.nitrogen_stock > 0) { c.nitrogen_stock <- c.nitrogen_stock - n_consumption; }
 	        
-	        float k_pest <- max(0.2,1.0 - c.pest_load); // Impact direct des pestes
+	        float k_pest <- max(0.2,1.0 - c.concerned_plot.pest_load); // Impact direct des pestes
 	       	
 	     	
 	    	// 3. FLOOD IMPACT (Progressive Mode / Decay)
