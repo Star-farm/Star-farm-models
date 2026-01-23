@@ -23,15 +23,15 @@ global {
 	        // Factor ranges from 0.0 (North) to 1.0 (South)
 	        float location_vulnerability <- grid_y / grid_resolution; 
 	        
-	         
+	          
 	        // --- 2. BASE SALINITY (Climate Dynamics) ---
 	        // We combine the daily threat (CSV) with the location vulnerability.
 	        // Ex: If CSV says 4g/L.
 	        // - In the South (factor 1.0) -> Base = 4.0 g/L
 	        // - In the North (factor 0.1) -> Base = 0.4 g/L
-	        float base_salinity <- the_weather.salinity * location_vulnerability;
+	        float base_sal <- the_weather.salinity * location_vulnerability;
 	
-	        // --- 3. HUMAN IMPACT (Feedback Loop) ---
+	        // --- 3. HUMAN IMPACT (Feedback Loop) --- 
 	        // If everyone pumps, it creates a depression that "sucks" salty water from the river into canals.
 	        // This is the anthropogenic amplifier.
 	        float human_impact <- 0.0;
@@ -41,7 +41,7 @@ global {
 	        }
 	    	
 	      // --- 4. FINAL CALCULATION & RAIN DILUTION ---
-	        float potential_salinity <- base_salinity + human_impact;
+	        float potential_salinity <- base_sal + human_impact;
 	       
 	        
 	       //if (self = unit_cell(location) and not empty(Crop)) { write sample(human_impact) + " " + sample(water_extraction_salt_impact);}

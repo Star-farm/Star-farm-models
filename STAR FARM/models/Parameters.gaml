@@ -26,8 +26,9 @@ global {
 	
 	shape_file plots_shapefile <- shape_file("../includes/Dong Thap/2020/lu_dongthap2020_clean_2016_2023.shp");
 	
-	string weather_scenario <- "Optimistic" among: ["Optimistic", "Pessimistic"];//, "Baseline"];
-	string weather_folder <- "../includes/weather_generated/" + weather_scenario;
+	bool use_weather_generator <- false;
+	string weather_id <- "Pessimistic";
+	string weather_folder <- "../includes/weather_generated/Pessimistic" ;
 	
 	string innovation_diffusion_model <- NONE; //NONE, NEIGHBORS
 	

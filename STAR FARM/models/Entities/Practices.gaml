@@ -204,7 +204,7 @@ species Harvesting_practice parent:Practice {
         plot.straw_yield_ton_ha <- (plot.associated_crop.biomass * biomass_to_ton_conv) -  plot.final_yield_ton_ha; 
  
         float rice_rev <- (plot.final_yield_ton_ha * 1000) * plot.associated_crop.variety.rice_market_price;
-        float straw_rev <- 0.0;
+        float straw_rev <- 0.0; 
         
         if (collect_straw) { straw_rev <- (plot.straw_yield_ton_ha * 1000) * straw_market_price; }
         

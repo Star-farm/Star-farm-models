@@ -46,10 +46,11 @@ global {
   
   
 	init {
+		do init_action;
 		if mode_batch {
 			string pr <- string(possible_practices.keys) replace("[","") replace("]","")replace("'","")  ;
-			id_xp <- pr + "-" + weather_scenario;
-		}
+			id_xp <- pr + "-" + weather_id;
+		} 
 		output_file_season <- output_folder + "/results_season_" + int(self)+ "_" + id_xp+".csv" ;
 		
 		save "id sim,seed,year,month,day,(CTU 12) Avg Rice Yield (t/ha),Methane emissions (kg CH4/ha),GHG Emission Intensity (kg CH4/kg),AWD Adoption Level (% of area),Water Reliability (< tolerance) (% of plots without salinity stress),Area under climate-resilient varieties (%),Crop Diversification Index (distinct varieties),(CTU 31) Risk Response (Avg Stress Days per plot): Salinity Stress (days),(CTU 31) Risk Response (Avg Stress Days per plot): Drought Stress (days),(CTU 31) Risk Response (Avg Stress Days per plot): Flood Stress (days), (CTU 13) Value of By-products (Straw) ($/ha),(CTU 4) Avg Production Costs ($/ha),(CTU 5) Net Farm Income ($/ha),(CTU 8) Profit Margin (%),Avg Labor Intensity (hours/ha/season),(CTU 19/38) Avg Salinity Exposure (g/l),(CTU 39) Irrigation Water Usage (mm/ha),Avg number of pesticide applications\n"
@@ -72,6 +73,8 @@ global {
 			do initialize();
 		}  
 	}
+	
+	action init_action;
 	
 	reflex end_of_year when: cycle > 1 and current_date.day_of_year =  day_start_of_year{
 		do write_year_report;
