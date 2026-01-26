@@ -15,7 +15,7 @@ global {
 	
 	bool write_results <- true;
 	
-	bool save_results <- false;
+	bool save_results <- true;
 	
 	int day_start_of_year <- 300;
 	
@@ -48,7 +48,8 @@ global {
 	
 	csv_file cultivars_csv_file <- csv_file("../includes/cultivars.csv", true);
 	
-	string output_folder <- "../../includes/results";
+	string output_folder <- "../../results";
+	
 	string id_xp ;
      
     

@@ -18,7 +18,7 @@ import "../Parameters.gaml"
 
 global {
 	bool new_season <- false;
-}  
+}   
 
 /**
  * SPECIES Farmer 
