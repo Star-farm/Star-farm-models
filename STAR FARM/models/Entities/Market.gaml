@@ -12,9 +12,7 @@ import "Cultivar.gaml"
 
 global {
 	Market the_market;
-	float global_inflation <- 0.03 ;
-    float global_volatility <- 0.05 ;
-    
+	
     action init_market {
 		if (the_market = nil) {
 			create Market {
@@ -29,7 +27,9 @@ global {
 
 species Market {
     rgb color_code;
-
+	float global_inflation <- 0.03 ;
+    float global_volatility <- 0.05 ;
+    
     // --- 1. THE RATIOS (The Output) ---
     // All start at 1.0 (100% of the base price in your database)
     float r_crop <- 1.0;       // Output Price

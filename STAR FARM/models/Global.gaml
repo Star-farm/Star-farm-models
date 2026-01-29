@@ -36,6 +36,8 @@ global {
 	
 	float rain_last_days <- 0.0;
 	
+	bool mode_batch <- false;
+   
 	bool end_of_sim <- false; 
 
 // Output file paths

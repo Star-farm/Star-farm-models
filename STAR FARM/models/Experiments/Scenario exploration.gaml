@@ -35,7 +35,7 @@ global  {
 			match PESSIMISTIC{
 				do generate_scenario(PESSIMISTIC,start_year, end_year, 2.5, 5.0, 1.4, 0.06,30,20);
 			}
-		}
+		} 
 		
 		switch market_scenario {
 			match STANDARD {

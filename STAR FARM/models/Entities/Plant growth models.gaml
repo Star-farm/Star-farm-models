@@ -96,7 +96,7 @@ species Plant_growth_model virtual: true{
 	
 	    // convert latitude to radians
 	    float lat_rad <- lat_deg * PI / 180.0;
-	
+	 
 	    // inverse relative distance Earth-Sun
 	    float dr <- 1.0 + 0.033 * cos(2.0 * PI / 365.0 * doy);
 	
@@ -123,8 +123,23 @@ species Plant_growth_model virtual: true{
 species ceresModel parent: Plant_growth_model {
 	string id <- CERES;
 	
+   	 /**** PARAMETERS FOR CERES PLANT GROWTH MODEL *****/
+    float Tbase <- 8.0;
+    float Topt_ceres  <- 30.0; 
+    float k     <- 0.6;     // extinction coefficient 
+    float P1    <- 500.0;   // °C.day emergence → panicle initiation
+    float P5    <- 500.0;   // °C.day grain filling
+    float RUE   <- 3.0;     // g DM / MJ
+    float latitude <- 10.0;
+    
+    // Grain
+    float HI_max          <- 0.50;
+    float grain_fill_rate <- 0.03; // fraction/jour
+
+
+	
    
-    // --- STATE VARIABLES
+    // --- STATE VARIABLES 
     map<Plot,float> tt;        // thermal time
     map<Plot,int> stage;         // 0=veg, 1=repro, 2=grain fill, 3=mat
     float LAI <- 0.1;
@@ -163,7 +178,7 @@ species ceresModel parent: Plant_growth_model {
 		}
 	}
 	
-	
+	 
 	reflex phenology {
         float dTT <- max(0, the_weather.t_mean - Tbase);
         ask plot_species{
@@ -172,9 +187,9 @@ species ceresModel parent: Plant_growth_model {
         		myself.stage[self] <- 0;
         	}else{
         		myself.tt[self] <- myself.tt[self] + dTT;
-        		if (myself.stage[self] = 0 and myself.tt[self] >= P1) { myself.stage[self] <- 1; }
-		        if (myself.stage[self] = 1 and myself.tt[self] >= (P1 + P5)) { myself.stage[self] <- 2; }
-		        if (myself.stage[self] = 2 and myself.tt[self] >= (P1 + 2 * P5)) { myself.stage[self] <- 3; }
+        		if (myself.stage[self] = 0 and myself.tt[self] >= myself.P1) { myself.stage[self] <- 1; }
+		        if (myself.stage[self] = 1 and myself.tt[self] >= (myself.P1 + myself.P5)) { myself.stage[self] <- 2; }
+		        if (myself.stage[self] = 2 and myself.tt[self] >= (myself.P1 + 2 * myself.P5)) { myself.stage[self] <- 3; }
         	}
         	
         }
@@ -243,7 +258,7 @@ species ceresModel parent: Plant_growth_model {
 		
 		if (c.B <= 1e-6) {
             N_stress <- 1.0;
-        } else {
+        } else { 
             N_conc <- c.plant_N / c.B; // g/g
             if (N_conc <= c.variety.N_min_conc) {
                 N_stress <- 0.0;
@@ -338,10 +353,7 @@ species lua_mdModel parent: Plant_growth_model {
 	        if ( c.concerned_plot.local_salinity > c.salt_threshold_val) { k_salt <- 1.0 - (salinity_sensitivity_slope * max(0, c.concerned_plot.local_salinity - c.salt_threshold_val)); }
 	        
 	        if (k_salt < 0) { k_salt <- 0.0; c.is_dead <- true;c.biomass <- 0.0; }
-	
-	        float n_consumption <- daily_n_consumption; 
-	        if (c.nitrogen_stock > 0) { c.nitrogen_stock <- c.nitrogen_stock - n_consumption; }
-	        
+	  
 	        float k_pest <- max(0.2,1.0 - c.concerned_plot.pest_load); // Impact direct des pestes
 	       	
 	     	
@@ -364,7 +376,33 @@ species lua_mdModel parent: Plant_growth_model {
 		            }
         		}
     		} 
-	   		float daily_growth <- c.potential_rue_calibrated * the_weather.solar_rad * k_water * k_salt * k_pest * k_flood;
+    		 
+    		 // 1. Calculate the optimal requirement for the day
+			float n_optimum_variety <- daily_n_consumption * (1.0 + (c.variety.nitrogen_response_eff * (n_saturation_threshold - 1.0)));
+			float k_nitrogen <- 1.0;
+			
+			// 2. Dynamic Factor Calculation
+			if (c.nitrogen_stock >= n_optimum_variety) {
+			    /* * BOOST PHASE: High 'nitrogen_response_eff' acts as a yield accelerator.
+			    * Realizes the "High-Yield Variety" (HYV) potential.
+			    */
+			    k_nitrogen <- 1.0 + (c.variety.nitrogen_response_eff * n_boost_max_factor);
+			
+			} else if (c.nitrogen_stock > 0 and c.nitrogen_stock < daily_n_consumption) {
+			    /* * DEFICIT PHASE: High 'nitrogen_response_eff' acts as a vulnerability.
+			    * The plant suffers more from the missing nitrogen.
+			    */
+			    float boost_ratio <- (c.nitrogen_stock - daily_n_consumption) / (n_optimum_variety - daily_n_consumption);
+    			k_nitrogen <- 1.0 + (c.variety.nitrogen_response_eff * n_boost_max_factor * boost_ratio);
+			
+			} else if (c.nitrogen_stock <= 0) {
+			    /* * DEPLETION PHASE: Growth is limited to the baseline rustic capacity.
+			    */
+			    k_nitrogen <- max(0.0, 1.0 - c.variety.nitrogen_response_eff);
+			}
+				 	
+	    		
+	   		float daily_growth <- c.potential_rue_calibrated * the_weather.solar_rad * k_water * k_salt * k_pest * k_flood * k_nitrogen;
 	   
 	        c.biomass <- c.biomass + daily_growth;
 	        

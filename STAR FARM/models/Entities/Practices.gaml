@@ -156,7 +156,7 @@ species Sowing_practice parent:Practice {
 			concerned_plot <- plot; 
 			
 			thermal_units_total <- variety.tt_emergence + variety.tt_veg + variety.tt_rep + variety.grain_filling_duration;
-       		potential_rue_calibrated <- RUE * rue_efficiency_factor; 
+       		potential_rue_calibrated <- myself.type_of_cultivar.RUE * rue_efficiency_factor; 
         	salt_threshold_val <- variety.salinity_tolerance;
  			
  			concerned_plot.stress_days_salinity <- 0;
@@ -176,7 +176,7 @@ species Sowing_practice parent:Practice {
     
    		}  
    		
-	}
+	} 
 }
 
 
@@ -206,7 +206,7 @@ species Harvesting_practice parent:Practice {
         plot.straw_yield_ton_ha <- (plot.associated_crop.biomass * biomass_to_ton_conv) -  plot.final_yield_ton_ha; 
  
         float rice_rev <- (plot.final_yield_ton_ha * 1000) * plot.associated_crop.variety.rice_market_price * the_market.r_for_crop(plot.associated_crop.variety);
-        float straw_rev <- 0.0; 
+        float straw_rev <- 0.0;  
         
         if (collect_straw) { straw_rev <- (plot.straw_yield_ton_ha * 1000) * straw_market_price * the_market.r_straw ; }
         
@@ -226,7 +226,7 @@ species Harvesting_practice parent:Practice {
        plot.the_farmer.yearly_profit <- plot.the_farmer.yearly_profit + plot.the_farmer.profit_net;
 		
 		
-		ask plot.associated_crop { 
+		ask plot.associated_crop {  
 			do die; 
 		}  
 		plot.associated_crop <- nil;

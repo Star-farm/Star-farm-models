@@ -15,6 +15,23 @@ import "../Parameters.gaml"
 
 
 global {
+	
+	// Paramètres du modèle avec pest(à calibrer)
+	float init_pest_resistant_rate <- 0.25;
+	int init_pest_cluster_number <- 3 min: 0;
+	int init_predator_number <- 15 min: 0;
+	
+	int pest_day_lifespan <- 800;
+	int predator_day_lifespan <- 800;
+	
+	float pest_quantity_B_to_eat <- 0.1;
+	float pest_reprod_effi_rate <- 2.0; // Energy cost of reproduction
+
+	float init_predator_resistant_rate <- 0.25;
+	float predator_hunting_rate <- 0.8;
+	float predator_reprod_effi_rate <- 20.0; // Energy cost of reproduction
+	float predator_eating_effi_rate <- 0.02; 
+	
 	string map_display <- "Current practice";
 	list<rgb> pest_density_palette <- brewer_colors("OrRd");
 	int palette_size <- length(pest_density_palette);

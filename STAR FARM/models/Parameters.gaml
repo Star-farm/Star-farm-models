@@ -54,8 +54,7 @@ global {
      
     
     int grid_resolution <- 20; // Number of cells per side for the salinity/pollution grid (20x20 grid)
-   	bool mode_batch <- false;
-   
+   	
     // =========================================================
     // 2. ECONOMIC PARAMETERS (Prices and Costs)
     // =========================================================
@@ -108,6 +107,11 @@ global {
     float flood_stress_threshold <- 300.0;    // Water level triggering submergence stress (mm)
     // Percentage of biomass that rots every day once flood tolerance is exceeded
     float flood_biomass_decay_rate <- 0.10; // 0.10 = 10% loss per extra day
+    
+    
+    float n_boost_max_factor <- 0.2; //Defines the maximum growth boost achievable through nitrogen saturation. A value of 0.2 means a variety can grow 20% faster than its potential RUE if stock is high.
+   
+    float n_saturation_threshold <- 1.2 ; //The safety margin of nitrogen required to trigger the boost effect. 1.2 means the stock must be 20% higher than the daily requirement to be considered "optimal".
     
     // Minimum Biomass Threshold
     // The minimum amount of biomass (g/m²) required for the plant to stay alive.
@@ -208,41 +212,8 @@ global {
     // --- Specific Task Labor ---
     float labor_spray_manual_hours <- 4.0; // Hours to spray 1 ha manually (BAU - physical burden)
     float labor_spray_drone_hours <- 0.0;  // Done by service provider (Time is 0 for the farmer)
- 
-    /**** PARAMETERS FOR BASIC PLANT GROWTH MODEL *****/
-    
- 	// Latitude pour ETo (en degrés)
-	
-	 /**** PARAMETERS FOR CERES PLANT GROWTH MODEL *****/
-    float Tbase <- 8.0;
-    float Topt_ceres  <- 30.0; 
-    float k     <- 0.6;     // extinction coefficient 
-    float P1    <- 500.0;   // °C.day emergence → panicle initiation
-    float P5    <- 500.0;   // °C.day grain filling
-    float RUE   <- 3.0;     // g DM / MJ
-    float latitude <- 10.0;
-    
-    // Grain
-    float HI_max          <- 0.50;
-    float grain_fill_rate <- 0.03; // fraction/jour
 
 
-	// Paramètres du modèle avec pest(à calibrer)
-	float init_pest_resistant_rate <- 0.25;
-	int init_pest_cluster_number <- 3 min: 0;
-	int init_predator_number <- 15 min: 0;
-	
-	int pest_day_lifespan <- 800;
-	int predator_day_lifespan <- 800;
-	
-	float pest_quantity_B_to_eat <- 0.1;
-	float pest_reprod_effi_rate <- 2.0; // Energy cost of reproduction
-
-	float init_predator_resistant_rate <- 0.25;
-	float predator_hunting_rate <- 0.8;
-	float predator_reprod_effi_rate <- 20.0; // Energy cost of reproduction
-	float predator_eating_effi_rate <- 0.02;
-   
     
 }
 
