@@ -85,11 +85,15 @@ global {
 		} 
 	}
 	
-	
-	action add_input_use_practice(Crop_practice pract, float target_nitrogen, bool mec) {
-		create Input_use_practice with:(target_nitrogen:target_nitrogen, mechanical:mec){
-			pract.other_practices << self;
-		}
+	action add_input_use_practice(Crop_practice cp, float trigger_threshold, float base_dose, float target, bool mech) {
+	    create Input_use_practice {
+	        self.trigger_threshold <- trigger_threshold;
+	        self.base_dose <- base_dose;
+	        self.target_nitrogen <- target;
+	        self.mechanical <- mech;
+	        // Add to the list of practices of the parent
+	        cp.other_practices <- cp.other_practices + self;
+	    }
 	}
 	
 	action add_pesticide_practice(Crop_practice pract, float pesticide_threshold, bool mec) {
@@ -339,37 +343,58 @@ species Pesticide_application_practice parent:Practice {
         plot.the_farmer.accumulated_labor_hours <- plot.the_farmer.accumulated_labor_hours + labor;
 	}  
 }
+
+
 species Input_use_practice parent:Practice {
 	string name <- INPUT;
-	float target_nitrogen;
+	
+	float trigger_threshold;   
+	float base_dose;           
+	
+	float target_nitrogen;     // Season total limit
 	bool mechanical;
 	float labor <- mechanical ? labor_fertilizer_machine_hours : labor_fertilizer_manual_hours;
 	
+	// --- DECISION LOGIC ---
 	bool to_apply(Plot plot, int current_day) {
-		
-		return plot.associated_crop != nil and plot.associated_crop.nitrogen_stock < n_stock_low_threshold and plot.associated_crop.total_fertilizer_applied < target_nitrogen and plot.associated_crop.growth_stage < n_late_stage_limit;
+		return plot.associated_crop != nil 
+		       and not plot.associated_crop.is_dead
+		       // 1. Check against the SPECIFIC threshold of this practice
+		       and plot.associated_crop.nitrogen_stock < trigger_threshold 
+		       // 2. Check season limits
+		       and plot.associated_crop.total_fertilizer_applied < target_nitrogen 
+		       and plot.associated_crop.growth_stage < n_late_stage_limit;
 	}
 	
+	// --- ACTION LOGIC ---
 	action effect(Plot plot) {
 		
-		// 1. Calculate the degradation gap (e.g., 1.0 - 0.8 = 0.2)
+		// 1. Calculate the degradation gap (Soil Health Logic)
         float degradation_gap <- 1.0 - plot.soil_health;
         
-        // 2. Define a compensatory factor (Simple linear compensation)
-        // If soil is perfect (1.0), factor is 1.0. 
-        // If soil is degraded (0.8), factor becomes 1.2 (+20% fertilizer)
+        // 2. Define compensatory factor
+        // Note: You might want to disable this for BAU if they don't care about soil health,
+        // but let's assume they apply more on bad soil effectively.
         float compensatory_factor <- 1.0 + degradation_gap;
         
-        // 3. Calculate the actual amount needed
-        float amount <- n_application_dose * compensatory_factor; 
+        // 3. Calculate actual amount using the SPECIFIC BASE DOSE
+        float amount <- base_dose * compensatory_factor; 
         
-        // 4. Apply to the crop (The crop receives the nitrogen)
-        plot.associated_crop.nitrogen_stock <- plot.associated_crop.nitrogen_stock + amount;
-        plot.associated_crop.total_fertilizer_applied <- plot.associated_crop.total_fertilizer_applied + amount;
-
+        // Safety check: Don't exceed the season target limit
+        if ((plot.associated_crop.total_fertilizer_applied + amount) > target_nitrogen) {
+        	amount <- target_nitrogen - plot.associated_crop.total_fertilizer_applied;
+        }
+        
+        // 4. Apply to the crop
+        if (amount > 0) {
+	        plot.associated_crop.nitrogen_stock <- plot.associated_crop.nitrogen_stock + amount;
+	        plot.associated_crop.total_fertilizer_applied <- plot.associated_crop.total_fertilizer_applied + amount;
+	        
+	        // Optional: Add cost tracking here if linked to farmer
+	        // plot.owner.expenses <- plot.owner.expenses + (amount * fertilizer_price);
+        }
 	} 
-} 
-
+}
 
 
 // ======================================================================
@@ -525,7 +550,13 @@ species BAU_rice_3_season parent:Crop_practice {
 		 	harvesting <- world.create_harvesting_practice(false);
 			ask world {
 				do add_CF_practice(myself);
-				do add_input_use_practice(myself, bau_nitrogen_goal, false);
+				do add_input_use_practice(cp: myself, 
+					    trigger_threshold: bau_n_trigger_threshold, 
+					    base_dose: bau_n_dose_amount,               
+					    target: bau_nitrogen_goal, 
+					    mech: false
+					);			
+				
 				do add_pesticide_practice(myself, bau_pesticide_threshold, false); 
 			} 
 	}
@@ -543,7 +574,12 @@ species BAU_rice_2_season parent:Crop_practice {
 		 	harvesting <- world.create_harvesting_practice(false);
 			ask world {
 				do add_CF_practice(myself);
-				do add_input_use_practice(myself, bau_nitrogen_goal, false);
+				do add_input_use_practice(cp: myself, 
+					    trigger_threshold: bau_n_trigger_threshold, 
+					    base_dose: bau_n_dose_amount,               
+					    target: bau_nitrogen_goal, 
+					    mech: false
+					);			
 				do add_pesticide_practice(myself, bau_pesticide_threshold, false); 
 				do add_fallow_practice(myself,290);
 			} 
@@ -564,7 +600,11 @@ species OMH_rice parent:Crop_practice {
 		 	harvesting <- world.create_harvesting_practice(true);
 			ask world {
 				do add_AWD_practice(myself);
-				do add_input_use_practice(myself, sust_nitrogen_goal, true);
+				do add_input_use_practice(cp:myself, 
+				    trigger_threshold: sust_n_trigger_threshold, 
+				    base_dose: sust_n_dose_amount,            
+				    target: sust_nitrogen_goal, 
+				    mech: true);
 				do add_pesticide_practice(myself,sust_pesticide_threshold, true);
 				do add_fallow_practice(myself,290); 
 			} 

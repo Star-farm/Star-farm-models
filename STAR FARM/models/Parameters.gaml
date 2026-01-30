@@ -153,12 +153,18 @@ global {
     float bau_pesticide_threshold <- 0.10; // Aggressive/Preventive treatment threshold
     float bau_nitrogen_goal <- 120.0;     // High input nitrogen target (kg/ha)
     float pumping_capacity_bau <- 10.0; // mm/jour (Vieilles pompes)
+   	float bau_n_trigger_threshold <- 15.0;  // The nitrogen stock level (kg/ha) that triggers fertilization for BAU farmers. High value (15.0) means they fertilize early to avoid any risk of deficiency (insurance behavior). 
+	float bau_n_dose_amount <- 50.0 ;// The amount of nitrogen (kg/ha) applied per dose by BAU farmers. High value (50.0) implies bulk application, often leading to leaching/waste. 
+	
    
     // Sustainable (1M_HA - Modern)
     float sust_seed_density <- 80.0;      // Precision mechanical seeding rate (kg/ha)
     float sust_pesticide_threshold <- 0.40;// Integrated Pest Management (IPM) threshold
     float sust_nitrogen_goal <- 90.0;      // Precise/Optimized nitrogen target (kg/ha)
     float pumping_capacity_sust <- 20.0; // mm/jour (Station de pompage moderne 1M_HA)
+  	float sust_n_trigger_threshold <- 5.0 ;	// The nitrogen stock level (kg/ha) that triggers fertilization for OMRH farmers. Low value (5.0) implies precision timing (Just-in-Time), waiting until the plant truly needs it. */
+	float sust_n_dose_amount <- 30.0;// The amount of nitrogen (kg/ha) applied per dose by OMRH farmers. Lower value (30.0) implies split application and higher efficiency. */
+	
    
     // Capacité de pompage active (Pompes diesel vs électriques)
    // =========================================================

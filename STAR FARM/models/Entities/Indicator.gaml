@@ -55,7 +55,7 @@ species Indicator virtual: true {
 }
 
 // -----------------------------------------------------------
-// SECTION 1: AGRO-ECONOMIC PERFORMANCE (Enriched)
+// SECTION 1: AGRO-ECONOMIC PERFORMANCE 
 // -----------------------------------------------------------
 
 species Avg_yield parent: Indicator {
@@ -165,7 +165,7 @@ species Avg_methane parent: Indicator {
 		if empty(active_plots) { value <- 0.0; }
 		else { value <- (active_plots mean_of each.methane_emissions_kg_ha); }
 	}
-}
+} 
 
 species AWD_adoption_rate parent: Indicator {
 	string name <- "AWD Adoption";
@@ -315,6 +315,30 @@ species Avg_max_flood_continuous parent: Indicator {
 		if empty(active_plots) { value <- 0.0; }
 		else { value <- mean(active_plots collect each.max_stress_days_flood_continuous); }
 	}
+}
+
+species Avg_pest_load parent: Indicator {
+    string name <- "Pest Pressure";
+    string legend <- "Avg Pest Load Index";
+    string unit <- "idx (0-1)";
+    string category <- ADAPTATION_RESILIENCE;
+    
+    // Timing configuration for Daily output
+    bool is_seasonal <- false;
+    bool is_yearly <- false;
+    bool is_dayly <- true;
+    
+    int float_precision <- 3; // Higher precision to detect small daily increments
+    
+    action compute_value {
+        // (CTU Example) Average Pest Load across all active plots
+        if empty(active_plots) { 
+            value <- 0.0; 
+        } else { 
+            // Calculates the mean pest load stored on the plots
+            value <- active_plots mean_of each.pest_load; 
+        }
+    }
 }
 
 // -----------------------------------------------------------
