@@ -12,17 +12,17 @@ import "Plant growth models.gaml"
  
 global {
 	 float total_province_pumping <- 0.0;  
-	 
+	 int grid_resolution <- (unit_cell max_of (each.grid_x)) +1;
 	  
 	 reflex environmental_dynamics {
     	total_province_pumping <- sum(Crop collect (each.water_pumped_today));
     	ask unit_cell {
     		
 	    		// --- 1. GEOGRAPHIC FACTOR (Spatial) ---
-	        // Mekong Delta: The South (large y) is closer to the sea, the North (small y) is protected.
+	        // Mekong Delta: use real data or The South (large y) is closer to the sea, the North (small y) is protected.
 	        // Factor ranges from 0.0 (North) to 1.0 (South)
-	        float location_vulnerability <- grid_y / grid_resolution; 
-	        
+	       float location_vulnerability <- use_real_data ? 
+    				grid_value :   (grid_y / grid_resolution);
 	          
 	        // --- 2. BASE SALINITY (Climate Dynamics) ---
 	        // We combine the daily threat (CSV) with the location vulnerability.
@@ -86,7 +86,7 @@ global {
    	} 
 }
 
-grid unit_cell width: grid_resolution height: grid_resolution {
+grid unit_cell cell_width: cell_size cell_height: cell_size {
     float pollution_level <- 0.0;
     float salinity_level <- 0.0;
     float pollution_level_tmp <- 0.0;
