@@ -53,7 +53,7 @@ global {
 	string id_xp ;
      
     bool use_real_data <- false; // use real data for local salinity
-    float cell_size <- 5000.0; // length of the cell size for the salinity/pollution grid (m)
+    float spatial_discretization <- 5000.0; // length of the cell size for the salinity/pollution grid (m)
    	
     // =========================================================
     // 2. ECONOMIC PARAMETERS (Prices and Costs)
