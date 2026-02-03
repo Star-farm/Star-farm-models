@@ -5,7 +5,7 @@
 */
 
 
-model Environment
+model Environment 
 
 import "Plant growth models.gaml"
 
@@ -86,7 +86,7 @@ global {
    	} 
 }
 
-grid unit_cell cell_width: cell_size cell_height: cell_size {
+grid unit_cell cell_width: spatial_discretization cell_height: spatial_discretization {
     float pollution_level <- 0.0;
     float salinity_level <- 0.0;
     float pollution_level_tmp <- 0.0;
