@@ -72,7 +72,7 @@ global {
 	}
 	
 	action add_fallow_practice(Crop_practice pract, int doy_end) {
-		create Fallow  {
+		create Fallow_practice  {
 			day_end_fallow <- doy_end;
 			pract.other_practices << self;	
 		} 
@@ -123,7 +123,7 @@ species Practice virtual: true {
 	action effect(Plot plot) virtual: true; 
 } 
 
-species Fallow parent: Practice {
+species Fallow_practice parent: Practice {
 	
 	int day_end_fallow;
 	bool to_apply(Plot plot, int current_day) {
