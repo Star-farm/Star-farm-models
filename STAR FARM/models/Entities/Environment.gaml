@@ -86,8 +86,8 @@ global {
    	} 
 }
 
-grid unit_cell cell_width: spatial_discretization cell_height: spatial_discretization {
-    float pollution_level <- 0.0;
+grid unit_cell cell_width: spatial_discretization cell_height: spatial_discretization neighbors: 8{
+    float pollution_level <- 0.0 min: 0.0 max: 1.0;
     float salinity_level <- 0.0;
     float pollution_level_tmp <- 0.0;
     float salinity_level_tmp <- 0.0;
