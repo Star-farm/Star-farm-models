@@ -335,31 +335,31 @@ species lua_mdModel parent: Plant_growth_model {
 	
 
 	action day_biomass_growth(Crop c) {
-		if (not c.is_dead) {
-       	
-	        if (the_weather.humidity > pest_humidity_limit and the_weather.t_mean > pest_temp_limit and flip(pest_infection_prob)) { 
-	        	c.concerned_plot.pest_load <- c.concerned_plot.pest_load + pest_daily_increment;
-	        } 
-	        
-			float daily_heat <- (the_weather.t_mean - c.variety.t_base);
-			
-			if(daily_heat<0){daily_heat<-0.0;} 
-	        c.accumulated_heat <- c.accumulated_heat + daily_heat;
-	        c.growth_stage <- c.accumulated_heat / c.thermal_units_total;
-		    float k_water <- (c.water_level < awd_pumping_threshold) ? drought_growth_reduction_factor : 1.0;
-	        
-	        c.concerned_plot.local_salinity <- c.concerned_plot.my_cell.salinity_level;
-	        float k_salt <- 1.0;
-	        if ( c.concerned_plot.local_salinity > c.salt_threshold_val) { k_salt <- 1.0 - (salinity_sensitivity_slope * max(0, c.concerned_plot.local_salinity - c.salt_threshold_val)); }
-	        
-	        if (k_salt < 0) { k_salt <- 0.0; c.is_dead <- true;c.biomass <- 0.0; }
-	  
-	        float k_pest <- max(0.2,1.0 - c.concerned_plot.pest_load); // Impact direct des pestes
+			if (not c.is_dead) {
 	       	
-	     	
-	    	// 3. FLOOD IMPACT (Progressive Mode / Decay)
-			float k_flood <- 1.0;
-    
+		        if (the_weather.humidity > pest_humidity_limit and the_weather.t_mean > pest_temp_limit and flip(pest_infection_prob)) { 
+		        	c.concerned_plot.pest_load <- c.concerned_plot.pest_load + pest_daily_increment;
+		        } 
+		        
+				float daily_heat <- (the_weather.t_mean - c.variety.t_base);
+				
+				if(daily_heat<0){daily_heat<-0.0;} 
+		        c.accumulated_heat <- c.accumulated_heat + daily_heat;
+		        c.growth_stage <- c.accumulated_heat / c.thermal_units_total;
+			    float k_water <- (c.water_level < awd_pumping_threshold) ? drought_growth_reduction_factor : 1.0;
+		        
+		        c.concerned_plot.local_salinity <- c.concerned_plot.my_cell.salinity_level;
+		        float k_salt <- 1.0;
+		        if ( c.concerned_plot.local_salinity > c.salt_threshold_val) { k_salt <- 1.0 - (salinity_sensitivity_slope * max(0, c.concerned_plot.local_salinity - c.salt_threshold_val)); }
+		        
+		        if (k_salt < 0) { k_salt <- 0.0; c.is_dead <- true;c.biomass <- 0.0; }
+		  
+		        float k_pest <- max(0.2,1.0 - c.concerned_plot.pest_load); // Impact direct des pestes
+		       	
+		     	
+		    	// 3. FLOOD IMPACT (Progressive Mode / Decay)
+				float k_flood <- 1.0;
+	    
     		if (c.water_level > flood_stress_threshold) {  
 		        // Phase 1: Growth stop (Asphyxia / Dormancy)
 		        k_flood <- 0.0; 
@@ -406,7 +406,7 @@ species lua_mdModel parent: Plant_growth_model {
 	   
 	        c.biomass <- c.biomass + daily_growth;
 	        
-        }
+        }	
 		
 	}	
 }

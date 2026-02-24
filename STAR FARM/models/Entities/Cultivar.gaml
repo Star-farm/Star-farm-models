@@ -36,8 +36,8 @@ species Cultivar {
 	float drought_tolerance;   // 0–1
 	float flood_tolerance;   //  0–1
 	float salinity_tolerance;   //  0–1
-	float heat_tolerance;   //  0–1
-	float lodging_resistance;   // 0–1
+	//float heat_tolerance;   //  0–1
+//	float lodging_resistance;   // 0–1
 	float nitrogen_response_eff;   // -
 //	float plant_density_opt;   // plants / m²
 	//float transplanting_suitability;   //  0–1
