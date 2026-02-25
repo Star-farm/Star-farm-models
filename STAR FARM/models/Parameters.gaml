@@ -92,7 +92,8 @@ global {
     float daily_water_loss_mm <- 10.0;     // Sum of evapotranspiration and deep percolation (mm/day)
     float methane_base_emission <- 2.5;   // Daily CH4 emission for continuously flooded fields (kg CH4/ha/day)
     float ch4_reduction_factor <- 0.1; // Emission multiplier during dry AWD phases (10% of base)
-   
+   	float straw_burn_emission_factor <- 1460.0; // kg CO2-eq emitted per ton of burned straw
+   	
    	// Seeding
    	float seed_density_kg_ha_mechanical <- 80.0; // Seeding density (kg) under mechanical seeding practices  
    	float seed_density_kg_ha_broadcast <- 150.0; // Seeding density (kg) under broadcast seeding practices    
