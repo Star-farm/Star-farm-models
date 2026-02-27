@@ -18,14 +18,18 @@ global  {
     
     string calibration_output <- "Calibration/calibration_result.csv";
     
+    bool fitness_computed <- false;
     action compute_fitness {
-    	fitness <- 0.0;
-    	loop ind over: indicators {
-    		fitness <- fitness + ind.compute_error();
+    	if not fitness_computed {
+	    		fitness <- 0.0;
+	    	loop ind over: indicators {
+	    		fitness <- fitness + ind.compute_error();
+	    	}
+	    	string result <- "" + int(self)+ ","+ seed+","+ rue_efficiency_factor+"," + flood_biomass_decay_rate+ ","+pest_infection_prob+"," +pest_daily_increment ;
+	    	result <- result + ","+fitness+"\n";
+	    	save result format: "text" to: calibration_output rewrite: false;
+	    	fitness_computed <- true;
     	}
-    	string result <- "" + int(self)+ ","+ seed+","+ rue_efficiency_factor+"," + flood_biomass_decay_rate+ ","+pest_infection_prob+"," +pest_daily_increment ;
-    	result <- result + ","+fitness+"\n";
-    	save result format: "text" to: calibration_output rewrite: false;
     }
    	
    
@@ -49,8 +53,8 @@ global  {
 		
 }
 experiment calibration_yield type: batch until: end_of_sim repeat: 10 keep_seed: true {
-	method genetic pop_dim: 10 crossover_prob: 0.7 mutation_prob: 0.1 improve_sol: true stochastic_sel: false
-	nb_prelim_gen: 1 max_gen: 1000  minimize: fitness  aggregation: "avr";
+	method genetic pop_dim: 10 crossover_prob: 0.7 mutation_prob: 0.1 improve_sol: false stochastic_sel: false
+	nb_prelim_gen: 1 max_gen: 10000  minimize: fitness  aggregation: "avr";
 	
 	parameter rue_efficiency_factor var: rue_efficiency_factor min: 0.5 max: 1.0 step: 0.01;
 	parameter flood_biomass_decay_rate var: flood_biomass_decay_rate min: 0.01 max: 0.5 step: 0.01;
@@ -61,6 +65,7 @@ experiment calibration_yield type: batch until: end_of_sim repeat: 10 keep_seed:
 	
 	init {
 		gama.pref_parallel_simulations_all <- false;
+		gama.pref_parallel_threads <- 10;
 		mode_batch <- true;
 		save_results <- false; 
 		write_results <- false;
