@@ -32,28 +32,8 @@ global {
 		if (the_weather = nil or not use_weather_generator) {
 			create Weather {
 				the_weather <- self; 
+				do load_real_data;
 				
-				loop f over: folder(weather_folder) {
-					matrix mat <- matrix( csv_file(weather_folder +"/"+ f, false));
-					loop i from: 0 to: mat.rows-1 {
-						date d <- date([int(mat[1,i]),1,1]);
-						d <- d add_days (int(mat[2,i]) -1);
-						_solar_radiation[d] <- float(mat[3,i]); 
-						if (_solar_radiation[d] = 0.0) {
-							if (i > 0) {
-								_solar_radiation[d] <- last(_solar_radiation.values);
-							}
-						}
-						_temp_min[d] <- float(mat[4,i]); 
-						_temp_max[d] <- float(mat[5,i]); 
-						_windspeed[d] <- float(mat[6,i]); 
-						_salinity[d] <- float(mat[7,i]); 
-						_rainfall[d] <- float(mat[8,i]); 
-						_humidity[d] <- float(mat[9,i]); 
-						
-					
-					}
-				}
 			}
 			
 		}
@@ -67,7 +47,7 @@ global {
         weather_id <- scen_name;
         create Weather  {
         	the_weather <- self;
-        }
+        } 
         loop year from: start_year to: end_year {
             
             float progress <- (year - start_year) / (end_year - start_year);
@@ -167,14 +147,14 @@ species Weather {
 	 		if not (mode_batch) {
 	 			ask world {
 	 				do pause;
-	 			}
+	 			} 
 	 		} else {
 	 			ask world {do compute_fitness;}
 	 			end_of_sim <- true; 
 	 		}
 	 	} else {
-	 		t_min <-	_temp_min[current_date]; 
-		 	t_max <- _temp_max[current_date];
+	 		t_min <- _temp_min[current_date]; 
+	 		t_max <- _temp_max[current_date];
 		 	t_mean <- (t_min + t_max)/2; 
 		 	solar_rad <- _solar_radiation[current_date] / 1000.0;
 		 	humidity <-  _humidity[current_date]; 
@@ -182,24 +162,27 @@ species Weather {
 		 	salinity <- empty(_salinity) ? 1.0 : _salinity[current_date];
 	 	}
     }
-    
-    action load_real_data(string file_path) {
-        matrix mat <- matrix(csv_file(file_path, ",", true));
+     
+    action load_real_data {
+    	csv_file f <- csv_file(weather_file, ";");
+     	matrix mat <- matrix(f);
         
-        loop i from: 0 to: mat.rows - 1 {
-            string date_str <- string(mat[1, i]);
-            date d <- date(date_str, 'yyyy-MM-dd');
+        loop i from: 1 to: mat.rows - 1 {
+            list<string> date_str <- string(mat[1, i]) split_with "-";
+           
+            date d <- date([date_str[0],date_str[1],date_str[2]]);
             
             _temp_max[d] <- float(mat[2, i]);
             _temp_min[d] <- float(mat[3, i]);
             _humidity[d] <- float(mat[5, i]);
             _rainfall[d] <- float(mat[6, i]);      
             _windspeed[d] <- float(mat[7, i]);
-            _solar_radiation[d] <- float(mat[9, i]) * 1000.0;  
+            _solar_radiation[d] <- float(mat[10, i]) * 1000.0;  
             
             
-            _salinity[d] <- base_salinity; 
+            _salinity[d] <- default_salinity; 
         }
+        
     }
 	
 } 

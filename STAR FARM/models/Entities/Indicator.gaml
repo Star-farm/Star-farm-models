@@ -29,7 +29,7 @@ global {
 			Indicator ct <- Indicator(first(new_indicators));
 			
 			if(ct.is_dayly) {
-				dayly_indicators[ct.name] <- ct;
+				//dayly_indicators[ct.name] <- ct;
 			}
 			if(ct.is_seasonal) {
 				seasonal_indicators[ct.name] <- ct;
@@ -68,18 +68,22 @@ species Indicator virtual: true {
 	action compute_value virtual: true;
 	
 	
-	
+	 
 	float compute_error {
 		float RMSE <- 0.0;
-		float sum_obs;
+		float sum_obs; 
 		int n <- min(length(observed_values), length(simulation_values));
-		
-		loop i from: 0 to: n -1 {
-			RMSE <- RMSE + (simulation_values[i] - observed_values[i]) ^ 2;	
-			sum_obs <- sum_obs + observed_values[i];
+		write sample(simulation_values) + sample(observed_values);
+		if (n > 0) {
+			loop i from: 0 to: n -1 {
+				RMSE <- RMSE + (simulation_values[i] - observed_values[i]) ^ 2;	
+				sum_obs <- sum_obs + observed_values[i];
+			}
+			RMSE <- sqrt(RMSE/n);
+			return RMSE/sum_obs;
 		}
-		RMSE <- sqrt(RMSE/n);
-		return RMSE/sum_obs;
+		return 0.0;
+		
 	}
 }
 

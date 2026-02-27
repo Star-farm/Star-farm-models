@@ -19,17 +19,18 @@ global {
 	
 	int day_start_of_year <- 300;
 	
-	date starting_date <- date([2026,1,1]) add_days (day_start_of_year -1);
+	date starting_date <- date([2020,1,1]) add_days (day_start_of_year -1);
 	
 	
 	image_file farmer_image <- image_file("../includes/Images/farmer.png");
 	
 	shape_file plots_shapefile <- shape_file("../includes/Dong Thap/2020/lu_dongthap2020_clean_2016_2023.shp");
 	
-	bool use_weather_generator <- false;
+	bool use_weather_generator <- true;
 	string weather_id <- "Optimistic";
-	string weather_folder <- "../includes/weather_generated/Optimistic" ;
-	
+	//string weather_folder <- "../includes/weather_generated/Optimistic" ;
+	string weather_file <- "../includes/Dong Thap/Weather_Dong_Thap_01_09_2018-31_12_2023.csv" ;
+	float default_salinity <- 0.0;
 	bool use_dynamic_market <- false;
 	string market_id <- "neutral";
   
