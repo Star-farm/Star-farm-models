@@ -85,10 +85,10 @@ global {
 		} 
 	}
 	
-	action add_input_use_practice(Crop_practice cp, float trigger_threshold, float base_dose, float target, bool mech) {
+	action add_input_use_practice(Crop_practice cp, float trigger_threshold_, float base_dose_, float target, bool mech) {
 	    create Input_use_practice {
-	        self.trigger_threshold <- trigger_threshold;
-	        self.base_dose <- base_dose;
+	        self.trigger_threshold <- trigger_threshold_;
+	        self.base_dose <- base_dose_;
 	        self.target_nitrogen <- target;
 	        self.mechanical <- mech;
 	        // Add to the list of practices of the parent
@@ -161,7 +161,7 @@ species Sowing_practice parent:Practice {
 			
 			thermal_units_total <- variety.tt_emergence + variety.tt_veg + variety.tt_rep + variety.grain_filling_duration;
        		potential_rue_calibrated <- myself.type_of_cultivar.RUE * rue_efficiency_factor; 
-        	salt_threshold_val <- variety.salinity_tolerance;
+       		salt_threshold_val <- variety.salinity_tolerance;
  			
  			concerned_plot.stress_days_salinity <- 0;
     		concerned_plot.stress_days_drought <- 0;
@@ -362,6 +362,7 @@ species Input_use_practice parent:Practice {
 	
 	// --- DECISION LOGIC ---
 	bool to_apply(Plot plot, int current_day) {
+		
 		return plot.associated_crop != nil 
 		       and not plot.associated_crop.is_dead
 		       // 1. Check against the SPECIFIC threshold of this practice
@@ -556,8 +557,8 @@ species BAU_rice_3_season parent:Crop_practice {
 			ask world {
 				do add_CF_practice(myself);
 				do add_input_use_practice(cp: myself, 
-					    trigger_threshold: bau_n_trigger_threshold, 
-					    base_dose: bau_n_dose_amount,               
+					    trigger_threshold_: bau_n_trigger_threshold, 
+					    base_dose_: bau_n_dose_amount,               
 					    target: bau_nitrogen_goal, 
 					    mech: false
 					);			
@@ -580,8 +581,8 @@ species BAU_rice_2_season parent:Crop_practice {
 			ask world {
 				do add_CF_practice(myself);
 				do add_input_use_practice(cp: myself, 
-					    trigger_threshold: bau_n_trigger_threshold, 
-					    base_dose: bau_n_dose_amount,               
+					    trigger_threshold_: bau_n_trigger_threshold, 
+					    base_dose_: bau_n_dose_amount,               
 					    target: bau_nitrogen_goal, 
 					    mech: false
 					);			
@@ -606,8 +607,8 @@ species OMH_rice parent:Crop_practice {
 			ask world {
 				do add_AWD_practice(myself);
 				do add_input_use_practice(cp:myself, 
-				    trigger_threshold: sust_n_trigger_threshold, 
-				    base_dose: sust_n_dose_amount,            
+				    trigger_threshold_: sust_n_trigger_threshold, 
+				    base_dose_: sust_n_dose_amount,            
 				    target: sust_nitrogen_goal, 
 				    mech: true);
 				do add_pesticide_practice(myself,sust_pesticide_threshold, true);

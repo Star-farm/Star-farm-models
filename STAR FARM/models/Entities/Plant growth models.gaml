@@ -401,7 +401,7 @@ species lua_mdModel parent: Plant_growth_model {
 			    k_nitrogen <- max(0.0, 1.0 - c.variety.nitrogen_response_eff);
 			}
 				 	
-	    		
+	    //	write sample(k_water) + " " + sample(k_salt) + " " + sample(k_pest) + " " + sample(k_flood) + " " + sample(k_nitrogen) +" " + sample(c.nitrogen_stock);
 	   		float daily_growth <- c.potential_rue_calibrated * the_weather.solar_rad * k_water * k_salt * k_pest * k_flood * k_nitrogen;
 	   
 	        c.biomass <- c.biomass + daily_growth;

@@ -22,7 +22,7 @@ global {
     float base_t_min <- 24.0;
     float base_t_max <- 31.0;
     float base_wind <- 2.2;
-    float base_salinity <- 0.1; // Eau douce par défaut
+    float base_salinity <- 0.1; 
    
     // Base historique : Jours 60 à 120 (Mars-Avril)
      int salt_start_doy <- 60;
@@ -58,6 +58,9 @@ global {
 			
 		}
 	}
+	
+	
+	
 	
 	 action generate_scenario(string scen_name, int start_year, int end_year, float temp_rise_total, float salt_max_intrusion, float rain_intensity_max, float typhoon_probability_max,  int salt_start_doy_coeff, int salt_end_doy_coeff) {
         
@@ -166,6 +169,7 @@ species Weather {
 	 				do pause;
 	 			}
 	 		} else {
+	 			ask world {do compute_fitness;}
 	 			end_of_sim <- true; 
 	 		}
 	 	} else {
@@ -177,8 +181,25 @@ species Weather {
 		 	rain <- _rainfall[current_date];
 		 	salinity <- empty(_salinity) ? 1.0 : _salinity[current_date];
 	 	}
-	 	
-	 
+    }
+    
+    action load_real_data(string file_path) {
+        matrix mat <- matrix(csv_file(file_path, ",", true));
+        
+        loop i from: 0 to: mat.rows - 1 {
+            string date_str <- string(mat[1, i]);
+            date d <- date(date_str, 'yyyy-MM-dd');
+            
+            _temp_max[d] <- float(mat[2, i]);
+            _temp_min[d] <- float(mat[3, i]);
+            _humidity[d] <- float(mat[5, i]);
+            _rainfall[d] <- float(mat[6, i]);      
+            _windspeed[d] <- float(mat[7, i]);
+            _solar_radiation[d] <- float(mat[9, i]) * 1000.0;  
+            
+            
+            _salinity[d] <- base_salinity; 
+        }
     }
 	
 } 

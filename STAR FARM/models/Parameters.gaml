@@ -27,8 +27,8 @@ global {
 	shape_file plots_shapefile <- shape_file("../includes/Dong Thap/2020/lu_dongthap2020_clean_2016_2023.shp");
 	
 	bool use_weather_generator <- false;
-	string weather_id <- "Pessimistic";
-	string weather_folder <- "../includes/weather_generated/Pessimistic" ;
+	string weather_id <- "Optimistic";
+	string weather_folder <- "../includes/weather_generated/Optimistic" ;
 	
 	bool use_dynamic_market <- false;
 	string market_id <- "neutral";
@@ -40,7 +40,7 @@ global {
 	
 	
    
-    map<string, float> possible_practices <- [OMRH::1.0];//[BAU::0.5, OMRH:: 0.5];
+    map<string, float> possible_practices <- ["BAU-3seasons"::1.0];//[BAU::0.5, OMRH:: 0.5];
    
 	map<string,string> plots_to_keep <- [];//["Lu05_en"::"Rice"];
 		
@@ -124,7 +124,7 @@ global {
     float daily_n_consumption <- 1.5;     // Daily nitrogen uptake by the plant (kg/ha/day)
     
     // Pest and Disease Logic
-    float pest_humidity_limit <- 2.8;    // Humidity threshold for pest infection (kpA)
+    float pest_humidity_limit <- 70.0;    // Humidity threshold for pest infection (%)
     float pest_temp_limit <- 27.0;        // Minimum temperature for pest infection (°C)
     float pest_infection_prob <- 0.5;     // Probability of outbreak if weather conditions are met
     float pest_daily_increment <- 0.02;   // Daily increase in pest load during infection

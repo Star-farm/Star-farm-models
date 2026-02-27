@@ -70,6 +70,8 @@ global {
 		}  
 	}
 	
+	
+	
 	// -------------------------------------------------------------------------
     // HEADER INITIALIZATION FUNCTIONS
     // -------------------------------------------------------------------------
@@ -133,9 +135,11 @@ global {
 	
 	
 	reflex end_of_year when: cycle > 1 and current_date.day_of_year =  day_start_of_year{
+		do write_year_report;
 		ask Farmer {do decide_practice;}
 		ask practices {do switch_to_new_year;}
-		do write_year_report;
+		  // 4. Reset counters (Important: do this AFTER saving)
+        ask Farmer { yearly_profit <- 0.0; }
 		if use_dynamic_market {
 			ask the_market {
 				do annual_update;
@@ -161,13 +165,16 @@ global {
     // REPORTING FUNCTIONS (CALCULATE + DISPLAY + SAVE)
     // -------------------------------------------------------------------------
 
+	//for calibration
+	action compute_fitness;
+	
     // --- DAILY REPORT ---
     action write_day_report {
         list<Indicator> daily_inds <- dayly_indicators.values;
         if (not empty(daily_inds)) {
         		        
 	        // 1. Calculate values
-	        ask daily_inds { do compute_value; }
+	        ask daily_inds { do generic_compute_value; }
 	        
 	        // 2. Console Display (Grouped by category)
 	        if (write_results ) {
@@ -202,7 +209,7 @@ global {
         if (not empty(seasonal_inds)) {
 	        	        
 	        // 1. Calculate
-	        ask seasonal_inds { do compute_value; }
+	        ask seasonal_inds { do generic_compute_value; }
 	
 	        // 2. Console Display
 	        if (write_results) {
@@ -238,7 +245,7 @@ global {
 		
 		if not empty(yearly_inds) {
 		// 1. Calculate
-	        ask yearly_inds { do compute_value; }
+	        ask yearly_inds { do generic_compute_value; }
 	
 	        // 2. Console Display
 	        if (write_results) {
@@ -265,148 +272,11 @@ global {
 	            save row to: output_file_year format: "text" rewrite: false;
 	        }
         }
-        // 4. Reset counters (Important: do this AFTER saving)
-        ask Farmer { yearly_profit <- 0.0; }
+      
     }
 
     
-   
-   
-  /*  action write_year_report { 
-    	list<float> farmer_profit <- (Farmer collect (each.yearly_profit )) sort_by each;
-		float gini_index <- gini(farmer_profit);
-    	float bankruptcy_risk <- (farmer_profit count (each < 0.0)) / length(Farmer) * 100.0;
-    	int number <- round(0.2 * length(Farmer));
-		float top_20_vs_bottom_20_income_ratio <- mean(number first farmer_profit) = 0.0 ? 0.0 : (mean(number last farmer_profit) / mean(number first farmer_profit));
-		float coefficient_of_variation <- mean(farmer_profit) = 0.0 ? 0.0 : (mean_deviation(farmer_profit)/ mean(farmer_profit));
-		ask Farmer {
-    		yearly_profit <- 0.0;
-    	}
-    	if (write_results) { 
-    		write "\n################################################################";
-		   	write "#        YEARLY INDICATORS    #";
-		    write "################################################################\n";
-		
-			   // =========================================================
-			    // SECTION 1: ECONOMIC EQUALITY 
-			    // =========================================================
-			write "\n>>> SECTION 3: AGRO-ECONOMIC PERFORMANCE <<<";
-			write "   * gini index: " + gini_index with_precision 2;
-			write "   * Bankruptcy risk: $" + bankruptcy_risk with_precision 1 + "%";
-			write "   * Top 20 vs bottom 20 income ratio: " + top_20_vs_bottom_20_income_ratio with_precision 2;
-			write "   * Coefficient of variation: " +  coefficient_of_variation with_precision 2 ;
-		    write "\n================================================================"; 
-    			
-    	}
-    	if (save_results) {
-	  		save "" + int(self)+ "," + seed + "," + current_date.year + "," + current_date.month + "," + current_date.day + ","
-		  	+ gini_index +","+bankruptcy_risk +","+top_20_vs_bottom_20_income_ratio +","+coefficient_of_variation + "\n"
-		  	format: "text" to: output_file_year rewrite: false;
-		}
-	  
-    }
-	action write_season_report { 
-		new_season <- false;
-		active_plots <- Plot where (each.is_active);
-		active_farmers <- Farmer where (each.is_active);
-		
-		float avg_yield <- (active_plots mean_of each.final_yield_ton_ha);
-	    float total_yield_tons <- (active_plots sum_of each.final_yield_ton_ha);
-	    float total_ch4_kg <- (active_plots sum_of each.methane_emissions_kg_ha);
-	    float avg_ch4_ha <- (active_plots mean_of each.methane_emissions_kg_ha);
-	    float emission_intensity <- total_ch4_kg / max(1.0, total_yield_tons * 1000); // kg CH4 / kg Rice
-	    float awd_plots <- (active_farmers where (each.practice.irrigation.name = AWD)) sum_of each.plot_area;
-	    float awd_adoption <- (awd_plots / (active_farmers sum_of each.plot_area)) * 100;
-	 	int plots_safe_salinity <- active_plots count (each.stress_days_salinity = 0);
-	    float safe_water_perc <- (plots_safe_salinity / length(active_plots)) * 100;
-	    float plots_adapted <- (active_farmers where each.practice.sowing.type_of_cultivar.is_climate_resilient_variety) sum_of each.plot_area;
-	    float adapted_area_perc <- (plots_adapted / (active_farmers sum_of each.plot_area)) * 100;
-	    float avg_stress_salinity <- mean(active_plots collect each.stress_days_salinity);
-	    float avg_stress_drought <- mean(active_plots collect each.stress_days_drought);
-	    float avg_stress_flood <- mean(active_plots collect each.stress_days_flood);
-	    float avg_stress_flood_continuous <- mean(active_plots collect each.max_stress_days_flood_continuous);
-	    float avg_straw_val <- mean(active_plots collect (each.straw_yield_ton_ha * 1000 * straw_market_price));
-	    float avg_cost <- mean(active_farmers collect each.total_costs);
-	    float avg_net_profit <- mean(active_farmers collect each.profit_net);
-	    float avg_margin <- mean(active_farmers collect (float(each.profit_net) / float(max(1.0, each.revenue)) * 100));
-	   	list<string> varieties <- active_farmers collect each.practice.sowing.type_of_cultivar.name;
-	    int num_varieties <- length(remove_duplicates(varieties)) ;
-	    float avg_labor <- mean(active_farmers collect each.accumulated_labor_hours);
-	    float avg_pesticide_count <- mean(active_plots collect each.pesticide_count);
-	    float avg_salinity_exp <- mean(active_plots collect each.local_salinity);
-	    float avg_water_pumped <- mean(active_plots collect each.total_water_pumped);
-	   
-	   	if (write_results) { 
-		   	write "\n################################################################";
-		    write "#        CONSOLIDATED KPI REPORT: MEKONG DELTA TRANSFORMATION    #";
-		    write "################################################################\n";
-		
-		    // =========================================================
-		    // SECTION 1: CLIMATE MITIGATION & GHG (Star Farm Focus)
-		    // =========================================================
-		    write ">>> SECTION 1: CLIMATE MITIGATION & GHG <<<";
-		    write "   * Methane emissions (CH4): " + round(avg_ch4_ha) + " kg CH4/ha";
-		    write "   * AWD Adoption Level: " + round(awd_adoption) + "% of area";
-		    write "   * GHG Emission Intensity: " + (emission_intensity with_precision 3) + " kg CH4/kg rice";
-		    
-		    // =========================================================
-		    // SECTION 2: ADAPTATION & RESILIENCE (Star Farm & CTU 10)
-		    // =========================================================
-		    write "\n>>> SECTION 2: ADAPTATION & RESILIENCE <<<";
-		    
-		    // Water & Salinity reliability
-		    write "   * Water Reliability (< tolerance): " + round(safe_water_perc) + "% of plots without salinity stress";
-		     
-		    // Resilience Capacity
-		    write "   * Area under climate-resilient varieties: " + round(adapted_area_perc) + "%";
-		    
-		    write "   * Crop Diversification Index: " + num_varieties + " distinct varieties";
-		
-		    // Consolidated Stress Days (CTU 31)
-		   	write "   * (CTU 31) Risk Response (Avg Stress Days per plot):";
-		    write "        - Salinity Stress: " + with_precision(avg_stress_salinity, 2) + " days";
-		    write "        - Drought Stress: " + with_precision(avg_stress_drought,2) + " days";
-		    write "        - Flood Stress: " + with_precision(avg_stress_flood,2) + " days";
-		  	write "        - Max Flood Stress: " + with_precision(avg_stress_flood_continuous,2) + " days";
-		
-		    // =========================================================
-		    // SECTION 3: AGRO-ECONOMIC PERFORMANCE (CTU 2, 3, 4)
-		    // =========================================================
-		    write "\n>>> SECTION 3: AGRO-ECONOMIC PERFORMANCE <<<";
-		    write "   * (CTU 12) Avg Rice Yield: " + with_precision(avg_yield,2) + " t/ha";
-		    
-		    write "   * (CTU 13) Value of By-products (Straw): $" + round(avg_straw_val) + "/ha";
-		
-		    
-		    write "   * (CTU 4) Avg Production Costs: $" + round(avg_cost) + "/ha";
-		    write "   * (CTU 5) Net Farm Income: $" + round(avg_net_profit) + "/ha";
-		    write "   * (CTU 8) Profit Margin: " + round(avg_margin) + "%";
-		
-		    write "   * Avg Labor Intensity: " + round(avg_labor) + " hours/ha/season";
-		    
-	    	
-		    // =========================================================
-		    // SECTION 4: RESOURCE USE & SOIL HEALTH (CTU 6, 13)
-		    // =========================output_file================
-		    write "\n>>> SECTION 4: RESOURCE USE & SOIL HEALTH <<<";
-		    write "   * (CTU 19/38) Avg Salinity Exposure: " + with_precision(avg_salinity_exp,3) + " g/l";
-		    
-		    write "   * (CTU 39) Irrigation Water Usage: " + round(avg_water_pumped) + " mm/ha";
-		     write "   *Avg number of pesticide applications: " + round(avg_pesticide_count);
-		   
-		
-		    write "\n================================================================";
-	  	}
-	  	if (save_results) {
-	  		save "" + int(self)+ "," + seed + "," + current_date.year + "," + current_date.month + "," + current_date.day + ","
-	  		+ avg_yield +","+avg_ch4_ha +","+emission_intensity +","+awd_adoption
-	  		+","+safe_water_perc +","+adapted_area_perc +"," + num_varieties + ","+avg_stress_salinity +","+avg_stress_drought +","+avg_stress_flood +","+avg_straw_val
-	  		+","+avg_cost +","+avg_net_profit +","+avg_margin +","+avg_labor +","+avg_salinity_exp +","+avg_water_pumped +"," + avg_pesticide_count+"\n"
-	  		format: "text" to: output_file_season rewrite: false;
-	  	}
-	  
-	  	 
-	}  */
+  
 	
 	action create_plots {
 		if (plot_species = nil) {

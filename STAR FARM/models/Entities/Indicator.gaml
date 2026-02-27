@@ -22,10 +22,12 @@ global {
 	map<string, Indicator> seasonal_indicators;
 	map<string, Indicator> yearly_indicators;
 	
+	
 	action create_indicators {
 		loop s over: Indicator.subspecies { 
 			create s returns: new_indicators;
 			Indicator ct <- Indicator(first(new_indicators));
+			
 			if(ct.is_dayly) {
 				dayly_indicators[ct.name] <- ct;
 			}
@@ -36,7 +38,10 @@ global {
 				yearly_indicators[ct.name] <- ct;
 			}
 		}
+		do prepare_indicators;
 	}
+	
+	action prepare_indicators;
 }
 
 species Indicator virtual: true {
@@ -50,8 +55,32 @@ species Indicator virtual: true {
 	int float_precision ;
 	
 	float value;
+	bool store_values <- false;
+	list<float> simulation_values;
+	list<float> observed_values;
 	
+	action generic_compute_value {
+		do compute_value;
+		if (store_values) {
+			simulation_values << value;
+		}
+	}
 	action compute_value virtual: true;
+	
+	
+	
+	float compute_error {
+		float RMSE <- 0.0;
+		float sum_obs;
+		int n <- min(length(observed_values), length(simulation_values));
+		
+		loop i from: 0 to: n -1 {
+			RMSE <- RMSE + (simulation_values[i] - observed_values[i]) ^ 2;	
+			sum_obs <- sum_obs + observed_values[i];
+		}
+		RMSE <- sqrt(RMSE/n);
+		return RMSE/sum_obs;
+	}
 }
 
 // -----------------------------------------------------------
