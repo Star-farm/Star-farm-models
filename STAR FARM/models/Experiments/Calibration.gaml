@@ -48,7 +48,7 @@ global  {
 	
 		
 }
-experiment "calibration yield" type: batch until: end_of_sim repeat: 1 keep_seed: true {
+experiment "calibration yield" type: batch until: end_of_sim repeat: 4 keep_seed: true {
 	method genetic pop_dim: 10 crossover_prob: 0.7 mutation_prob: 0.1 improve_sol: true stochastic_sel: false
 	nb_prelim_gen: 1 max_gen: 1000  minimize: fitness  aggregation: "avr";
 	
@@ -60,7 +60,7 @@ experiment "calibration yield" type: batch until: end_of_sim repeat: 1 keep_seed
 	parameter pest_daily_increment var: pest_daily_increment min: 0.01 max: 0.05 step:0.01;
 	
 	init {
-		gama.pref_parallel_simulations_all <- true;
+		gama.pref_parallel_simulations_all <- false;
 		mode_batch <- true;
 		save_results <- false; 
 		write_results <- false;

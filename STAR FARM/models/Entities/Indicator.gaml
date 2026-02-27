@@ -73,7 +73,6 @@ species Indicator virtual: true {
 		float RMSE <- 0.0;
 		float sum_obs; 
 		int n <- min(length(observed_values), length(simulation_values));
-		write sample(simulation_values) + sample(observed_values);
 		if (n > 0) {
 			loop i from: 0 to: n -1 {
 				RMSE <- RMSE + (simulation_values[i] - observed_values[i]) ^ 2;	
