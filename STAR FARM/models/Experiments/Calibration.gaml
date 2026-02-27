@@ -48,7 +48,7 @@ global  {
 	
 		
 }
-experiment "calibration yield" type: batch until: end_of_sim repeat: 4 keep_seed: true {
+experiment calibration_yield type: batch until: end_of_sim repeat: 10 keep_seed: true {
 	method genetic pop_dim: 10 crossover_prob: 0.7 mutation_prob: 0.1 improve_sol: true stochastic_sel: false
 	nb_prelim_gen: 1 max_gen: 1000  minimize: fitness  aggregation: "avr";
 	
