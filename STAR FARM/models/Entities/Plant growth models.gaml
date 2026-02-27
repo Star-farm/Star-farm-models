@@ -400,9 +400,34 @@ species lua_mdModel parent: Plant_growth_model {
 			    */
 			    k_nitrogen <- max(0.0, 1.0 - c.variety.nitrogen_response_eff);
 			}
-				 	
-	    //	write sample(k_water) + " " + sample(k_salt) + " " + sample(k_pest) + " " + sample(k_flood) + " " + sample(k_nitrogen) +" " + sample(c.nitrogen_stock);
-	   		float daily_growth <- c.potential_rue_calibrated * the_weather.solar_rad * k_water * k_salt * k_pest * k_flood * k_nitrogen;
+			// 1. Define the cumulative phenological thresholds for this cultivar
+		    float emergence_threshold <- c.variety.tt_emergence;
+		    float flowering_threshold <- emergence_threshold + c.variety.tt_veg;
+		    float maturity_threshold  <- flowering_threshold + c.variety.tt_rep;
+		    
+		    float fAPAR <- 0.0;
+		    
+		    // 2. Determine fAPAR based on the current accumulated thermal time
+		    if (c.accumulated_heat < emergence_threshold) {
+		        // Phase 1: Germination / Emergence (Very low canopy interception)
+		        fAPAR <- 0.20; 
+		    } 
+		    else if (c.accumulated_heat < flowering_threshold) {
+		        // Phase 2: Vegetative growth (Leaf development and tillering)
+		        fAPAR <- 0.70; 
+		    } 
+		    else if (c.accumulated_heat < maturity_threshold) {
+		        // Phase 3: Reproductive phase (Canopy closed, maximum light interception)
+		        fAPAR <- 0.90; 
+		    } 
+		    else {
+		        // Phase 4: Grain filling / Senescence (Leaves are yellowing/drying)
+		        fAPAR <- 0.85; 
+		    }
+    
+    // 3. Calculate daily  biomass with the integrated fAPAR
+       //	write sample(k_water) + " " + sample(k_salt) + " " + sample(k_pest) + " " + sample(k_flood) + " " + sample(k_nitrogen) +" " + sample(c.nitrogen_stock);
+	   		float daily_growth <- c.potential_rue_calibrated * the_weather.solar_rad * fAPAR * k_water * k_salt * k_pest * k_flood * k_nitrogen;
 	   
 	        c.biomass <- c.biomass + daily_growth;
 	        

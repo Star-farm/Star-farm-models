@@ -162,6 +162,10 @@ species Sowing_practice parent:Practice {
 			thermal_units_total <- variety.tt_emergence + variety.tt_veg + variety.tt_rep + variety.grain_filling_duration;
        		potential_rue_calibrated <- myself.type_of_cultivar.RUE * rue_efficiency_factor; 
        		salt_threshold_val <- variety.salinity_tolerance;
+       		emergence_threshold <- variety.tt_emergence;
+    		flowering_threshold <- emergence_threshold + variety.tt_veg;
+     		maturity_threshold  <- flowering_threshold + variety.tt_rep;
+   
  			
  			concerned_plot.stress_days_salinity <- 0;
     		concerned_plot.stress_days_drought <- 0;

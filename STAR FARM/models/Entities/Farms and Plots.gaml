@@ -270,11 +270,15 @@ species Crop  {
     float biomass <- 0.0;     
     float harvest_index <- 0.5;  
     float growth_stage <- 0.0;  
-    float accumulated_heat <- 0.0;
+    float accumulated_heat <- 0.0; 
     bool is_harvested <- false;
     bool is_dead <- false;
     int stress_count <- 0; 
     
+    float emergence_threshold ;
+    float flowering_threshold ;
+    float maturity_threshold  ;
+   
     
        // computed variables
     float thermal_units_total;         // number of total cycle required
