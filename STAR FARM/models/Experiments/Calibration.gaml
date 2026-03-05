@@ -43,6 +43,7 @@ global  {
 			list<float> autumn_2019_2023 <- [60.5,61.3,61.8,63.2,62.8];
 			list<float> winter_2019_2023 <- [39.6,42.3,45.6,42.1,39.1];
 			loop i from: 0 to: length(spring_2019_2023) -1  {
+				//conversion -> t/ha
 				observed_values_per_seasons << spring_2019_2023[i]/10.0;
 				observed_values_per_seasons << autumn_2019_2023[i]/10.0;
 				observed_values_per_seasons << winter_2019_2023[i]/10.0;
@@ -58,9 +59,10 @@ global  {
 		}
 		ask Avg_irrigation_usage {
 			store_values <- true;
-			observed_values_avg_seasons << 8186;
-			observed_values_avg_seasons << 5830;
-			observed_values_avg_seasons << 2204;
+			//conversion m3/ha -> mm/ha
+			observed_values_avg_seasons << (8186 / 10.0);
+			observed_values_avg_seasons << (5830 / 10.0);
+			observed_values_avg_seasons << (2204 / 10.0);
 			indicators << self;
 		}
 	}
