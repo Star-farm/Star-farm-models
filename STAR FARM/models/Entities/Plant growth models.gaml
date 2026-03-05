@@ -337,7 +337,11 @@ species lua_mdModel parent: Plant_growth_model {
 	action day_biomass_growth(Crop c) {
 			if (not c.is_dead) {
 	       	
-		        if (the_weather.humidity > pest_humidity_limit and the_weather.t_mean > pest_temp_limit and flip(pest_infection_prob)) { 
+		      
+		        if ((the_weather.humidity > pest_humidity_limit) and (the_weather.t_mean > pest_temp_limit) and flip(pest_infection_prob)) { 
+		        	/*if (c.concerned_plot = Plot[0]) {
+		        		write current_date + " -> " + c.concerned_plot.pest_load;
+		        	}*/
 		        	c.concerned_plot.pest_load <- c.concerned_plot.pest_load + pest_daily_increment;
 		        } 
 		        

@@ -214,7 +214,7 @@ global {
 	        // 2. Console Display
 	        if (write_results) {
 	            write "\n################################################################";
-	            write "#        CONSOLIDATED KPI REPORT: SEASON END                   #";
+	            write "#        "+ current_date.year + "-" + current_date.month + "-" + current_date.day+  ": CONSOLIDATED KPI REPORT: SEASON END                   #";
 	            write "################################################################";
 	            
 	            // Tip: Group by automatically recreates your sections (SECTION 1, SECTION 2...)
@@ -250,7 +250,7 @@ global {
 	        // 2. Console Display
 	        if (write_results) {
 	            write "\n################################################################";
-	            write "#        YEARLY INDICATORS REPORT                              #";
+	           write "#        "+ current_date.year + ": YEARLY INDICATORS REPORT                              #";
 	            write "################################################################";
 	            
 	            map<string, list<Indicator>> by_cat <- yearly_inds group_by each.category;

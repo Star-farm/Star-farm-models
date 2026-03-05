@@ -145,15 +145,18 @@ species Sowing_practice parent:Practice {
 	string name <- "sowing";
 	Cultivar type_of_cultivar;
 	bool mechanical_seeding;
+	bool date_ok;
 	float labor <- mechanical_seeding ? labor_sowing_machine_hours : labor_sowing_manual_hours;
 			
 	
 	bool to_apply(Plot plot, int current_day) { 
-		return current_day in implementation_days; 
+		date_ok <- date_ok or (current_day in implementation_days);
+		return date_ok and (plot.associated_crop = nil); 
 	} 
 	
 	
 	action effect(Plot plot) {
+		date_ok <- false;
 		create Crop with:(the_farmer:plot.the_farmer, variety:type_of_cultivar  ) {
 			seed_density_kg_ha <- myself.mechanical_seeding ? seed_density_kg_ha_mechanical : seed_density_kg_ha_broadcast;
 			plot.associated_crop <- self;
@@ -329,7 +332,6 @@ species AWD_Irrigating_practice parent: Irrigating_practice{
 
 species Pesticide_application_practice parent:Practice {
 	string name <- PESTICIDE;
-	int days_since_last_spray; 
 	float pesticide_threshold;
 	bool mechanical;
 	float labor <- mechanical ? labor_spray_drone_hours : labor_spray_manual_hours;
@@ -338,13 +340,14 @@ species Pesticide_application_practice parent:Practice {
 		if (plot.associated_crop = nil) {
 			return false;
 		}
-		days_since_last_spray <- days_since_last_spray + 1;
-    	return plot.pest_load > pesticide_threshold and days_since_last_spray >= pest_spray_cooldown_days;
+		plot.days_since_last_spray <- plot.days_since_last_spray + 1;
+		//if (plot = Plot[0]) {write "" + (current_date) + " "+ sample(plot.days_since_last_spray) + " " + sample(plot.pest_load);}
+    	return plot.pest_load > pesticide_threshold and plot.days_since_last_spray >= pest_spray_cooldown_days;
 	}
 	action effect(Plot plot) {
-		days_since_last_spray <-0;
+		plot.days_since_last_spray <-0;
 		plot.pest_load <- 0.0;  
-        plot.my_cell.pollution_level <- plot.my_cell.pollution_level + pesticide_pollution_add;
+        plot.my_cell.pollution_level <- plot.my_cell.pollution_level + pesticide_pollution_add * plot.shape.area / plot.my_cell.shape.area;
        	plot.pesticide_count <- plot.pesticide_count + 1; 
     	if (mechanical) {
         	plot.the_farmer.mechanization_costs <- plot.the_farmer.mechanization_costs + cost_service_drone_spray;

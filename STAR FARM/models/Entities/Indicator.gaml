@@ -57,7 +57,9 @@ species Indicator virtual: true {
 	float value;
 	bool store_values <- false;
 	list<float> simulation_values;
-	list<float> observed_values;
+	list<float> observed_values_per_seasons;
+	list<float> observed_values_avg_seasons;
+	float observed_values_avg_total;
 	
 	action generic_compute_value {
 		do compute_value;
@@ -71,17 +73,41 @@ species Indicator virtual: true {
 	 
 	float compute_error {
 		float RMSE <- 0.0;
-		float sum_obs; 
-		int n <- min(length(observed_values), length(simulation_values));
-		if (n > 0) {
-			loop i from: 0 to: n -1 {
-				RMSE <- RMSE + (simulation_values[i] - observed_values[i]) ^ 2;	
-				sum_obs <- sum_obs + observed_values[i];
+		float sum_obs ; 
+		if not empty(observed_values_per_seasons) {
+			int n <- min(length(observed_values_per_seasons), length(simulation_values));
+			if (n > 0) {
+				loop i from: 0 to: n -1 {
+					RMSE <- RMSE + (simulation_values[i] - observed_values_per_seasons[i]) ^ 2;	
+					sum_obs <- sum_obs + observed_values_per_seasons[i];
+				}
+				RMSE <- sqrt(RMSE/n);
+				
 			}
-			RMSE <- sqrt(RMSE/n);
-			return RMSE/sum_obs;
+		} else if not empty(observed_values_avg_seasons) {
+			list<list<float>> f;
+			int nb <- length(observed_values_avg_seasons) ;
+			loop times: nb{
+				f << [];
+			}
+			loop i from: 0 to: length(simulation_values) -1 {
+				int ind <- i mod nb;
+				f[ind] << simulation_values[i];
+			}
+			loop i from: 0 to: nb -1 {
+				RMSE <- RMSE + (mean(f[i]) - observed_values_avg_seasons[i]) ^ 2;	
+				sum_obs <- sum_obs + observed_values_avg_seasons[i];
+			}
+			RMSE <- sqrt(RMSE/nb);
+		} else {
+			RMSE <- abs(mean(simulation_values) - observed_values_avg_total) ;	
+			sum_obs <- observed_values_avg_total;
 		}
-		return 0.0;
+		if (sum_obs = 0) {
+			return 0.0;
+		}
+		return RMSE/sum_obs;
+		
 		
 	}
 }

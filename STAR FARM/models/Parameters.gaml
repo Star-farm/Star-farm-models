@@ -19,8 +19,8 @@ global {
 	
 	int day_start_of_year <- 300;
 	
-	date starting_date <- date([2020,1,1]) add_days (day_start_of_year -1);
-	
+	date starting_date <- date([2018,1,1]) add_days (day_start_of_year -1);
+   		
 	
 	image_file farmer_image <- image_file("../includes/Images/farmer.png");
 	
@@ -89,7 +89,7 @@ global {
    // =========================================================
     // 4. BIOLOGICAL & CROP MANAGEMENT PARAMETERS
     // =========================================================
-    float rue_efficiency_factor <- 0.8; // Correction factor to adjust theoretical RUE to field conditions (0.0 to 1.0)
+    float rue_efficiency_factor <- 0.9; // Correction factor to adjust theoretical RUE to field conditions (0.0 to 1.0)
     float daily_water_loss_mm <- 10.0;     // Sum of evapotranspiration and deep percolation (mm/day)
     float methane_base_emission <- 2.5;   // Daily CH4 emission for continuously flooded fields (kg CH4/ha/day)
     float ch4_reduction_factor <- 0.1; // Emission multiplier during dry AWD phases (10% of base)
@@ -107,7 +107,7 @@ global {
     float drought_stress_threshold <- -200.0; // Water level below which plant growth stops (mm)
     float flood_stress_threshold <- 300.0;    // Water level triggering submergence stress (mm)
     // Percentage of biomass that rots every day once flood tolerance is exceeded
-    float flood_biomass_decay_rate <- 0.10; // 0.10 = 10% loss per extra day
+    float flood_biomass_decay_rate <- 0.01; // 0.10 = 10% loss per extra day
     
     
     float n_boost_max_factor <- 0.2; //Defines the maximum growth boost achievable through nitrogen saturation. A value of 0.2 means a variety can grow 20% faster than its potential RUE if stock is high.
@@ -127,11 +127,11 @@ global {
     // Pest and Disease Logic
     float pest_humidity_limit <- 70.0;    // Humidity threshold for pest infection (%)
     float pest_temp_limit <- 27.0;        // Minimum temperature for pest infection (°C)
-    float pest_infection_prob <- 0.5;     // Probability of outbreak if weather conditions are met
-    float pest_daily_increment <- 0.02;   // Daily increase in pest load during infection
+    float pest_infection_prob <- 0.3;     // Probability of outbreak if weather conditions are met
+    float pest_daily_increment <- 0.05;   // Daily increase in pest load during infection
     int pest_spray_cooldown_days <- 7;    // Minimum required delay between spray treatments (days)
     float pest_pollution_feedback <- 0.05;// Pollution impact on pest resurgence (killing natural predators)
-    float pesticide_pollution_add <- 0.2; // Pollution units added to the cell per spray event
+    float pesticide_pollution_add <- 0.2; // Pollution units added to the cell per spray event (ratio plot area / cell area)
     float pest_reduction_fallow <- 0.9; //reduction factor of the pest for Fallow activity;
     // Yield Calibration
     float biomass_to_ton_conv <- 0.01;    // Unit conversion: g/m² to t/ha

@@ -16,6 +16,12 @@ global {
 	  
 	 reflex environmental_dynamics {
     	total_province_pumping <- sum(Crop collect (each.water_pumped_today));
+    		
+    	  // 1. Dilution factor linked to rainfall (strong leaching/washout during storms)
+			float dilution_factor <- (the_weather.rain > 0) ? (1.0 / (1.0 + (the_weather.rain * 0.1))) : 1.0;
+			
+			
+		
     	ask unit_cell {
     		
 	    		// --- 1. GEOGRAPHIC FACTOR (Spatial) ---
@@ -43,15 +49,12 @@ global {
 	      // --- 4. FINAL CALCULATION & RAIN DILUTION ---
 	        float potential_salinity <- base_sal + human_impact;
 	       
-	        
-	       //if (self = unit_cell(location) and not empty(Crop)) { write sample(human_impact) + " " + sample(water_extraction_salt_impact);}
-	        // Local rain (on the plot) washes away salt immediately
-	        // Simple dilution formula
-	       float dilution_factor <- (the_weather.rain > 0) ? (1.0 / (1.0 + (the_weather.rain * 0.1))) : 1.0;
-	        	 
+	     	
+			
 	        salinity_level <- potential_salinity * dilution_factor;
 	    		
 			pollution_level <- pollution_level * pollution_decay_rate;
+			
     	}
       	 
       	ask unit_cell { 
