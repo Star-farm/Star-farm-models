@@ -64,6 +64,7 @@ global {
     float fertilizer_unit_price <- 0.90;    // Cost of chemical nitrogen fertilizer ($/kg)
     float pesticide_unit_cost <- 15.0;    // Cost of one pesticide application ($/spray/ha)
  
+
    
     // =========================================================
     // 3. ENVIRONMENTAL & CLIMATE PARAMETERS
@@ -89,8 +90,8 @@ global {
    // =========================================================
     // 4. BIOLOGICAL & CROP MANAGEMENT PARAMETERS
     // =========================================================
-    float rue_efficiency_factor <- 0.9; // Correction factor to adjust theoretical RUE to field conditions (0.0 to 1.0)
-    float daily_water_loss_mm <- 10.0;     // Sum of evapotranspiration and deep percolation (mm/day)
+    float rue_efficiency_factor <- 0.57; // Correction factor to adjust theoretical RUE to field conditions (0.0 to 1.0)
+    float daily_water_loss_mm <- 12.0;     // Sum of evapotranspiration and deep percolation (mm/day)
     float methane_base_emission <- 2.5;   // Daily CH4 emission for continuously flooded fields (kg CH4/ha/day)
     float ch4_reduction_factor <- 0.1; // Emission multiplier during dry AWD phases (10% of base)
    	float straw_burn_emission_factor <- 1460.0; // kg CO2-eq emitted per ton of burned straw
@@ -127,8 +128,8 @@ global {
     // Pest and Disease Logic
     float pest_humidity_limit <- 70.0;    // Humidity threshold for pest infection (%)
     float pest_temp_limit <- 27.0;        // Minimum temperature for pest infection (°C)
-    float pest_infection_prob <- 0.3;     // Probability of outbreak if weather conditions are met
-    float pest_daily_increment <- 0.05;   // Daily increase in pest load during infection
+    float pest_infection_prob <- 0.4;     // Probability of outbreak if weather conditions are met
+    float pest_daily_increment <- 0.01;   // Daily increase in pest load during infection
     int pest_spray_cooldown_days <- 7;    // Minimum required delay between spray treatments (days)
     float pest_pollution_feedback <- 0.05;// Pollution impact on pest resurgence (killing natural predators)
     float pesticide_pollution_add <- 0.2; // Pollution units added to the cell per spray event (ratio plot area / cell area)

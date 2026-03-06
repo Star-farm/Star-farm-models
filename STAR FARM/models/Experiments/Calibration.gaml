@@ -72,19 +72,18 @@ global  {
 
 
 experiment fine_tuning_yield type: batch until: end_of_sim repeat: 4 keep_seed: true {
-	method reactive_tabu iter_max: 1000 cycle_size_max: 10 cycle_size_min: 3 tabu_list_size_init: 5 minimize: fitness aggregation: "avr"
-	init_solution: ["rue_efficiency_factor"::0.9, "flood_biomass_decay_rate"::0.01,	"pest_infection_prob"::0.9,	"pest_daily_increment"::0.05];
-			
+	method reactive_tabu iter_max: 1000 cycle_size_max: 20 cycle_size_min: 20 tabu_list_size_init:10 minimize: fitness aggregation: "avr"
+	init_solution: ["rue_efficiency_factor"::0.57, "daily_water_loss_mm"::12.0,	"pest_infection_prob"::0.4,	"pest_daily_increment"::0.01];
+
 	
 	parameter rue_efficiency_factor var: rue_efficiency_factor min: 0.5 max: 1.0 step: 0.01;
-	parameter flood_biomass_decay_rate var: flood_biomass_decay_rate min: 0.01 max: 0.2 step: 0.01;
 	
 	parameter pest_infection_prob var: pest_infection_prob min: 0.1 max: 1.0 step: 0.1;
 	
 	parameter pest_daily_increment var: pest_daily_increment min: 0.01 max: 0.05 step:0.01;
 	
 	parameter daily_water_loss_mm var: daily_water_loss_mm min: 4.0 max: 12.0 step: 1.0;
-	
+		
 	
 	init {
 		gama.pref_parallel_simulations_all <- false;
@@ -101,7 +100,7 @@ experiment fine_tuning_yield type: batch until: end_of_sim repeat: 4 keep_seed: 
 	}
 }
 
-experiment calibration_yield_spray_water type: batch until: end_of_sim repeat: 10 keep_seed: true {
+experiment calibration_yield_spray_water type: batch until: end_of_sim repeat: 4 keep_seed: true {
 	method genetic pop_dim: 10 crossover_prob: 0.7 mutation_prob: 0.1 improve_sol: false stochastic_sel: false
 	nb_prelim_gen: 2 max_gen: 10000  minimize: fitness  aggregation: "avr";
 	
@@ -116,7 +115,7 @@ experiment calibration_yield_spray_water type: batch until: end_of_sim repeat: 1
 
 	init {
 		gama.pref_parallel_simulations_all <- false;
-		gama.pref_parallel_threads <- 10;
+		gama.pref_parallel_threads <- 4;
 		mode_batch <- true;
 		save_results <- false; 
 		write_results <- false;

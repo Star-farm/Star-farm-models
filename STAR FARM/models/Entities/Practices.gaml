@@ -145,18 +145,17 @@ species Sowing_practice parent:Practice {
 	string name <- "sowing";
 	Cultivar type_of_cultivar;
 	bool mechanical_seeding;
-	bool date_ok;
 	float labor <- mechanical_seeding ? labor_sowing_machine_hours : labor_sowing_manual_hours;
 			
 	
 	bool to_apply(Plot plot, int current_day) { 
-		date_ok <- date_ok or (current_day in implementation_days);
-		return date_ok and (plot.associated_crop = nil); 
+		plot.date_sowing_ok <- plot.date_sowing_ok or (current_day in implementation_days);
+		return plot.date_sowing_ok and (plot.associated_crop = nil); 
 	} 
 	
 	
 	action effect(Plot plot) {
-		date_ok <- false;
+		plot.date_sowing_ok <- false;
 		create Crop with:(the_farmer:plot.the_farmer, variety:type_of_cultivar  ) {
 			seed_density_kg_ha <- myself.mechanical_seeding ? seed_density_kg_ha_mechanical : seed_density_kg_ha_broadcast;
 			plot.associated_crop <- self;

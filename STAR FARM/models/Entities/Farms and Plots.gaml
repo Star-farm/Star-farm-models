@@ -186,6 +186,8 @@ species Plot {
     int pesticide_count <- 0;        //SPRAY COUNTER
    	int days_since_last_spray; 
 	
+	bool date_sowing_ok <- false;
+	
    // 1.0 = Perfect soil, 0.6 = Highly degraded soil
     float soil_health <- 1.0 min: min_soil_health max: 1.0;
     

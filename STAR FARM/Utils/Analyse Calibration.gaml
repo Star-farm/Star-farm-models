@@ -8,7 +8,7 @@
 model AnalyseCalibration
 
 global {
-	csv_file calibration_result_csv_file <- csv_file("../models/Experiments/Calibration/calibration_result 2.csv", ";", false);
+	csv_file calibration_result_csv_file <- csv_file("../models/Experiments/Calibration/tabu_calibration_result.csv", ",", false);
 	map<list<float>,list<float>> solutions;
 	int min_parameter_index <- 2;
 	int max_parameter_index <- 5;
@@ -23,16 +23,15 @@ global {
 	 		}
 	 		
 	 		if (sol in solutions.keys) {
-	 			solutions[sol] << float(mat[max_parameter_index+1,i]);
+	 			solutions[sol] << float(mat[max_parameter_index+4,i]);
 	 		} else {
-	 			solutions[sol] <- [float(mat[max_parameter_index+1,i])];
+	 			solutions[sol] <- [float(mat[max_parameter_index+4,i])];
 	 		}
 	 	}
 	 	list<float> best_sol;
 	 	float best_fitness <- #max_float;
 
 	 	loop sol over: solutions.keys {
-	 		write length(solutions[sol]);
 	 		float m_f <- mean(solutions[sol]);
 	 		if m_f < best_fitness {
 	 			best_fitness <- m_f;
