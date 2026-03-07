@@ -26,12 +26,16 @@ global {
  */
 species Farmer  {
 	bool is_active <- false;
+	bool ended_year <- false;
+	bool ended_season <- false;
 	
 	Farm my_farm;  // Reference to the farm owned by this farmer
 	
 	// The current agricultural practice followed by the farmer
 	Crop_practice practice <- practices[possible_practices.keys[rnd_choice(possible_practices.values)]];
- 
+ 	int num_seasons <- length(practice.sowing.implementation_days);
+	int ended_seasons <- 0;
+	
 	float money; // Economic capital of the farmer
 	float day_revenue update: 0.0; 
 	float day_expenses update: 0.0;
@@ -193,7 +197,9 @@ species Plot {
     
     // PESTICIDES & PESTS
     float pest_load <- 0.0;          // 0.0 (not infected) à 1.0 (Infected)
-  
+
+
+	
 	/**
 	 * Reflex: sowing
 	 * Checks whether sowing should occur according to the practice calendar
@@ -212,16 +218,32 @@ species Plot {
 		 }
 		 the_farmer.is_active <- true;
 		 is_active <- true;
-		 ask the_farmer.practice {
-		 	do sowing_season_update;
-		 }
-		 
+	
 		 ask the_farmer.practice.sowing {
 			do effect_with_labor(myself);
 		} 
 		 
 	}
 	
+	reflex harvesting when: the_farmer.practice.harvesting.to_apply(self,current_date.day_of_year){
+		the_farmer.ended_seasons <- the_farmer.ended_seasons +1;
+		the_farmer.ended_season <- true;
+		if (the_farmer.ended_seasons = the_farmer.num_seasons) {
+			the_farmer.ended_seasons <- 0;
+			the_farmer.ended_year<- true;
+			
+		}
+		ask the_farmer.practice.harvesting {
+			do effect_with_labor(myself);
+		} 
+		ask associated_crop {
+			do die; 
+		}
+		associated_crop <- nil;
+		
+	} 
+	
+	 
 	reflex apply_practices {
 		ask the_farmer.practice.other_practices {
 			if (to_apply(myself, current_date.day_of_year)) {
@@ -339,19 +361,6 @@ species Crop  {
 	    }
 	}
 	
-	reflex harvesting when: the_farmer.practice.harvesting.to_apply(concerned_plot,current_date.day_of_year){
-		ask the_farmer.practice {
-		 	do harvesting_season_update;
-		}
-		/*ask the_farmer.practice{
-			do add_to_indicator("Harvest",myself.harvest_biomass_computation());
-			do add_to_indicator("Water consumption", myself.concerned_plot.soil_water);
-		}	*/
-		
-		ask the_farmer.practice.harvesting {
-			do effect_with_labor(myself.concerned_plot);
-		} 
-	} 
 	
 	  
 }

@@ -8,7 +8,7 @@
 model AnalyseCalibration
 
 global {
-	csv_file calibration_result_csv_file <- csv_file("../models/Experiments/Calibration/tabu_calibration_result.csv", ",", false);
+	csv_file calibration_result_csv_file <- csv_file("../models/Experiments/Calibration/PSO_calibration_result.csv", ",", false);
 	map<list<float>,list<float>> solutions;
 	int min_parameter_index <- 2;
 	int max_parameter_index <- 5;

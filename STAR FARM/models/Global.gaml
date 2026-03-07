@@ -39,6 +39,9 @@ global {
 	bool mode_batch <- false;
    
 	bool end_of_sim <- false; 
+	
+	bool first_year <- true;
+	
 
 // Output file paths
     string output_file_day <- "../results/daily_data.csv";
@@ -59,7 +62,7 @@ global {
 		do init_all_headers;
 		do load_cultivars;
 		do create_practices;
-		do create_plant_growth_models;
+		do create_plant_growth_models; 
 		do create_plots;	
 		do init_weather_data;
 		do init_market;
@@ -68,6 +71,8 @@ global {
 		ask remove_duplicates(PG_models){
 			do initialize();
 		}  
+		list<Sowing_practice> sp_r <- remove_duplicates(Farmer collect each.practice.sowing);
+		
 	}
 	
 	
@@ -125,33 +130,32 @@ global {
 	action init_action;
 	
 	
-	reflex end_of_days when: cycle > 0 {
+	reflex end_of_days when: cycle > 0 { 
 		do write_day_report;
 	}
 	
-	reflex end_of_season when: ready_to_end_season and empty(Crop) {
+	reflex end_of_season when: ready_to_end_season and empty(Farmer where (each.is_active and (not each.ended_season))) {
 		do write_season_report;
+		ready_to_end_season <- false;
 	}
 	
 	
-	reflex end_of_year when: cycle > 1 and current_date.day_of_year =  day_start_of_year{
+	reflex end_of_year when: (Farmer first_with not(each.ended_year)) = nil{
 		do write_year_report;
-		ask Farmer {do decide_practice;}
+		ask Farmer {
+			ended_year <- false;
+			do decide_practice;
+		}
 		ask practices {do switch_to_new_year;}
-		  // 4. Reset counters (Important: do this AFTER saving)
-        ask Farmer { yearly_profit <- 0.0; }
+			  // 4. Reset counters (Important: do this AFTER saving)
+	    ask Farmer { yearly_profit <- 0.0; }
 		if use_dynamic_market {
 			ask the_market {
 				do annual_update;
-			}
-		}	
+			}	
+		}
 	}
 	
-	
-	
-	reflex update_end_of_season {
-		 ready_to_end_season <- not empty(Crop);
-	}
 	
 	  
     reflex update_rain_memory {
@@ -286,7 +290,7 @@ global {
 		
 		ask plot_species {
 			map attributes <- shape.attributes;
-			surface_in_ha <- shape.area / 10000;
+			surface_in_ha <- shape.area / 10000; 
 			if not empty(plots_to_keep) {
 				loop att over: plots_to_keep.keys {
 					if not(att in attributes.keys) or not(string(attributes[att]) contains plots_to_keep[att]) {

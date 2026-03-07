@@ -63,7 +63,7 @@ global {
 		create Harvesting_practice with:(collect_straw:collect_straw) returns: har_pract;
 		return first(har_pract);
 	}	
-	
+	 
 	action add_AWD_practice(Crop_practice pract) {
 		create AWD_Irrigating_practice  {
 			pract.irrigation <- self;
@@ -156,6 +156,9 @@ species Sowing_practice parent:Practice {
 	
 	action effect(Plot plot) {
 		plot.date_sowing_ok <- false;
+		ready_to_end_season <- true; 
+		plot.the_farmer.ended_season <- false;
+		
 		create Crop with:(the_farmer:plot.the_farmer, variety:type_of_cultivar  ) {
 			seed_density_kg_ha <- myself.mechanical_seeding ? seed_density_kg_ha_mechanical : seed_density_kg_ha_broadcast;
 			plot.associated_crop <- self;
@@ -204,6 +207,7 @@ species Harvesting_practice parent:Practice {
 	
 	
 	action effect(Plot plot) { 
+		
 	  float dry_yield <- plot.associated_crop.biomass * plot.associated_crop.variety.harvest_index_potential;
 	  
 	  	// Applying the Soil Fatigue Factor ---
@@ -241,10 +245,6 @@ species Harvesting_practice parent:Practice {
        plot.the_farmer.yearly_profit <- plot.the_farmer.yearly_profit + plot.the_farmer.profit_net;
 		
 		
-		ask plot.associated_crop {  
-			do die; 
-		}  
-		plot.associated_crop <- nil;
 	}
 }
 
@@ -511,7 +511,7 @@ species Crop_practice virtual: true {
 	}
 	
 	
-	action sowing_season_update{
+	/*action sowing_season_update{
 		if (not is_active_season){
 			is_active_season <- true;
 		 	// starts a new season
@@ -543,7 +543,7 @@ species Crop_practice virtual: true {
 		 	activity << int(is_active_season);
 		}
 		
-	}
+	}*/
 	
 	
 
