@@ -11,35 +11,35 @@ import "../Global.gaml"
 
 
 global  {
-	int start_year <- 2026;
-    int end_year <- 2049;
+	int start_year <- 2025;
+    int end_year <- 2050;
     string OPTIMISTIC <- "Optimistic" ; 
     string BASELINE <- "Baseline" ;
     string PESSIMISTIC <- "Pessimistic";
-    
+     
     string STANDARD <- "Standard";
-    string RESOURCE_CRISIS <- "Crisis";
-    
-    
-	string weather_scenario <- BASELINE among: [OPTIMISTIC, BASELINE,PESSIMISTIC]   ;
+    string RESOURCE_CRISIS <- "Crisis"; 
+     
+      
+	string weather_scenario <- OPTIMISTIC among: [OPTIMISTIC, PESSIMISTIC]   ;
 	string market_scenario <- STANDARD among: [STANDARD, RESOURCE_CRISIS]   ;
 	
 	action init_action {
 		switch weather_scenario {
 			match OPTIMISTIC {
-				do generate_scenario(OPTIMISTIC,start_year, end_year, 0.5, 1.0, 1.1, 0.0,0,0);
+				do generate_scenario(OPTIMISTIC,start_year, end_year, 0.5, 1.0, 1.2, 0.0,0,0);
 			}
 			match BASELINE {
-				do generate_scenario(BASELINE,start_year, end_year,1.2, 2.5, 1.25, 0.03,15,10);
+				do generate_scenario(BASELINE,start_year, end_year,1.2, 2.5, 1.4, 0.03,15,10);
 			}
 			match PESSIMISTIC{
-				do generate_scenario(PESSIMISTIC,start_year, end_year, 2.5, 5.0, 1.4, 0.06,30,20);
+				do generate_scenario(PESSIMISTIC,start_year, end_year, 2.5, 4.5, 1.6, 0.06,30,20);
 			}
 		} 
 		
 		switch market_scenario {
 			match STANDARD {
-				create Market {
+				create Market { 
            			market_id <- "Standard";
             		// Setup: We leave specific trends at 0.0 (neutral)
             		// We set high correlation (0.8) with the global economy
@@ -73,17 +73,50 @@ global  {
 	
 		
 }
-experiment "explore strategies" type: batch until: end_of_sim repeat: 1 keep_seed: true {
-	parameter possible_practices var: possible_practices <- ["BAU-3seasons"::1.0] among: [["BAU-3seasons"::1.0], ["BAU-2seasons"::1.0],["OMRH":: 1.0]];
-	parameter weather_scenario var: weather_scenario ;
+
+experiment test_strategy type: batch until: end_of_sim repeat: 1 keep_seed: true {
+	method exploration 
+	with: [["possible_practices"::[BAU_3S_sust::1.0], "weather_scenario"::PESSIMISTIC,	"market_scenario"::STANDARD]];
 	
-	parameter market_scenario var: market_scenario ;
 	
-	init {
+	parameter possible_practices var: possible_practices <- [BAU_3S_sust::1.0] among:[[BAU_3S_sust::1.0]];
+	parameter "weather scenario" var: weather_scenario  ;
+	
+	parameter "market scenario" var: market_scenario   ;
+	
+	init { 
 		mode_batch <- true;
-		save_results <- true;
+		save_results <- true; 
+		gama.pref_parallel_simulations_all <- false;
+		gama.pref_parallel_threads <- 1;
+		
+		write_results <- true;
+		day_start_of_year <- 300;
+		starting_date <- date([2025,1,1]) add_days (day_start_of_year -1);
+		use_weather_generator <- true;	
+		use_dynamic_market <- true;
+		
+	}
+}
+
+experiment explore_strategies type: batch until: end_of_sim repeat: 20 keep_seed: true {
+	//method exploration;
+	parameter possible_practices var: possible_practices <- [BAU_3S::1.0] among:[[OMRH:: 1.0],[BAU_3S::1.0], [BAU_3S_sust::1.0],[BAU_2S::1.0]];
+	parameter "weather scenario" var: weather_scenario  ;
+	
+	parameter "market scenario" var: market_scenario   ;
+	
+	init { 
+		mode_batch <- true;
+		save_results <- true; 
+		gama.pref_parallel_simulations_all <- false;
+		gama.pref_parallel_threads <- 20;
+		
 		write_results <- false;
-		use_weather_generator <- false;
+		day_start_of_year <- 300;
+		starting_date <- date([2025,1,1]) add_days (day_start_of_year -1);
+		use_weather_generator <- true;	
+		use_dynamic_market <- true;
 		
 	}
 }

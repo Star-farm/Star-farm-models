@@ -7,7 +7,7 @@
   
 model STARFARM   
    
-import "Generic Experiment.experiment" 
+import "Generic Experiment.experiment"  
     
 global{
 	string current_indicator_family <- "Economy";

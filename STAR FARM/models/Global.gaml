@@ -55,6 +55,7 @@ global {
 	  // Total provincial capacity (updates automatically based on agent count)
     float max_province_pumping_capacity ;
   
+ 	 string market_scenario ;
   
 	init { 
 		do init_action;
@@ -86,13 +87,16 @@ global {
 			string pr <- string(possible_practices.keys) replace("[","") replace("]","")replace("'","")  ;
 			id_xp <- pr + "-" + weather_id +"-"+market_id;
 		} 
-		output_file_day <- output_folder + "/day/daily_data_" + int(self)+ "_" + id_xp+".csv" ;
-		output_file_season <- output_folder + "/season/seasonal_data_" + int(self)+ "_" + id_xp+".csv" ;
-		output_file_year <- output_folder + "/year/yearly_data_" + int(self)+ "_" + id_xp+".csv" ;
+		output_file_day <- output_folder + "/day/daily_data_"  + id_xp+".csv" ;
+		output_file_season <- output_folder + "/season/seasonal_data_"  + id_xp+".csv" ;
+		output_file_year <- output_folder + "/year/yearly_data_" + id_xp+".csv" ;
 		
-        do write_header_day;
-        do write_header_season;
-        do write_header_year;
+		if (not file_exists(output_file_day)) { 
+			do write_header_day;
+        	do write_header_season;
+        	do write_header_year;
+		}
+       
     }
     
 	action write_header_day {
@@ -103,7 +107,7 @@ global {
             list<Indicator> daily_inds <- dayly_indicators.values;
             loop ind over: daily_inds { header <- header + "," + ind.name; }
             header <- header + "\n";
-            save header to: output_file_day format: "text" rewrite: true;
+            save header to: output_file_day format: "text" rewrite: mode_batch;
         }
     }
 
@@ -113,7 +117,7 @@ global {
             list<Indicator> seasonal_inds <- seasonal_indicators.values;
             loop ind over: seasonal_inds { header <- header + "," + ind.name; }
            	header <- header + "\n";
-            save header to: output_file_season format: "text" rewrite: true;
+            save header to: output_file_season format: "text" rewrite: mode_batch;
         }
     }
 
@@ -123,7 +127,7 @@ global {
             list<Indicator> yearly_inds <- yearly_indicators.values;
             loop ind over: yearly_inds { header <- header + "," + ind.name; }
             header <- header + "\n";
-            save header to: output_file_year format: "text" rewrite: true;
+            save header to: output_file_year format: "text" rewrite: mode_batch;
         }
     }
 	

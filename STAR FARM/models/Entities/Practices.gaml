@@ -21,7 +21,7 @@
 model STARFARM
 
 import "Market.gaml"
-
+ 
 import "../Global.gaml" 
 
 import "../Constants.gaml" 
@@ -34,7 +34,7 @@ import "../Constants.gaml"
  
 global {
 	// Map storing all crop practices available in the model, keyed by their ID
-	map<string,Crop_practice> practices;
+	map<string,Crop_strategy> practices;
 	
 	// List of the indicators to be monitored
 	list<string> key_indicators <- ["Harvest","Profit","Crop area","Water consumption","Fertilizer consumption","Current year","Current season"];
@@ -43,19 +43,19 @@ global {
 		
 	// Action to create all practice instances from their species definitions
 	action create_practices {
-		loop s over: Crop_practice.subspecies { 
+		loop s over: Crop_strategy.subspecies { 
 			create s returns: new_practices;
-			Crop_practice ct <- Crop_practice(first(new_practices));
+			Crop_strategy ct <- Crop_strategy(first(new_practices));
 			practices[ct.id] <- ct ;
 		}
-		ask Crop_practice {
+		ask Crop_strategy {
 			do initialize;
-		}
+		} 
 	}
 	
 	
-	Sowing_practice create_sowing_practice(Cultivar cultivar, list<int> days, bool mechanical) {
-		create Sowing_practice with:(type_of_cultivar: cultivar, implementation_days: days,  mechanical_seeding:mechanical) returns: sow_pract;
+	Sowing_practice create_sowing_practice(Cultivar cultivar, map<int,bool> days_cleaning, bool mechanical) {
+		create Sowing_practice with:(type_of_cultivar: cultivar, implementation_days: days_cleaning,  mechanical_seeding:mechanical) returns: sow_pract;
 		return first(sow_pract);
 	}
 	
@@ -64,41 +64,44 @@ global {
 		return first(har_pract);
 	}	
 	 
-	action add_AWD_practice(Crop_practice pract) {
+	action add_AWD_practice(Crop_strategy pract) {
 		create AWD_Irrigating_practice  {
 			pract.irrigation <- self;
 			pract.other_practices << self;
 		}
 	}
 	
-	action add_fallow_practice(Crop_practice pract, int doy_end) {
+	action add_fallow_practice(Crop_strategy pract, int doy_end) {
 		create Fallow_practice  {
 			day_end_fallow <- doy_end;
 			pract.other_practices << self;	
 		} 
 	}
 	
-	action add_CF_practice(Crop_practice pract) {
+	action add_CF_practice(Crop_strategy pract) {
 		create CF_Irrigating_practice  {
 			pract.irrigation <- self;
 			pract.other_practices << self;
 		} 
 	}
 	
-	action add_input_use_practice(Crop_practice cp, float trigger_threshold_, float base_dose_, float target, bool mech) {
+	action add_input_use_practice(Crop_strategy cp, map<int,float>  trigger_thresholds_, float base_dose_, map<int,float> targets, bool mech) {
 	    create Input_use_practice {
-	        self.trigger_threshold <- trigger_threshold_;
+	        self.trigger_thresholds <- trigger_thresholds_;
 	        self.base_dose <- base_dose_;
-	        self.target_nitrogen <- target;
+	        self.target_nitrogens <- targets;
 	        self.mechanical <- mech;
 	        // Add to the list of practices of the parent
 	        cp.other_practices <- cp.other_practices + self;
 	    }
 	}
 	
-	action add_pesticide_practice(Crop_practice pract, float pesticide_threshold, bool mec) {
-		create Pesticide_application_practice with:(pesticide_threshold:pesticide_threshold, mechanical:mec){
+	action add_pesticide_practice(Crop_strategy pract, map<int,float> pesticide_thresholds, bool mec, bool IPM) {
+		create Pesticide_application_practice with:(pesticide_thresholds:pesticide_thresholds, mechanical:mec){
 			pract.other_practices << self;
+			ask pract.sowing {
+				labor <- labor + (IPM ? labor_IMP_pest_management_hours : labor_pest_management_hours);
+			}
 		} 
 	}
 	
@@ -119,7 +122,7 @@ species Practice virtual: true {
 		do effect(plot);
 		do add_labor(plot);
 	}
-	
+	 
 	action effect(Plot plot) virtual: true; 
 } 
 
@@ -141,15 +144,21 @@ species Fallow_practice parent: Practice {
 }
 
 species Sowing_practice parent:Practice { 
-	list<int> implementation_days ;
+	map<int,bool> implementation_days ;
+	
 	string name <- "sowing";
 	Cultivar type_of_cultivar;
 	bool mechanical_seeding;
-	float labor <- mechanical_seeding ? labor_sowing_machine_hours : labor_sowing_manual_hours;
+	float labor <- mechanical_seeding ? (labor_sowing_machine_hours + labor_land_prep_hours_meca) : (labor_sowing_manual_hours + labor_land_prep_hours_manual);
 			
 	
 	bool to_apply(Plot plot, int current_day) { 
-		plot.date_sowing_ok <- plot.date_sowing_ok or (current_day in implementation_days);
+		bool impl_day  <- current_day in implementation_days.keys;
+		if (impl_day and implementation_days[current_day]) {
+			plot.last_harvest_date <- nil; 
+			
+		}
+		plot.date_sowing_ok <- plot.date_sowing_ok or impl_day;
 		return plot.date_sowing_ok and (plot.associated_crop = nil); 
 	} 
 	
@@ -158,20 +167,62 @@ species Sowing_practice parent:Practice {
 		plot.date_sowing_ok <- false;
 		ready_to_end_season <- true; 
 		plot.the_farmer.ended_season <- false;
-		
+		 
 		create Crop with:(the_farmer:plot.the_farmer, variety:type_of_cultivar  ) {
 			seed_density_kg_ha <- myself.mechanical_seeding ? seed_density_kg_ha_mechanical : seed_density_kg_ha_broadcast;
 			plot.associated_crop <- self;
-			concerned_plot <- plot; 
+			concerned_plot <- plot;  
+			Practice p <- plot.the_farmer.practice.has_practice(PESTICIDE) ?plot.the_farmer.practice.get_practice(PESTICIDE) : nil;
+			if (p != nil) {
+				Pesticide_application_practice pp <- Pesticide_application_practice(p);
+				plot.pesticide_threshold <- pp.pesticide_thresholds[pp.pesticide_thresholds.keys with_min_of (abs(each - current_date.day_of_year)) ];
 			
+			}
+			p <- plot.the_farmer.practice.has_practice(INPUT) ?plot.the_farmer.practice.get_practice(INPUT) : nil;
+			if (p != nil) {
+				Input_use_practice pp <- Input_use_practice(p);
+				plot.target_nitrogen <- pp.target_nitrogens[pp.target_nitrogens.keys with_min_of (abs(each - current_date.day_of_year)) ];
+				plot.trigger_threshold <- pp.trigger_thresholds[pp.trigger_thresholds.keys with_min_of (abs(each - current_date.day_of_year)) ];
+			}
 			thermal_units_total <- variety.tt_emergence + variety.tt_veg + variety.tt_rep + variety.grain_filling_duration;
        		potential_rue_calibrated <- myself.type_of_cultivar.RUE * rue_efficiency_factor; 
+
+       		
+       		if (plot.last_harvest_date != nil) { 
+	           // Check if there is fresh straw decomposing in the soil
+    			if (plot.leftover_straw_base > 0.0 ) {
+	        
+	       			 int rest_days <- round((current_date - plot.last_harvest_date) / #day);
+	        
+	        		if (rest_days < safe_rest_period) {
+	            
+			            // 1. Time factor: Non-linear decay of toxicity over time
+			            float missing_rest_ratio <- (safe_rest_period - rest_days) / safe_rest_period;
+			            float time_factor <- missing_rest_ratio ; 
+			            
+			            // 2. Calculate the combined penalty: Amount of straw * Toxicity rate * Time factor
+			            float total_penalty <- plot.leftover_straw_base * toxicity_per_straw_unit * time_factor;
+			            
+			            // 3. Safety check: Ensure the penalty doesn't exceed a logical maximum (e.g., 80% reduction max)
+			            total_penalty <- min(0.30, total_penalty);
+			            
+			            // 4. Apply the permanent penalty to the plant's engine (RUE)
+			            float local_toxicity_penalty <- 1.0 - total_penalty;
+			            potential_rue_calibrated <- potential_rue_calibrated * local_toxicity_penalty;
+			        }  
+	   	 		}
+	           
+	            
+	        } 
+	         
+	      
+       		
        		salt_threshold_val <- variety.salinity_tolerance;
        		emergence_threshold <- variety.tt_emergence;
     		flowering_threshold <- emergence_threshold + variety.tt_veg;
      		maturity_threshold  <- flowering_threshold + variety.tt_rep;
    
- 			
+ 			 
  			concerned_plot.stress_days_salinity <- 0;
     		concerned_plot.stress_days_drought <- 0;
     		concerned_plot.stress_days_flood <- 0; 
@@ -179,24 +230,25 @@ species Sowing_practice parent:Practice {
     		concerned_plot.pesticide_count <- 0;
     		concerned_plot.max_stress_days_flood_continuous <- 0;  
     		concerned_plot.total_water_pumped <- 0.0;  
-    		concerned_plot.methane_emissions_kg_ha <- 0.0;
     		concerned_plot.final_yield_ton_ha <- 0.0;
     		concerned_plot.straw_yield_ton_ha <- 0.0;
+    		concerned_plot.total_fertilizer_applied <- 0.0;
+    		concerned_plot.methane_emissions_kg_ha <- 0.0;
     		the_farmer.accumulated_labor_hours <- 0.0;
     		the_farmer.mechanization_costs <- (myself.mechanical_seeding ? mech_cost_sust_fixed : mech_cost_bau_fixed);
 			
 
     
-   		}  
+   		}
    		
-	} 
+   	}
 }
 
 
 
 species Harvesting_practice parent:Practice {
 	string name <- "harvesting";
-	float labor <- labor_harvest_supervision;
+	float labor <- labor_harvest_supervision_logistics;
 		
 	bool collect_straw;             //false (Slash-and-burn) vs 1M: true (Sale)
     
@@ -206,9 +258,9 @@ species Harvesting_practice parent:Practice {
 	}
 	
 	
-	action effect(Plot plot) { 
+ 	action effect(Plot plot) {
 		
-	  float dry_yield <- plot.associated_crop.biomass * plot.associated_crop.variety.harvest_index_potential;
+    	float dry_yield <- plot.associated_crop.biomass * plot.associated_crop.variety.harvest_index_potential;
 	  
 	  	// Applying the Soil Fatigue Factor ---
         dry_yield <- dry_yield * plot.soil_health;
@@ -219,7 +271,9 @@ species Harvesting_practice parent:Practice {
         plot.final_yield_ton_ha <- (dry_yield * biomass_to_ton_conv) / harvest_moisture_adjust;
         plot.straw_yield_ton_ha <- (plot.associated_crop.biomass * biomass_to_ton_conv) -  plot.final_yield_ton_ha; 
  
-        float rice_rev <- (plot.final_yield_ton_ha * 1000) * plot.associated_crop.variety.rice_market_price * the_market.r_for_crop(plot.associated_crop.variety);
+ 		float actual_sold_yield <- plot.final_yield_ton_ha * (1.0 - harvest_loss_rate);
+
+		float rice_rev <- (actual_sold_yield * 1000) * plot.associated_crop.variety.rice_market_price * the_market.r_for_crop(plot.associated_crop.variety);
         float straw_rev <- 0.0;  
         
         if (collect_straw) { straw_rev <- (plot.straw_yield_ton_ha * 1000) * straw_market_price * the_market.r_straw ; }
@@ -231,21 +285,20 @@ species Harvesting_practice parent:Practice {
         
         plot.the_farmer.revenue <- rice_rev + straw_rev;
          
-         
-        float cost_fert <- plot.associated_crop.total_fertilizer_applied * fertilizer_unit_price * the_market.r_fertilizer;
+        float cost_labor <- plot.the_farmer.accumulated_labor_hours * labor_cost_per_hour; 
+        float cost_fert <- plot.total_fertilizer_applied * fertilizer_unit_price * the_market.r_fertilizer;
         float cost_pest <- plot.pesticide_count * pesticide_unit_cost * the_market.r_pesticides;
         float cost_water <- plot.total_water_pumped * pumping_cost_per_mm * the_market.r_water; 
         float cost_seed <- plot.associated_crop.seed_density_kg_ha * plot.associated_crop.variety.seed_unit_cost * the_market.r_for_seed(plot.associated_crop.variety); 
         float cost_meca <- plot.the_farmer.mechanization_costs * the_market.r_mech;  
-    
-        plot.the_farmer.total_costs <- cost_fert + cost_pest + cost_water + cost_seed  + cost_meca;
+    	plot.the_farmer.total_costs <- cost_labor+ cost_fert + cost_pest + cost_water + cost_seed + cost_meca ;
         
         plot.the_farmer.profit_net <- plot.the_farmer.revenue - plot.the_farmer.total_costs;
 		
        plot.the_farmer.yearly_profit <- plot.the_farmer.yearly_profit + plot.the_farmer.profit_net;
 		
 		
-	}
+	} 
 }
 
 species Irrigating_practice parent: Practice virtual: true{
@@ -254,35 +307,30 @@ species Irrigating_practice parent: Practice virtual: true{
 	float pumping_capacity;
 	float pumping_energy_cost;
 	bool to_apply(Plot plot, int current_day) {
+		// plot.water_level <- plot.water_level + the_weather.rain - daily_water_loss_mm;
+      
 		return plot.associated_crop != nil;
 	}
 	
 	action effect(Plot plot) {
 		 
-		 plot.associated_crop.water_level <- plot.associated_crop.water_level + the_weather.rain - daily_water_loss_mm;
-       
-        if (plot.associated_crop.water_level <= 0) {  
-        	plot.methane_emissions_kg_ha <- plot.methane_emissions_kg_ha + (methane_base_emission * ch4_reduction_factor);
-        } 
-        else { 
-        	plot.methane_emissions_kg_ha <- plot.methane_emissions_kg_ha + methane_base_emission;
-        }
-        float water_needed <- max(0,manage_water_needed(plot));
+		 
+     	float water_needed <- max(0,manage_water_needed(plot));
        
         bool water_is_good_quality <- plot.my_cell.salinity_level < max_pumping_salinity;
         bool water_is_available <- (rain_last_days > min_rain_for_access) and (total_province_pumping < max_province_pumping_capacity);
       
         float water_pumped <- (water_is_good_quality and water_is_available) ? water_needed: 0.0;
        
- 		plot.associated_crop.water_level <- plot.associated_crop.water_level + water_pumped;
+ 		plot.water_level <- plot.water_level + water_pumped;
        
         plot.associated_crop.water_pumped_today <-  water_pumped; 
         if (water_pumped > 0) {  
         	plot.total_water_pumped <- plot.total_water_pumped + water_pumped;
         }
         
-      	if (plot.associated_crop.water_level > flood_stress_threshold) {
-        	plot.associated_crop.water_level <- plot.associated_crop.water_level - pumping_capacity;
+      	if (plot.water_level > flood_stress_threshold) {
+        	plot.water_level <- plot.water_level - pumping_capacity;
        		plot.the_farmer.mechanization_costs <- plot.the_farmer.mechanization_costs + (pumping_energy_cost * pumping_cost_per_mm); 
         }
 	} 
@@ -304,8 +352,8 @@ species CF_Irrigating_practice parent: Irrigating_practice{
 	float manage_water_needed(Plot plot)  {
 		float water_needed <- 0.0;
 		
-		if (plot.associated_crop.water_level < water_target_flooded) { 
-			water_needed <- water_target_flooded - plot.associated_crop.water_level; 
+		if (plot.water_level < water_target_flooded) { 
+			water_needed <- water_target_flooded - plot.water_level; 
 		}
 	   	return water_needed;
 	} 
@@ -322,16 +370,16 @@ species AWD_Irrigating_practice parent: Irrigating_practice{
 	
 	float manage_water_needed(Plot plot)  {
 		float water_needed <- 0.0;
-		if (plot.associated_crop.water_level <= awd_pumping_threshold) {
-			water_needed <- water_target_flooded - plot.associated_crop.water_level; 
+		if (plot.water_level <= awd_pumping_threshold) {
+			water_needed <- water_target_flooded - plot.water_level; 
 		}
-        return water_needed;
+        return water_needed;  
 	}
 }
 
 species Pesticide_application_practice parent:Practice {
 	string name <- PESTICIDE;
-	float pesticide_threshold;
+	map<int,float> pesticide_thresholds;
 	bool mechanical;
 	float labor <- mechanical ? labor_spray_drone_hours : labor_spray_manual_hours;
 	
@@ -340,8 +388,7 @@ species Pesticide_application_practice parent:Practice {
 			return false;
 		}
 		plot.days_since_last_spray <- plot.days_since_last_spray + 1;
-		//if (plot = Plot[0]) {write "" + (current_date) + " "+ sample(plot.days_since_last_spray) + " " + sample(plot.pest_load);}
-    	return plot.pest_load > pesticide_threshold and plot.days_since_last_spray >= pest_spray_cooldown_days;
+		return plot.pest_load > plot.pesticide_threshold and plot.days_since_last_spray >= pest_spray_cooldown_days;
 	}
 	action effect(Plot plot) {
 		plot.days_since_last_spray <-0;
@@ -359,22 +406,31 @@ species Pesticide_application_practice parent:Practice {
 species Input_use_practice parent:Practice {
 	string name <- INPUT;
 	
-	float trigger_threshold;   
+	map<int,float> trigger_thresholds;   
 	float base_dose;           
 	
-	float target_nitrogen;     // Season total limit
+	map<int,float> target_nitrogens;     // Season total limit
 	bool mechanical;
 	float labor <- mechanical ? labor_fertilizer_machine_hours : labor_fertilizer_manual_hours;
+	
 	
 	// --- DECISION LOGIC ---
 	bool to_apply(Plot plot, int current_day) {
 		
+		// 1. Calculate the loss in soil health 
+		float soil_degradation <- 1.0 - plot.soil_health; 
+	
+		// 3. Calculate the dynamic nitrogen goal
+		// The farmer increases the chemical target to compensate for the loss of natural soil fertility.
+		// E.g., A BAU farmer with 20% soil degradation changes their goal from 120 kg to 144 kg.
+		float dynamic_n_goal <- plot.target_nitrogen * (1.0 + soil_degradation);
+		
 		return plot.associated_crop != nil 
 		       and not plot.associated_crop.is_dead
 		       // 1. Check against the SPECIFIC threshold of this practice
-		       and plot.associated_crop.nitrogen_stock < trigger_threshold 
+		       and plot.associated_crop.nitrogen_stock < (plot.trigger_threshold  * (1.0 + soil_degradation))
 		       // 2. Check season limits
-		       and plot.associated_crop.total_fertilizer_applied < target_nitrogen 
+		       and plot.total_fertilizer_applied < dynamic_n_goal 
 		       and plot.associated_crop.growth_stage < n_late_stage_limit;
 	}
 	
@@ -385,25 +441,22 @@ species Input_use_practice parent:Practice {
         float degradation_gap <- 1.0 - plot.soil_health;
         
         // 2. Define compensatory factor
-        // Note: You might want to disable this for BAU if they don't care about soil health,
-        // but let's assume they apply more on bad soil effectively.
+        // they apply more on bad soil effectively.
         float compensatory_factor <- 1.0 + degradation_gap;
         
         // 3. Calculate actual amount using the SPECIFIC BASE DOSE
         float amount <- base_dose * compensatory_factor; 
         
         // Safety check: Don't exceed the season target limit
-        if ((plot.associated_crop.total_fertilizer_applied + amount) > target_nitrogen) {
-        	amount <- target_nitrogen - plot.associated_crop.total_fertilizer_applied;
+        if ((plot.total_fertilizer_applied + amount) > plot.target_nitrogen) {
+        	amount <- plot.target_nitrogen - plot.total_fertilizer_applied;
         }
         
         // 4. Apply to the crop
         if (amount > 0) {
 	        plot.associated_crop.nitrogen_stock <- plot.associated_crop.nitrogen_stock + amount;
-	        plot.associated_crop.total_fertilizer_applied <- plot.associated_crop.total_fertilizer_applied + amount;
+	        plot.total_fertilizer_applied <- plot.total_fertilizer_applied + amount;
 	        
-	        // Optional: Add cost tracking here if linked to farmer
-	        // plot.owner.expenses <- plot.owner.expenses + (amount * fertilizer_price);
         }
 	} 
 }
@@ -414,7 +467,7 @@ species Input_use_practice parent:Practice {
 // ======================================================================
 
 
-species Crop_practice virtual: true {
+species Crop_strategy virtual: true {
 	string id;  // Unique identifier for the practice
 	string short_name; // Short name used for displays
 	rgb color;  // Color used for visual representation
@@ -510,115 +563,105 @@ species Crop_practice virtual: true {
 		return tmp;
 	}
 	
-	
-	/*action sowing_season_update{
-		if (not is_active_season){
-			is_active_season <- true;
-		 	// starts a new season
-		 	loop key over: seasons_summary.keys-["Current year","Current season"] {
-				seasons_summary[key] <- seasons_summary[key]+0.0;
-			}
-			// add indicators that are only updated at the first step of the season
-			// add the current year
-			seasons_summary["Current year"] <+ current_date.year;
-			//add the season number (reset at the beginning of the year)
-			float new_season_index;
-			int len <- length(seasons_summary["Current year"]);
-			if (len = 1 or last(seasons_summary["Current year"]) != seasons_summary["Current year"][len-2]){
-				new_season_index <- 1.0;
-			}else{
-				new_season_index <- last(seasons_summary["Current season"])+1;
-			}
-			seasons_summary["Current season"] <+ new_season_index;
-			// add the crop area data
-			seasons_summary["Crop area"] <+ plot_species where (each.the_farmer.practice = self) sum_of(each.shape.area); 
-		 
-		 	activity << int(is_active_season);
-		 }
-	}
-	
-	action harvesting_season_update{
-		if is_active_season {
-			is_active_season <- false;
-		 	activity << int(is_active_season);
-		}
-		
-	}*/
-	
-	
-
-	
 }
  
  
-species BAU_rice_3_season parent:Crop_practice {
-	string id <-  "BAU-3seasons"  ; // Unique identifier for the practice
+species BAU_rice_3_season parent:Crop_strategy {
+	string id <-  BAU_3S ; // Unique identifier for the practice
 	string short_name <- "Business as usual - 3 seasons"; // Short name used for displays
-	rgb color <- practices_color[short_name];  // Color used for visual representation	
+	rgb color <- practices_color[id];  // Color used for visual representation	
 
 	list<Practice> other_practices;
 	init {
-		 	sowing <- world.create_sowing_practice(Cultivar first_with (each.name = "OM5451"),[320,95, 215], false);
+		 	sowing <- world.create_sowing_practice(Cultivar first_with (each.name = OM5451),[320::true,95::false, 215::false], false);
 		 	harvesting <- world.create_harvesting_practice(false);
 			ask world {
 				do add_CF_practice(myself);
 				do add_input_use_practice(cp: myself, 
-					    trigger_threshold_: bau_n_trigger_threshold, 
+					    trigger_thresholds_:[320::bau_n_trigger_threshold*1.0,95::bau_n_trigger_threshold*1.0,215::bau_n_trigger_threshold*0.8 ] , 
 					    base_dose_: bau_n_dose_amount,               
-					    target: bau_nitrogen_goal, 
+					    targets: [320::bau_nitrogen_goal*1.3,95::bau_nitrogen_goal*1.2,215::bau_nitrogen_goal*0.8 ], 
 					    mech: false
 					);			
 				
-				do add_pesticide_practice(myself, bau_pesticide_threshold, false); 
+				do add_pesticide_practice(myself, [320::bau_pesticide_threshold*0.4,95::bau_pesticide_threshold*1.0,215::bau_pesticide_threshold*1.6 ] , false, false); 
 			} 
+			do initialize();
+	}
+} 
+
+species BAU_rice_3_season_sust parent:Crop_strategy {
+	string id <-  BAU_3S_sust  ; // Unique identifier for the practice
+	string short_name <- "Business as usual - but with AWD and sustainable inputs"; // Short name used for displays
+	rgb color <- practices_color[id];  // Color used for visual representation	
+
+	list<Practice> other_practices;
+	init {
+		 	sowing <- world.create_sowing_practice(Cultivar first_with (each.name = OM5451),[320::true,95::false, 215::false], false);
+		 	harvesting <- world.create_harvesting_practice(false);
+			ask world {
+				do add_AWD_practice(myself);
+				do add_input_use_practice(cp: myself, 
+					    trigger_thresholds_:[320::sust_n_trigger_threshold*1.0,95::sust_n_trigger_threshold*1.0,215::sust_n_trigger_threshold*0.8 ] , 
+					    base_dose_: sust_n_dose_amount,               
+					    targets: [320::sust_nitrogen_goal*1.3,95::sust_nitrogen_goal*1.2,215::sust_nitrogen_goal*0.8 ], 
+					    mech: false
+					);			
+				
+				do add_pesticide_practice(myself, [320::sust_pesticide_threshold*0.4,95::sust_pesticide_threshold*1.0,215::sust_pesticide_threshold*1.6 ] , false, true); 
+			} 
+			do initialize();
 	}
 } 
 
  
-species BAU_rice_2_season parent:Crop_practice {
-	string id <- "BAU-2seasons" ; // Unique identifier for the practice
+species BAU_rice_2_season parent:Crop_strategy {
+	string id <- BAU_2S; // Unique identifier for the practice
 	string short_name <- "Business as usual - 2 seasons"; // Short name used for displays
-	rgb color <- practices_color[short_name];  // Color used for visual representation	
+	rgb color <- practices_color[id];  // Color used for visual representation	
 
 	list<Practice> other_practices;
 	init {
-		 	sowing <- world.create_sowing_practice(Cultivar first_with (each.name = "OM5451"),[305, 115], false);
+		 	sowing <- world.create_sowing_practice(Cultivar first_with (each.name = OM5451),[305::true, 115::false], false);
 		 	harvesting <- world.create_harvesting_practice(false);
 			ask world {
 				do add_CF_practice(myself);
 				do add_input_use_practice(cp: myself, 
-					    trigger_threshold_: bau_n_trigger_threshold, 
+					    trigger_thresholds_: [305::bau_n_trigger_threshold*0.8,115::bau_n_trigger_threshold*1.0], 
 					    base_dose_: bau_n_dose_amount,               
-					    target: bau_nitrogen_goal, 
+					    targets: [305::bau_nitrogen_goal*1.2,115::bau_nitrogen_goal*1.0], 
 					    mech: false
 					);			
-				do add_pesticide_practice(myself, bau_pesticide_threshold, false); 
+				do add_pesticide_practice(myself, [305::bau_pesticide_threshold*0.4,115::bau_pesticide_threshold*1.0], false, false); 
 				do add_fallow_practice(myself,290);
+				
 			} 
+			do initialize();
 	}
 } 
 
 
 
-species OMH_rice parent:Crop_practice {
+species OMH_rice parent:Crop_strategy {
 	string id <- OMRH ; // Unique identifier for the practice
 	string short_name <- "One Million Hectares"; // Short name used for displays
-	rgb color <- practices_color[short_name];  // Color used for visual representation	
+	rgb color <- practices_color[id];  // Color used for visual representation	
 
 	list<Practice> other_practices;
 	
 	init {
-		 	sowing <- world.create_sowing_practice(Cultivar first_with (each.name = "ST25"),[305, 115], true);
+		 	sowing <- world.create_sowing_practice(Cultivar first_with (each.name = ST25),[305::true, 115::false], true);
 		 	harvesting <- world.create_harvesting_practice(true);
 			ask world {
 				do add_AWD_practice(myself);
 				do add_input_use_practice(cp:myself, 
-				    trigger_threshold_: sust_n_trigger_threshold, 
+				    trigger_thresholds_:[305::sust_n_trigger_threshold*0.8,115::sust_n_trigger_threshold*1.0] , 
 				    base_dose_: sust_n_dose_amount,            
-				    target: sust_nitrogen_goal, 
+				    targets: [305::sust_nitrogen_goal*1.2,115::sust_nitrogen_goal*1.0], 
 				    mech: true);
-				do add_pesticide_practice(myself,sust_pesticide_threshold, true);
+				do add_pesticide_practice(myself,[305::sust_pesticide_threshold*0.4,115::sust_pesticide_threshold*1.0], true, true);
 				do add_fallow_practice(myself,290); 
 			} 
+			do initialize();
 	}
 }

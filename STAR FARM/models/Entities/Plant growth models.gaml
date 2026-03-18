@@ -52,8 +52,13 @@ global {
 			Plant_growth_model ct <- Plant_growth_model(first(new_practices));
 			models[ct.id] <- ct ;
 		}
-		loop pract over: plant_grow_models.keys {
-			PG_models[pract] <- models[plant_grow_models[pract]];
+		loop pract over: practices.keys {
+			if (pract in plant_grow_models.keys) {
+				PG_models[pract] <- models[plant_grow_models[pract]];
+			} else {
+				PG_models[pract] <- models[default_plant_grow_model];
+			}
+			
 		}
 	}	
 } 
@@ -71,48 +76,7 @@ species Plant_growth_model virtual: true{
 	// Virtual methods to be implemented in derived models
 	action day_biomass_growth(Crop c) virtual: true;	
 
-	
-	action initialize;
-	/*int compute_crop_duration(Crop c) {
-		int start <- current_date.day_of_year;
-		int index_start <- c.the_farmer.practice.sowing.implementation_days index_of start;
-		int harvesting_date <-  c.the_farmer.practice.harvesting.implementation_days[index_start];
-		if (harvesting_date < start) {
-			harvesting_date <- harvesting_date + 365;
-		}
-		return harvesting_date - start; 
-	}*/
-	 
-	
-	
-	float compute_Ra {
-    // constants
-    
-    	float lat_deg <- CRS_transform(world.location, "4326").location.y;
-    
-		int doy <- current_date.day_of_year;
-	    float PI <- 3.141592653589793;
-	    float Gsc <- 0.0820; // MJ m-2 min-1, constante solaire
-	
-	    // convert latitude to radians
-	    float lat_rad <- lat_deg * PI / 180.0;
-	 
-	    // inverse relative distance Earth-Sun
-	    float dr <- 1.0 + 0.033 * cos(2.0 * PI / 365.0 * doy);
-	
-	    // solar declination (radians)
-	    float delta <- 0.409 * sin(2.0 * PI / 365.0 * doy - 1.39);
-	
-	    // sunset hour angle (radians)
-	    float tmp <- -tan(lat_rad) * tan(delta);
-	    // clamp tmp to [-1,1] to avoid NaN from acos for extreme lat/doy combos
-	    if (tmp < -1.0) { tmp <- -1.0; }
-	    if (tmp >  1.0) { tmp <-  1.0; }
-	    float ws <- acos(tmp);
-	
-	    // Ra in MJ m-2 day-1
-	    return (24.0 * 60.0 / PI) * Gsc * dr * ( ws * sin(lat_rad) * sin(delta) + cos(lat_rad) * cos(delta) * sin(ws) );
-	}
+	action initialize; 
 	
 } 
 
@@ -156,6 +120,36 @@ species ceresModel parent: Plant_growth_model {
 	
 	float Ra update:  compute_Ra();
 	
+	
+		
+	float compute_Ra {
+    // constants
+    
+    	float lat_deg <- CRS_transform(world.location, "4326").location.y;
+    
+		int doy <- current_date.day_of_year;
+	    float PI <- 3.141592653589793;
+	    float Gsc <- 0.0820; // MJ m-2 min-1, constante solaire
+	
+	    // convert latitude to radians
+	    float lat_rad <- lat_deg * PI / 180.0;
+	 
+	    // inverse relative distance Earth-Sun
+	    float dr <- 1.0 + 0.033 * cos(2.0 * PI / 365.0 * doy);
+	
+	    // solar declination (radians)
+	    float delta <- 0.409 * sin(2.0 * PI / 365.0 * doy - 1.39);
+	
+	    // sunset hour angle (radians)
+	    float tmp <- -tan(lat_rad) * tan(delta);
+	    // clamp tmp to [-1,1] to avoid NaN from acos for extreme lat/doy combos
+	    if (tmp < -1.0) { tmp <- -1.0; }
+	    if (tmp >  1.0) { tmp <-  1.0; }
+	    float ws <- acos(tmp);
+	
+	    // Ra in MJ m-2 day-1
+	    return (24.0 * 60.0 / PI) * Gsc * dr * ( ws * sin(lat_rad) * sin(delta) + cos(lat_rad) * cos(delta) * sin(ws) );
+	}
 	action initialize{
 //		ask plot_species {soil_water <- 0.8 * self.theta_fc * my_cultivar.Zr_ini;}
 		water_stress <- create_map(list<Plot>(plot_species), list_with(length(plot_species), 1.0)) ;
@@ -343,35 +337,40 @@ species lua_mdModel parent: Plant_growth_model {
 		        		write current_date + " -> " + c.concerned_plot.pest_load;
 		        	}*/
 		        	c.concerned_plot.pest_load <- c.concerned_plot.pest_load + pest_daily_increment;
-		        } 
+		        }  
 		        
 				float daily_heat <- (the_weather.t_mean - c.variety.t_base);
-				
+				 
 				if(daily_heat<0){daily_heat<-0.0;} 
 		        c.accumulated_heat <- c.accumulated_heat + daily_heat;
 		        c.growth_stage <- c.accumulated_heat / c.thermal_units_total;
-			    float k_water <- (c.water_level < awd_pumping_threshold) ? drought_growth_reduction_factor : 1.0;
+			    
+			    float k_water <- (c.concerned_plot.water_level < awd_pumping_threshold) ? drought_growth_reduction_factor : 1.0;
 		        
 		        c.concerned_plot.local_salinity <- c.concerned_plot.my_cell.salinity_level;
 		        float k_salt <- 1.0;
-		        if ( c.concerned_plot.local_salinity > c.salt_threshold_val) { k_salt <- 1.0 - (salinity_sensitivity_slope * max(0, c.concerned_plot.local_salinity - c.salt_threshold_val)); }
+		        if ( c.concerned_plot.local_salinity > c.salt_threshold_val) { 
+		        	k_salt <- 1.0 - (salinity_sensitivity_slope * max(0, c.concerned_plot.local_salinity - c.salt_threshold_val));
+		        }
 		        
 		        if (k_salt < 0) { k_salt <- 0.0; c.is_dead <- true;c.biomass <- 0.0; }
 		  
-		        float k_pest <- max(0.2,1.0 - c.concerned_plot.pest_load); // Impact direct des pestes
+		        float k_pest <- max(min_k_pest,1.0 - c.concerned_plot.pest_load); // Impact direct des pestes
 		       	
-		     	
+		     	 
 		    	// 3. FLOOD IMPACT (Progressive Mode / Decay)
 				float k_flood <- 1.0;
 	    
-    		if (c.water_level > flood_stress_threshold) {  
-		        // Phase 1: Growth stop (Asphyxia / Dormancy)
-		        k_flood <- 0.0; 
+    			if (c.concerned_plot.water_level > flood_stress_threshold) {  
+    			 // Phase 1: Growth stop (Asphyxia / Dormancy)
+    			
+		       	 k_flood <- 0.0; 
 		        
 		        // Phase 2: Rotting if duration exceeds genetic tolerance
-		        if (c.concerned_plot.stress_days_flood_continuous > c.variety.max_flood_tolerance_days) {
+		        if (c.concerned_plot.stress_days_flood_continuous > (c.variety.max_flood_tolerance_days * stress_days_flood_continuous_coeff)) {
 		            //we reduce biomass
-		            c.biomass <- c.biomass * (1.0 - flood_biomass_decay_rate);
+		            float reduction <- flood_biomass_decay_rate *  min(1.0,(c.concerned_plot.stress_days_flood_continuous/c.variety.max_flood_tolerance_days));
+		            c.biomass <- c.biomass * (1.0 - ( flood_biomass_decay_rate * reduction));
 		            // Safety check: If biomass becomes too small (< 50 g/m2), the plant actually dies
 		            if (c.biomass < min_biomass_survival_threshold) { 
 		               	c. is_dead <- true; 
@@ -380,63 +379,80 @@ species lua_mdModel parent: Plant_growth_model {
 		            }
         		}
     		} 
-    		 
-    		 // 1. Calculate the optimal requirement for the day
-			float n_optimum_variety <- daily_n_consumption * (1.0 + (c.variety.nitrogen_response_eff * (n_saturation_threshold - 1.0)));
-			float k_nitrogen <- 1.0;
+    		float k_nitrogen <- compute_k_nitrogen(c);
 			
-			// 2. Dynamic Factor Calculation
-			if (c.nitrogen_stock >= n_optimum_variety) {
-			    /* * BOOST PHASE: High 'nitrogen_response_eff' acts as a yield accelerator.
-			    * Realizes the "High-Yield Variety" (HYV) potential.
-			    */
-			    k_nitrogen <- 1.0 + (c.variety.nitrogen_response_eff * n_boost_max_factor);
+			float fAPAR <- compute_fAPAR(c);
+    
+    		
 			
-			} else if (c.nitrogen_stock > 0 and c.nitrogen_stock < daily_n_consumption) {
-			    /* * DEFICIT PHASE: High 'nitrogen_response_eff' acts as a vulnerability.
-			    * The plant suffers more from the missing nitrogen.
-			    */
-			    float boost_ratio <- (c.nitrogen_stock - daily_n_consumption) / (n_optimum_variety - daily_n_consumption);
-    			k_nitrogen <- 1.0 + (c.variety.nitrogen_response_eff * n_boost_max_factor * boost_ratio);
-			
-			} else if (c.nitrogen_stock <= 0) {
-			    /* * DEPLETION PHASE: Growth is limited to the baseline rustic capacity.
-			    */
-			    k_nitrogen <- max(0.0, 1.0 - c.variety.nitrogen_response_eff);
-			}
-			// 1. Define the cumulative phenological thresholds for this cultivar
+    // 3. Calculate daily  biomass with the integrated fAPAR
+       		float daily_growth <- c.potential_rue_calibrated * the_weather.solar_rad * fAPAR * k_water * k_salt * k_pest * k_flood * k_nitrogen ;
+	   		c.biomass <- c.biomass + daily_growth;
+	        
+	     
+        }	
+		
+	}	
+	float compute_k_nitrogen (Crop c) {
+		float k_nitrogen <- 1.0;
+    		if (c.growth_stage < n_late_stage_limit) {
+	    		 // 1. Calculate the optimal requirement for the day
+				float n_optimum_variety <- daily_n_consumption * (1.0 + (c.variety.nitrogen_response_eff * (n_saturation_threshold - 1.0)));
+				
+				float n_consumed <- 0.0;
+				/*if c.concerned_plot = Plot(0) {
+					write sample(n_optimum_variety) + " " + sample(c.nitrogen_stock) + " " + sample(c.growth_stage);
+				}*/
+				// 2. Dynamic Factor Calculation
+				if (c.nitrogen_stock >= n_optimum_variety) {
+				    /* * BOOST PHASE: High 'nitrogen_response_eff' acts as a yield accelerator.
+				    * Realizes the "High-Yield Variety" (HYV) potential.
+				    */
+				    k_nitrogen <- 1.0 + (c.variety.nitrogen_response_eff * n_boost_max_factor);
+				    n_consumed <- n_optimum_variety;
+				
+				} else if (c.nitrogen_stock > 0) {
+				    /* * DEFICIT PHASE: High 'nitrogen_response_eff' acts as a vulnerability.
+				    * The plant suffers more from the missing nitrogen.
+				    */
+				    float boost_ratio <- (c.nitrogen_stock - daily_n_consumption) / (n_optimum_variety - daily_n_consumption);
+	    			k_nitrogen <- 1.0 + (c.variety.nitrogen_response_eff * n_boost_max_factor * boost_ratio);
+					n_consumed <- c.nitrogen_stock;
+				
+				} else {
+				    /* * DEPLETION PHASE: Growth is limited to the baseline rustic capacity.
+				    */
+				    k_nitrogen <- max(0.0, 1.0 - c.variety.nitrogen_response_eff);
+				}
+				c.nitrogen_stock <- max(0.0, c.nitrogen_stock - n_consumed);
+			} 
+			return k_nitrogen;
+	}
+	float compute_fAPAR (Crop c) {
+		float fAPAR <- 0.0;
+		  	// 1. Define the cumulative phenological thresholds for this cultivar
 		    float emergence_threshold <- c.variety.tt_emergence;
 		    float flowering_threshold <- emergence_threshold + c.variety.tt_veg;
 		    float maturity_threshold  <- flowering_threshold + c.variety.tt_rep;
 		    
-		    float fAPAR <- 0.0;
-		    
 		    // 2. Determine fAPAR based on the current accumulated thermal time
 		    if (c.accumulated_heat < emergence_threshold) {
 		        // Phase 1: Germination / Emergence (Very low canopy interception)
-		        fAPAR <- 0.20; 
+		        fAPAR <- fAPAR_phase1; 
 		    } 
 		    else if (c.accumulated_heat < flowering_threshold) {
 		        // Phase 2: Vegetative growth (Leaf development and tillering)
-		        fAPAR <- 0.70; 
+		        fAPAR <- fAPAR_phase2; 
 		    } 
 		    else if (c.accumulated_heat < maturity_threshold) {
 		        // Phase 3: Reproductive phase (Canopy closed, maximum light interception)
-		        fAPAR <- 0.90; 
+		        fAPAR <- fAPAR_phase3; 
 		    } 
 		    else {
 		        // Phase 4: Grain filling / Senescence (Leaves are yellowing/drying)
-		        fAPAR <- 0.85; 
+		        fAPAR <- fAPAR_phase4; 
 		    }
-    
-    // 3. Calculate daily  biomass with the integrated fAPAR
-       //	write sample(k_water) + " " + sample(k_salt) + " " + sample(k_pest) + " " + sample(k_flood) + " " + sample(k_nitrogen) +" " + sample(c.nitrogen_stock);
-	   		float daily_growth <- c.potential_rue_calibrated * the_weather.solar_rad * fAPAR * k_water * k_salt * k_pest * k_flood * k_nitrogen;
-	   
-	        c.biomass <- c.biomass + daily_growth;
-	        
-        }	
-		
-	}	
+		    return fAPAR;
+	}
 }
  

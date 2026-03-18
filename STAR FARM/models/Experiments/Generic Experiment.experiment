@@ -49,33 +49,33 @@ global{
 	
 	////WARNING: (Arno) WRONG FORMULA fro now it is attached to a crop should be plot
 	// computes the total biomass for a given type of crop and practice
-	float get_total_ghg(Crop_practice p){
+	float get_total_ghg(Crop_strategy p){
 		return Crop where(each.the_farmer.practice = p) sum_of(each.B);
 	}
 	////WARNING: WRONG FORMULA
 	// computes the biomass per ha for a given type of crop and practice
-	float get_ghg_per_ha(Crop_practice p){
+	float get_ghg_per_ha(Crop_strategy p){
 		return p.practice_area = 0 ? 0 : get_total_biomass(p) / p.practice_area;
 	}
 	
 	// computes the total biomass for a given type of crop and practice. Convert to kg/ha
 
-	float get_total_biomass(Crop_practice p){
+	float get_total_biomass(Crop_strategy p){
 		return (Crop where(each.the_farmer.practice = p) sum_of(each.B)) * 10;
 	}
 	
 	// computes the biomass per ha for a given type of crop and practice
-	float get_biomass_per_ha(Crop_practice p){
+	float get_biomass_per_ha(Crop_strategy p){
 		return p.practice_area = 0 ? 0 : get_total_biomass(p) / p.practice_area;
 	}
 	
 	// computes the income per ha for a given type of crop and practice
-	float get_income_per_ha(Crop_practice p){
+	float get_income_per_ha(Crop_strategy p){
 		return p.practice_area = 0 ? 0 : p.day_income / p.practice_area;
 	}
 	
 	// computes the biomass per ha for a given type of crop and practice
-	float get_expenses_per_ha(Crop_practice p){
+	float get_expenses_per_ha(Crop_strategy p){
 		return p.practice_area = 0 ? 0 : p.day_expenses / p.practice_area;
 	}
 	// detail the expenses per categories
@@ -126,7 +126,7 @@ global{
 	}
 	
 	// make x labels for season histograms
-	list<string> update_x_labels(Crop_practice p){
+	list<string> update_x_labels(Crop_strategy p){
 		list<string> tmp;
 		ask first(practices){
 			tmp <- create_x_labels(); 
@@ -135,7 +135,7 @@ global{
 	}
 	
 	// used to keep only practices that are currently displayed
-	list<Crop_practice> current_practices{
+	list<Crop_strategy> current_practices{
 		return practices.values where (each.id = show_season);
 	}
 		 

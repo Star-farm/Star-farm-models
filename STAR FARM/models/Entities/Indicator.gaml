@@ -75,6 +75,9 @@ species Indicator virtual: true {
 		float RMSE <- 0.0;
 		float sum_obs ; 
 		if not empty(observed_values_per_seasons) {
+			if (write_calibration_result) {
+				write "\n *** " + name + " obs: " + observed_values_per_seasons collect (each with_precision 2) + " sim: "+ simulation_values collect (each with_precision 2);
+			}
 			int n <- min(length(observed_values_per_seasons), length(simulation_values));
 			if (n > 0) {
 				loop i from: 0 to: n -1 {
@@ -94,12 +97,18 @@ species Indicator virtual: true {
 				int ind <- i mod nb;
 				f[ind] << simulation_values[i];
 			}
+			if (write_calibration_result) {
+				write "\n *** " + name + " obs: " + observed_values_avg_seasons + " sim: "+ (f collect (mean(each)));
+			}
 			loop i from: 0 to: nb -1 {
 				RMSE <- RMSE + (mean(f[i]) - observed_values_avg_seasons[i]) ^ 2;	
 				sum_obs <- sum_obs + observed_values_avg_seasons[i];
 			}
 			RMSE <- sqrt(RMSE/nb);
 		} else {
+			if (write_calibration_result) {
+				write "\n *** " + name + " obs: " + observed_values_avg_total + " sim: "+ mean(simulation_values);
+			}
 			RMSE <- abs(mean(simulation_values) - observed_values_avg_total) ;	
 			sum_obs <- observed_values_avg_total;
 		}
@@ -142,7 +151,7 @@ species Avg_straw_value parent: Indicator {
 	int float_precision <- 0;
 	
 	action compute_value {
-		// (CTU 13) Value of By-products
+		// (CTU 13) Value of By-products 
 		if empty(active_plots) { value <- 0.0; }
 		else { value <- mean(active_plots collect (each.straw_yield_ton_ha * 1000 * straw_market_price)); }
 	}
@@ -174,7 +183,8 @@ species Avg_net_income parent: Indicator {
 	action compute_value {
 		// (CTU 5) Net Farm Income
 		if empty(active_farmers) { value <- 0.0; }
-		else { value <- mean(active_farmers collect each.profit_net); }
+		else { value <- mean(active_farmers collect each.profit_net);
+		}
 	}
 }
 
@@ -203,7 +213,9 @@ species Avg_labor_intensity parent: Indicator {
 	
 	action compute_value {
 		if empty(active_farmers) { value <- 0.0; }
-		else { value <- mean(active_farmers collect each.accumulated_labor_hours); }
+		else { value <- mean(active_farmers collect each.accumulated_labor_hours); 
+			
+		}
 	}
 }
 
@@ -257,7 +269,7 @@ species Emission_intensity parent: Indicator {
 		else {
 			float total_yield_tons <- (active_plots sum_of each.final_yield_ton_ha);
 			float total_ch4_kg <- (active_plots sum_of each.methane_emissions_kg_ha);
-			value <- total_ch4_kg / max(1.0, total_yield_tons * 1000); 
+			value <- total_ch4_kg / max(1.0, total_yield_tons * 1000);	  
 		}
 	}
 }
@@ -444,6 +456,20 @@ species Avg_pesticide_applications parent: Indicator {
 	action compute_value {
 		if empty(active_plots) { value <- 0.0; }
 		else { value <- mean(active_plots collect each.pesticide_count); }
+	}
+}
+
+species Avg_fertilizer_usage parent: Indicator {
+	string name <- "Fertilizer Usage";
+	string legend <- "Avg Fertilize usage";
+	string unit <- "count";
+	string category <- RESOURCE_USE_SOIL;
+	bool is_seasonal <- true;
+	int float_precision <- 1;
+	
+	action compute_value {
+		if empty(active_plots) { value <- 0.0; }
+		else { value <- mean(active_plots collect each.total_fertilizer_applied);}
 	}
 }
 

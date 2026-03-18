@@ -24,7 +24,9 @@ global {
 	string RICE_AWD <- "Rice (Alt. Wetting and Drying)" const: true;
 	string RICE_CF <- "Rice (Continuous Flooding)" const: true;
 	
-	string BAU <- "BAU" const: true; //BUSINESS AS USUAL
+	string BAU_3S <- "BAU-3seasons" ; //BUSINESS AS USUAL 3 SEASONS
+	string BAU_2S <- "BAU-2seasons"; //BUSINESS AS USUAL 2 SEASONS
+	string BAU_3S_sust <- "BAU-sust" ; //BUSINESS AS USUAL 3 SEASONS
 	string OMRH <- "OMRH" const: true; //ONE MILLION RICE HECTARES 
 	 
 	/******* RICE IRRIGATION *******/
@@ -34,5 +36,9 @@ global {
 	
 	string INPUT <- "input" const: true;
 	string PESTICIDE <- "pesticide" const: true;
+	
+	string OM5451 <- "OM5451";
+	string ST25 <- "ST25";
 }
+
 
