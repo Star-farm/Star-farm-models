@@ -68,6 +68,9 @@ global  {
 		            the_market <- self;
         		}
 			}
+		}
+		ask the_market {
+			do generate_data(start_year,end_year);
 		}	
 	}
 	

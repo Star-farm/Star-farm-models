@@ -153,11 +153,7 @@ global {
 		ask practices {do switch_to_new_year;}
 			  // 4. Reset counters (Important: do this AFTER saving)
 	    ask Farmer { yearly_profit <- 0.0; }
-		if use_dynamic_market {
-			ask the_market {
-				do annual_update;
-			}	
-		}
+		
 	}
 	
 	
