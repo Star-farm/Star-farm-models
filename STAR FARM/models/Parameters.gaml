@@ -139,7 +139,6 @@ global {
     float min_biomass_survival_threshold <- 50.0;
     // Nitrogen (N) Management
     float n_application_dose <- 40.0;     // Quantity of nitrogen per application (kg/ha)
-    float n_stock_low_threshold <- 5.0;   // Soil stock level triggering fertilization (kg/ha)
     float n_late_stage_limit <- 0.8;      // Maximum growth stage for N input (80% of cycle)
     float daily_n_consumption <- 0.8;     // Daily nitrogen uptake by the plant (kg/ha/day)
     
@@ -162,7 +161,7 @@ global {
     float salinity_sensitivity_slope <- 0.2;      // Yield reduction rate per unit of salinity above tolerance (e.g., 0.2 = 20% loss per g/L)
     
     
-    float degradation_rate <- 0.00; // Loss of 0.5% potential per cultivation season
+    float degradation_rate <- 0.005; // Loss of 0.5% potential per cultivation season
     float regeneration_rate <- 0.02; // Gain of 2% per fallow/flood season
     float min_soil_health <- 0.6;   // Soil never drops below 60% of its potential
     
