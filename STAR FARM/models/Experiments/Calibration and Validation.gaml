@@ -12,15 +12,22 @@ import "../Global.gaml"
   
 global  {   
 	 
+	 string DONG_THAP <- "Dong Thap";
 	 float fitness;  
      
      map<Indicator, float> indicators;
     
     string calibration_output <- "Calibration/calibration_result.csv";
     
+    string case_study <- DONG_THAP;
+    
+    
+    map<string, list<list<float>>> yield_values_per_case_study <-  [
+    	DONG_THAP:: [[72.4,73.2,73.2,73.1],[61.3,61.8,63.2,62.8],[42.3,45.6,42.1,39.1]]
+    ];
    
     bool fitness_computed <- false;
-    action compute_fitness {
+    action compute_fitness() {
     	if not fitness_computed {
 	    	fitness <- 0.0;
 	    	string error_ <- "";
@@ -45,17 +52,21 @@ global  {
     }
    	
    
-	action prepare_indicators {
+	action prepare_indicators() {
 		ask Avg_yield {
 			store_values <- true;
-			list<float> spring_2019_2023 <- [72.4,73.2,73.2,73.1];
-			list<float> autumn_2019_2023 <- [61.3,61.8,63.2,62.8];
-			list<float> winter_2019_2023 <- [42.3,45.6,42.1,39.1];
+			list<list<float>> data <- yield_values_per_case_study[case_study];
+			list<float> spring_2019_2023 <- data[0];
+			list<float> autumn_2019_2023 <- data[1];
+			list<float> winter_2019_2023 <-(length(data) > 2) ? data[2] : nil;
 			loop i from: 0 to: length(spring_2019_2023) -1  {
 				//conversion -> t/ha
 				observed_values_per_seasons << spring_2019_2023[i]/10.0;
 				observed_values_per_seasons << autumn_2019_2023[i]/10.0;
-				observed_values_per_seasons << winter_2019_2023[i]/10.0;
+				if (winter_2019_2023 != nil) {
+					observed_values_per_seasons << winter_2019_2023[i]/10.0;
+				}
+				
 			}
 			
 			indicators[self] <- 10.0;
@@ -81,28 +92,18 @@ global  {
 		
 }
 
-experiment check_result type: batch until: end_of_sim repeat: 20 keep_seed: true {
+
+experiment check_result type: batch until: end_of_sim repeat: 4 keep_seed: true {
 	method exploration 
-	with: [[ "daily_water_loss_mm"::10.0,	"pest_infection_prob"::0.8,	"pest_daily_increment"::0.03, "max_water_capacity"::100.0, "toxicity_per_straw_unit"::0.002]];
+	with: [[ "daily_water_loss_mm"::10.0]];
 	
 
 
-	parameter rue_efficiency_factor var: rue_efficiency_factor min: 0.5 max: 1.0 step: 0.01;
-	
-	parameter pest_infection_prob var: pest_infection_prob min: 0.1 max: 1.0 step: 0.01;
-	
-	parameter pest_daily_increment var: pest_daily_increment min: 0.01 max: 0.05 step:0.01;
-	
-	parameter daily_water_loss_mm var: daily_water_loss_mm min: 4.0 max: 15.0 step: 0.01;
-	parameter toxicity_per_straw_unit var: toxicity_per_straw_unit min: 0.1 max: 0.8 step: 1.0;
-	
-	parameter max_water_capacity var: max_water_capacity min: 50.0 max: 120.0 step: 1.0;
-	
 	init {
 		gama.pref_parallel_simulations_all <- false;
-		gama.pref_parallel_threads <- 20;
+		gama.pref_parallel_threads <- 4;
 		mode_batch <- true;
-		save_results <- true; 
+		save_results <- false; 
 		write_results <- false;
 		write_calibration_result <- true;     
 		save_calibration_results <- false;

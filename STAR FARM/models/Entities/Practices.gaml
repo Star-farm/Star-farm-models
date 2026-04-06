@@ -42,25 +42,25 @@ global {
 	map<string,rgb> expense_categories <- ["Seed"::rgb(22, 160, 133),"Fertilizer"::rgb(241, 196, 15),"Irrigation"::rgb(52, 152, 219),"Manpower"::rgb(230, 126, 34),"Other"::rgb(127, 140, 141)];
 		
 	// Action to create all practice instances from their species definitions
-	action create_practices {
+	action create_practices() {
 		loop s over: Crop_strategy.subspecies { 
 			create s returns: new_practices;
 			Crop_strategy ct <- Crop_strategy(first(new_practices));
 			practices[ct.id] <- ct ;
 		}
 		ask Crop_strategy {
-			do initialize;
+			do initialize();
 		} 
 	}
 	
 	
 	Sowing_practice create_sowing_practice(Cultivar cultivar, map<int,bool> days_cleaning, bool mechanical) {
-		create Sowing_practice with:(type_of_cultivar: cultivar, implementation_days: days_cleaning,  mechanical_seeding:mechanical) returns: sow_pract;
+		create Sowing_practice (type_of_cultivar: cultivar, implementation_days: days_cleaning,  mechanical_seeding:mechanical) returns: sow_pract;
 		return first(sow_pract);
 	}
 	
 	Harvesting_practice create_harvesting_practice (bool collect_straw){
-		create Harvesting_practice with:(collect_straw:collect_straw) returns: har_pract;
+		create Harvesting_practice (collect_straw:collect_straw) returns: har_pract;
 		return first(har_pract);
 	}	
 	 
@@ -97,7 +97,7 @@ global {
 	}
 	
 	action add_pesticide_practice(Crop_strategy pract, map<int,float> pesticide_thresholds, bool mec, bool IPM) {
-		create Pesticide_application_practice with:(pesticide_thresholds:pesticide_thresholds, mechanical:mec){
+		create Pesticide_application_practice (pesticide_thresholds:pesticide_thresholds, mechanical:mec){
 			pract.other_practices << self;
 			ask pract.sowing {
 				labor <- labor + (IPM ? labor_IMP_pest_management_hours : labor_pest_management_hours);
@@ -168,7 +168,7 @@ species Sowing_practice parent:Practice {
 		ready_to_end_season <- true; 
 		plot.the_farmer.ended_season <- false;
 		 
-		create Crop with:(the_farmer:plot.the_farmer, variety:type_of_cultivar  ) {
+		create Crop (the_farmer:plot.the_farmer, variety:type_of_cultivar  ) {
 			seed_density_kg_ha <- myself.mechanical_seeding ? seed_density_kg_ha_mechanical : seed_density_kg_ha_broadcast;
 			plot.associated_crop <- self;
 			concerned_plot <- plot;  
@@ -503,7 +503,7 @@ species Crop_strategy virtual: true {
  	list<int> activity <- [];
 	
 	
-	action initialize {
+	action initialize() {
 		practices_id <- (other_practices as_map (each.name :: each)) + ([sowing.name :: sowing, harvesting.name :: harvesting]);
 	} 
 	 
@@ -518,17 +518,17 @@ species Crop_strategy virtual: true {
 	
 		// Reset yearly key indicator monitors. 
 	
-	action switch_to_new_year {
+	action switch_to_new_year() {
 		// add monitors for the new year
 		loop key over: seasons_summary.keys - ["Current year","Current season"] {
 			year_summary[key] <- year_summary[key] + 0.0;
 		}
 		year_summary["Current year"] <+ current_date.year;
-		do compute_practice_area; 
+		do compute_practice_area(); 
 	}
 	
 	//  compute crop surface and store it in the yearly indicators.
-	action compute_practice_area{
+	action compute_practice_area() {
 		practice_area <- plot_species where(each.the_farmer.practice = self) sum_of(each.surface_in_ha);
 		year_summary["Crop area"][length(year_summary["Crop area"]) - 1] <- practice_area;
 	}
@@ -555,7 +555,7 @@ species Crop_strategy virtual: true {
 	}
 	
 	
-	list<string> create_x_labels{
+	list<string> create_x_labels(){
 		list<string> tmp <- [];
 		loop i from: 0 to: length(seasons_summary["Current season"] - 1){
 			tmp <+ 'Y'+seasons_summary["Current year"][i]+"S"+seasons_summary["Current season"][i];

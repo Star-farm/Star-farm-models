@@ -24,7 +24,7 @@ global  {
 	string weather_scenario <- OPTIMISTIC among: [OPTIMISTIC, PESSIMISTIC]   ;
 	string market_scenario <- STANDARD among: [STANDARD, RESOURCE_CRISIS]   ;
 	
-	action init_action {
+	action init_action() {
 		switch weather_scenario {
 			match OPTIMISTIC {
 				do generate_scenario(OPTIMISTIC,start_year, end_year, 0.5, 1.0, 1.2, 0.0,0,0);

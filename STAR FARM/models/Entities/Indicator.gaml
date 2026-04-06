@@ -23,7 +23,7 @@ global {
 	map<string, Indicator> yearly_indicators;
 	
 	
-	action create_indicators {
+	action create_indicators() {
 		loop s over: Indicator.subspecies { 
 			create s returns: new_indicators;
 			Indicator ct <- Indicator(first(new_indicators));
@@ -38,10 +38,12 @@ global {
 				yearly_indicators[ct.name] <- ct;
 			}
 		}
-		do prepare_indicators;
+		do prepare_indicators();
 	}
 	
-	action prepare_indicators;
+	action prepare_indicators() {
+		
+	}
 }
 
 species Indicator virtual: true {
@@ -61,17 +63,17 @@ species Indicator virtual: true {
 	list<float> observed_values_avg_seasons;
 	float observed_values_avg_total;
 	
-	action generic_compute_value {
-		do compute_value;
+	action generic_compute_value() {
+		do compute_value();
 		if (store_values) {
 			simulation_values << value;
 		}
 	}
-	action compute_value virtual: true;
+	action compute_value() virtual: true;
 	
 	
 	 
-	float compute_error {
+	float compute_error() {
 		float RMSE <- 0.0;
 		float sum_obs ; 
 		if not empty(observed_values_per_seasons) {
@@ -135,7 +137,7 @@ species Avg_yield parent: Indicator {
 	bool is_dayly <- false;
 	int float_precision <- 2;
 	
-	action compute_value {
+	action compute_value() {
 		// (CTU 12) Avg Rice Yield
 		if empty(active_plots) { value <- 0.0; }
 		else { value <- (active_plots mean_of each.final_yield_ton_ha); }
@@ -150,7 +152,7 @@ species Avg_straw_value parent: Indicator {
 	bool is_seasonal <- true;
 	int float_precision <- 0;
 	
-	action compute_value {
+	action compute_value() {
 		// (CTU 13) Value of By-products 
 		if empty(active_plots) { value <- 0.0; }
 		else { value <- mean(active_plots collect (each.straw_yield_ton_ha * 1000 * straw_market_price)); }
@@ -165,7 +167,7 @@ species Avg_production_cost parent: Indicator {
 	bool is_seasonal <- true;
 	int float_precision <- 0;
 	
-	action compute_value {
+	action compute_value() {
 		// (CTU 4) Avg Production Costs
 		if empty(active_farmers) { value <- 0.0; }
 		else { value <- mean(active_farmers collect each.total_costs); }
@@ -180,7 +182,7 @@ species Avg_net_income parent: Indicator {
 	bool is_seasonal <- true;
 	int float_precision <- 0;
 	
-	action compute_value {
+	action compute_value() {
 		// (CTU 5) Net Farm Income
 		if empty(active_farmers) { value <- 0.0; }
 		else { value <- mean(active_farmers collect each.profit_net);
@@ -196,7 +198,7 @@ species Avg_profit_margin parent: Indicator {
 	bool is_seasonal <- true;
 	int float_precision <- 1;
 	
-	action compute_value {
+	action compute_value() {
 		// (CTU 8) Profit Margin
 		if empty(active_farmers) { value <- 0.0; }
 		else { value <- mean(active_farmers collect (float(each.profit_net) / float(max(1.0, each.revenue)) * 100)); }
@@ -211,7 +213,7 @@ species Avg_labor_intensity parent: Indicator {
 	bool is_seasonal <- true;
 	int float_precision <- 0;
 	
-	action compute_value {
+	action compute_value() {
 		if empty(active_farmers) { value <- 0.0; }
 		else { value <- mean(active_farmers collect each.accumulated_labor_hours); 
 			
@@ -231,7 +233,7 @@ species Avg_methane parent: Indicator {
 	bool is_seasonal <- true;
 	int float_precision <- 0;
 	
-	action compute_value {
+	action compute_value() {
 		if empty(active_plots) { value <- 0.0; }
 		else { value <- (active_plots mean_of each.methane_emissions_kg_ha); }
 	}
@@ -245,7 +247,7 @@ species AWD_adoption_rate parent: Indicator {
 	bool is_seasonal <- true;
 	int float_precision <- 1;
 	
-	action compute_value {
+	action compute_value() {
 		float total_area <- active_farmers sum_of each.plot_area;
 		if (total_area > 0) {
 			float awd_plots_area <- (active_farmers where (each.practice.irrigation.name = AWD)) sum_of each.plot_area;
@@ -264,7 +266,7 @@ species Emission_intensity parent: Indicator {
 	bool is_seasonal <- true;
 	int float_precision <- 3;
 	
-	action compute_value {
+	action compute_value() {
 		if empty(active_plots) { value <- 0.0; }
 		else {
 			float total_yield_tons <- (active_plots sum_of each.final_yield_ton_ha);
@@ -286,7 +288,7 @@ species Safe_water_reliability parent: Indicator {
 	bool is_seasonal <- true;
 	int float_precision <- 1;
 	
-	action compute_value {
+	action compute_value() {
 		if empty(active_plots) { value <- 0.0; }
 		else {
 			int plots_safe_salinity <- active_plots count (each.stress_days_salinity = 0);
@@ -303,7 +305,7 @@ species Resilient_variety_adoption parent: Indicator {
 	bool is_seasonal <- true;
 	int float_precision <- 1;
 	
-	action compute_value {
+	action compute_value() {
 		float total_area <- active_farmers sum_of each.plot_area;
 		if (total_area > 0) {
 			float plots_adapted <- (active_farmers where each.practice.sowing.type_of_cultivar.is_climate_resilient_variety) sum_of each.plot_area;
@@ -322,7 +324,7 @@ species Biodiversity_index parent: Indicator {
 	bool is_seasonal <- true;
 	int float_precision <- 0;
 	
-	action compute_value {
+	action compute_value() {
 		if empty(active_farmers) { value <- 0.0; }
 		else {
 			list<string> varieties <- active_farmers collect each.practice.sowing.type_of_cultivar.name;
@@ -339,7 +341,7 @@ species Avg_salinity_stress_days parent: Indicator {
 	bool is_seasonal <- true;
 	int float_precision <- 2;
 	
-	action compute_value {
+	action compute_value() {
 		if empty(active_plots) { value <- 0.0; }
 		else { value <- mean(active_plots collect each.stress_days_salinity); }
 	}
@@ -353,7 +355,7 @@ species Avg_drought_stress_days parent: Indicator {
 	bool is_seasonal <- true;
 	int float_precision <- 2;
 	
-	action compute_value {
+	action compute_value() {
 		if empty(active_plots) { value <- 0.0; }
 		else { value <- mean(active_plots collect each.stress_days_drought); }
 	}
@@ -367,7 +369,7 @@ species Avg_flood_stress_days parent: Indicator {
 	bool is_seasonal <- true;
 	int float_precision <- 2;
 	
-	action compute_value {
+	action compute_value() {
 		if empty(active_plots) { value <- 0.0; }
 		else { value <- mean(active_plots collect each.stress_days_flood); }
 	}
@@ -381,7 +383,7 @@ species Avg_max_flood_continuous parent: Indicator {
 	bool is_seasonal <- true;
 	int float_precision <- 2;
 	
-	action compute_value {
+	action compute_value() {
 		if empty(active_plots) { value <- 0.0; }
 		else { value <- mean(active_plots collect each.max_stress_days_flood_continuous); }
 	}
@@ -400,7 +402,7 @@ species Avg_pest_load parent: Indicator {
     
     int float_precision <- 3; // Higher precision to detect small daily increments
     
-    action compute_value {
+    action compute_value() {
         // (CTU Example) Average Pest Load across all active plots
         if empty(active_plots) { 
             value <- 0.0; 
@@ -423,7 +425,7 @@ species Avg_salinity_exposure parent: Indicator {
 	bool is_seasonal <- true;
 	int float_precision <- 3;
 	
-	action compute_value {
+	action compute_value() {
 		// (CTU 19/38) Avg Salinity Exposure
 		if empty(active_plots) { value <- 0.0; }
 		else { value <- mean(active_plots collect each.local_salinity); }
@@ -438,7 +440,7 @@ species Avg_irrigation_usage parent: Indicator {
 	bool is_seasonal <- true;
 	int float_precision <- 0;
 	
-	action compute_value {
+	action compute_value() {
 		// (CTU 39) Irrigation Water Usage
 		if empty(active_plots) { value <- 0.0; }
 		else { value <- mean(active_plots collect each.total_water_pumped); }
@@ -453,7 +455,7 @@ species Avg_pesticide_applications parent: Indicator {
 	bool is_seasonal <- true;
 	int float_precision <- 1;
 	
-	action compute_value {
+	action compute_value() {
 		if empty(active_plots) { value <- 0.0; }
 		else { value <- mean(active_plots collect each.pesticide_count); }
 	}
@@ -467,7 +469,7 @@ species Avg_fertilizer_usage parent: Indicator {
 	bool is_seasonal <- true;
 	int float_precision <- 1;
 	
-	action compute_value {
+	action compute_value() {
 		if empty(active_plots) { value <- 0.0; }
 		else { value <- mean(active_plots collect each.total_fertilizer_applied);}
 	}
@@ -486,7 +488,7 @@ species Gini_index parent: Indicator {
     bool is_yearly <- true;
     int float_precision <- 2;
 
-    action compute_value {
+    action compute_value() {
         // Collect all yearly profits
         list<float> farmer_profit <- Farmer collect each.yearly_profit;
         
@@ -504,7 +506,7 @@ species Bankruptcy_risk parent: Indicator {
     bool is_yearly <- true;
     int float_precision <- 1;
 
-    action compute_value {
+    action compute_value() {
         list<float> farmer_profit <- Farmer collect each.yearly_profit;
         
         if empty(farmer_profit) { value <- 0.0; }
@@ -524,7 +526,7 @@ species Top20_Bottom20_Ratio parent: Indicator {
     bool is_yearly <- true;
     int float_precision <- 2;
 
-    action compute_value {
+    action compute_value() {
         // We must sort the list to identify Top and Bottom
         list<float> farmer_profit <- (Farmer collect each.yearly_profit) sort_by each;
         
@@ -553,7 +555,7 @@ species Coefficient_of_variation parent: Indicator {
     bool is_yearly <- true;
     int float_precision <- 2;
 
-    action compute_value {
+    action compute_value() {
         list<float> farmer_profit <- Farmer collect each.yearly_profit;
         
         if empty(farmer_profit) { value <- 0.0; }

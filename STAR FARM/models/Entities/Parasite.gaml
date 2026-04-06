@@ -43,7 +43,7 @@ global {
 	float max_pest_density <- 0.0;
 
 	
-	action create_pests_and_predators{ 
+	action create_pests_and_predators() { 
 		
 		loop times: init_pest_cluster_number {
 			ask any(any(Farm).plots) {
@@ -157,7 +157,7 @@ species Pest_Cluster virtual: true parallel: true {
 		do die;
 	}
 	
-	action newEgg {
+	action newEgg() {
 		add [time, false] to: egg_population ;
 	}
 	

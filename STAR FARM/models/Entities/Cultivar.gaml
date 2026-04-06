@@ -11,7 +11,7 @@ import "../Parameters.gaml"
 
 
 global {
-	action load_cultivars {
+	action load_cultivars() {
 		create Cultivar from: cultivars_csv_file;
 	}
 }

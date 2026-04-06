@@ -26,13 +26,13 @@ global {
         			shape <- union (cluster collect each.shape);
         		}
         		ask cluster - first(cluster) {
-        			do die;
+        			do die();
         		}
         	}
         }
         ask plot {
         	if shape.area < min_area {
-        		do die;
+        		do die();
         	} else {
         		shape <- shape simplification dist_simp;
         	}

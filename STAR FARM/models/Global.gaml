@@ -6,7 +6,7 @@
 */
 
 
-model STARFARM
+model STARFARM 
 
 import "Entities/Indicator.gaml"
 
@@ -23,7 +23,7 @@ import "Entities/Farms and Plots.gaml"
 import "Parameters.gaml"
 
 import "Constants.gaml"
-
+ 
 
 global { 
 	
@@ -55,20 +55,20 @@ global {
 	  // Total provincial capacity (updates automatically based on agent count)
     float max_province_pumping_capacity ;
   
- 	 string market_scenario ;
+ 	string market_scenario ;
   
 	init { 
-		do init_action;
-		do create_indicators;
-		do init_all_headers;
-		do load_cultivars;
-		do create_practices;
-		do create_plant_growth_models; 
-		do create_plots;	
-		do init_weather_data;
-		do init_market;
+		do init_action();
+		do create_indicators();
+		do init_all_headers();
+		do load_cultivars();
+		do create_practices();
+		do create_plant_growth_models(); 
+		do create_plots();	
+		do init_weather_data();
+		do init_market();
 		// compute the surface for each practice at the begining of the simulation
-		ask practices {do compute_practice_area;}
+		ask practices {do compute_practice_area();}
 		ask remove_duplicates(PG_models){
 			do initialize();
 		}  
@@ -81,8 +81,8 @@ global {
 	// -------------------------------------------------------------------------
     // HEADER INITIALIZATION FUNCTIONS
     // -------------------------------------------------------------------------
-    
-    action init_all_headers {
+     
+    action init_all_headers() {
         if save_results {
 			string pr <- string(possible_practices.keys) replace("[","") replace("]","")replace("'","")  ;
 			id_xp <- pr + "-" + weather_id +"-"+market_id;
@@ -92,14 +92,14 @@ global {
 		output_file_year <- output_folder + "/year/yearly_data_" + id_xp+".csv" ;
 		
 		if (not file_exists(output_file_day)) { 
-			do write_header_day;
-        	do write_header_season;
-        	do write_header_year;
+			do write_header_day();
+        	do write_header_season();
+        	do write_header_year();
 		}
        
     }
     
-	action write_header_day {
+	action write_header_day() {
         if (save_results and not empty(dayly_indicators)) {
             // Fixed columns
             string header <- "id_sim,year,month,day,seed";
@@ -111,7 +111,7 @@ global {
         }
     }
 
-    action write_header_season {
+    action write_header_season() {
         if (save_results and not empty(seasonal_indicators)) {
             string header <- "id_sim,year,month,day,seed";
             list<Indicator> seasonal_inds <- seasonal_indicators.values;
@@ -121,7 +121,7 @@ global {
         }
     }
 
-    action write_header_year {
+    action write_header_year() {
         if (save_results and not empty(yearly_indicators)) {
             string header <- "id_sim,year,month,day,seed";
             list<Indicator> yearly_inds <- yearly_indicators.values;
@@ -131,26 +131,28 @@ global {
         }
     }
 	
-	action init_action;
+	action init_action() {
+		
+	} 
 	
 	
 	reflex end_of_days when: cycle > 0 { 
-		do write_day_report;
+		do write_day_report();
 	}
 	
 	reflex end_of_season when: ready_to_end_season and empty(Farmer where (each.is_active and (not each.ended_season))) {
-		do write_season_report;
+		do write_season_report();
 		ready_to_end_season <- false;
 	}
 	
 	
 	reflex end_of_year when: (Farmer first_with not(each.ended_year)) = nil{
-		do write_year_report;
+		do write_year_report();
 		ask Farmer {
 			ended_year <- false;
-			do decide_practice;
+			do decide_practice();
 		}
-		ask practices {do switch_to_new_year;}
+		ask practices {do switch_to_new_year();}
 			  // 4. Reset counters (Important: do this AFTER saving)
 	    ask Farmer { yearly_profit <- 0.0; }
 		
@@ -170,15 +172,17 @@ global {
     // -------------------------------------------------------------------------
 
 	//for calibration
-	action compute_fitness;
+	action compute_fitness() {
+		
+	}
 	
     // --- DAILY REPORT ---
-    action write_day_report {
+    action write_day_report() {
         list<Indicator> daily_inds <- dayly_indicators.values;
         if (not empty(daily_inds)) {
         		        
 	        // 1. Calculate values
-	        ask daily_inds { do generic_compute_value; }
+	        ask daily_inds { do generic_compute_value(); }
 	        
 	        // 2. Console Display (Grouped by category)
 	        if (write_results ) {
@@ -204,7 +208,7 @@ global {
     }
 
     // --- SEASONAL REPORT ---
-    action write_season_report {
+    action write_season_report() {
         new_season <- false;
 		active_plots <- Plot where (each.is_active);
 		active_farmers <- Farmer where (each.is_active);
@@ -213,7 +217,7 @@ global {
         if (not empty(seasonal_inds)) {
 	        	        
 	        // 1. Calculate
-	        ask seasonal_inds { do generic_compute_value; }
+	        ask seasonal_inds { do generic_compute_value(); }
 	
 	        // 2. Console Display
 	        if (write_results) {
@@ -244,12 +248,12 @@ global {
     }
 
     // --- YEARLY REPORT ---
-    action write_year_report {
+    action write_year_report() {
         list<Indicator> yearly_inds <- yearly_indicators.values;
 		
 		if not empty(yearly_inds) {
 		// 1. Calculate
-	        ask yearly_inds { do generic_compute_value; }
+	        ask yearly_inds { do generic_compute_value(); }
 	
 	        // 2. Console Display
 	        if (write_results) {
@@ -282,7 +286,7 @@ global {
     
   
 	
-	action create_plots {
+	action create_plots() {
 		if (plot_species = nil) {
 			plot_species <- species<Plot>("Plot");
 		}
@@ -294,7 +298,7 @@ global {
 			if not empty(plots_to_keep) {
 				loop att over: plots_to_keep.keys {
 					if not(att in attributes.keys) or not(string(attributes[att]) contains plots_to_keep[att]) {
-						do die;
+						do die();
 					}
 				}
 			}
@@ -312,7 +316,7 @@ global {
 		}
 		max_province_pumping_capacity <- infrastructure_capacity_per_plot * length(plot_species);
 		ask Farmer {
-			do define_neighbors;
+			do define_neighbors();
 		}
 	}
 	

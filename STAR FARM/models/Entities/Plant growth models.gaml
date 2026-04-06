@@ -45,7 +45,7 @@ global {
 
 	
 	//action that creates at the initialization of the simulation the different plant growth models
-	action create_plant_growth_models {
+	action create_plant_growth_models() {
 		map<string,Plant_growth_model> models;
 		loop s over: Plant_growth_model.subspecies { 
 			create s returns: new_practices;
@@ -76,7 +76,9 @@ species Plant_growth_model virtual: true{
 	// Virtual methods to be implemented in derived models
 	action day_biomass_growth(Crop c) virtual: true;	
 
-	action initialize; 
+	action initialize() {
+		
+	} 
 	
 } 
 
@@ -122,7 +124,7 @@ species ceresModel parent: Plant_growth_model {
 	
 	
 		
-	float compute_Ra {
+	float compute_Ra() {
     // constants
     
     	float lat_deg <- CRS_transform(world.location, "4326").location.y;
@@ -150,7 +152,7 @@ species ceresModel parent: Plant_growth_model {
 	    // Ra in MJ m-2 day-1
 	    return (24.0 * 60.0 / PI) * Gsc * dr * ( ws * sin(lat_rad) * sin(delta) + cos(lat_rad) * cos(delta) * sin(ws) );
 	}
-	action initialize{
+	action initialize(){
 //		ask plot_species {soil_water <- 0.8 * self.theta_fc * my_cultivar.Zr_ini;}
 		water_stress <- create_map(list<Plot>(plot_species), list_with(length(plot_species), 1.0)) ;
 	}

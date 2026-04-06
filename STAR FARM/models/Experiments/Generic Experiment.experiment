@@ -79,7 +79,7 @@ global{
 		return p.practice_area = 0 ? 0 : p.day_expenses / p.practice_area;
 	}
 	// detail the expenses per categories
-	list<list<float>> get_expenses_by_category{
+	list<list<float>> get_expenses_by_category(){
 		list<list<float>> res <- [];
 		loop i from: 0 to: length(expense_categories.keys)-1{
 			list<float> vals;
@@ -135,7 +135,7 @@ global{
 	}
 	
 	// used to keep only practices that are currently displayed
-	list<Crop_strategy> current_practices{
+	list<Crop_strategy> current_practices(){
 		return practices.values where (each.id = show_season);
 	}
 		 
@@ -149,7 +149,7 @@ global{
 	}
 	
 	// generate the current histogram labels
-	list<string> yearly_histo_labels{
+	list<string> yearly_histo_labels(){
 		return first(practices).year_summary["Current year"] accumulate(add_ref_to_practice(string(int(each))));
 	}
 	
@@ -194,7 +194,7 @@ global{
 	}
 	
 	// returns the adoption rate
-	list<list<float>> get_adoption_rate {
+	list<list<float>> get_adoption_rate() {
 		// if the scale is the total adoption rate, display the surface for each practice
 		if (scale = "Total"){
 			return practices collect(each.year_summary["Crop area"]);

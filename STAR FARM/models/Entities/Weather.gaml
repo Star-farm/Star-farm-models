@@ -62,7 +62,7 @@ global {
     int salt_end_doy   <- 120;
     
    
-	 action init_weather_data {
+	 action init_weather_data() {
 		if (the_weather = nil or not use_weather_generator) {
 			create Weather {
 				the_weather <- self; 
@@ -276,7 +276,7 @@ species Weather {
 	 	}
     }
      
-    action load_real_data {
+    action load_real_data() {
     	csv_file f <- csv_file(weather_file, ";");
      	matrix mat <- matrix(f);
         

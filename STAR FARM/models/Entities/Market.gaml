@@ -13,7 +13,7 @@ import "Cultivar.gaml"
 global {
 	Market the_market;
 	
-    action init_market {
+    action init_market() {
 		if (the_market = nil) {
 			create Market {
 				the_market <- self; 

@@ -62,7 +62,7 @@ species Farmer  {
 	 * Defines neighbors based on spatial proximity (distance = 1.0 m).
 	 * This allows social interactions and practice diffusion between farmers.
 	 */
-	action define_neighbors {
+	action define_neighbors() {
 		neighbors <- Farmer at_distance neighbor_distance;
 	}
 	 
@@ -71,7 +71,7 @@ species Farmer  {
 	 * Determines which decision model to use for adopting new practices.
 	 * Currently, only the neighbor-based innovation diffusion model is implemented.
 	 */
-	action decide_practice {
+	action decide_practice() {
 		switch innovation_diffusion_model {
 			match NEIGHBORS {
 				do innovation_diffusion_neighbors;
@@ -84,7 +84,7 @@ species Farmer  {
 	 * Farmers observe their neighbors’ success (measured by money)
 	 * and tend to adopt the practices of wealthier farmers in their neighborhood.
 	 */
-	action innovation_diffusion_neighbors {
+	action innovation_diffusion_neighbors() {
 		map<string, float> practice_candidates;
 		
 		// Evaluate each possible practice based on the average income of neighbors using it
