@@ -47,7 +47,7 @@ global  {
 	    	} else {
 	    		write "\n" + result;
 	    	}
-	    	fitness_computed <- true;
+	    	fitness_computed <- true; 
     	}
     }
    	

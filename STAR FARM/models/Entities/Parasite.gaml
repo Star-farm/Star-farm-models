@@ -62,7 +62,7 @@ global {
 	
 	
 	reflex start_pest when: cycle = 50 {
-		do create_pests_and_predators;
+		do create_pests_and_predators();
 	}
 	
 }
@@ -96,7 +96,7 @@ species Pest_Cluster virtual: true parallel: true {
 	
 	init {
 		loop times: rnd(1,daily_max_eggs) {
-			do newEgg;
+			do newEgg();
 		}
 	}
 	
@@ -134,7 +134,7 @@ species Pest_Cluster virtual: true parallel: true {
 	reflex cluster_evolution when: energy >= 100 {
 		loop times: (population count (each[1] = true and each[3] = true)) * rnd(daily_max_eggs) {
 			if (energy > 0){
-				do newEgg;
+				do newEgg();
 				energy <- energy - 15;	
 			}
 		}
@@ -154,7 +154,7 @@ species Pest_Cluster virtual: true parallel: true {
 	}
 	
 	reflex deleteCluster when: length(population) + length(egg_population) = 0 {
-		do die;
+		do die();
 	}
 	
 	action newEgg() {
@@ -197,9 +197,9 @@ species Predator skills: [moving] {
 	
 	reflex move {
 		if ( length(BrownPlanthopper_Cluster) > 0 or length(BrownPlanthopper_Cluster overlapping self) > 0 ) {
-			do goto target: BrownPlanthopper_Cluster closest_to(self);
+			do goto (target: BrownPlanthopper_Cluster closest_to(self));
 		} else {
-			do wander;
+			do wander();
 		}
 	}
 	 
@@ -222,7 +222,7 @@ species Predator skills: [moving] {
 	}
 	
 	reflex natural_death when: (current_date - date_of_birth >= predator_day_lifespan # days){
-		do die;
+		do die();
 	}
 		
 	aspect default {

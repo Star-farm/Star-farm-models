@@ -177,19 +177,19 @@ global{
 	}
 	
 	// function to build y label, based on the scale choice (total or per ha)
-	string y_label{
+	string y_label(){
 		return scale = "Total" ? "Total " + current_chart : current_chart + " per ha";
 	}
 	
 	// compute the color of the bars of the histogram. Get the color list of practices, and duplicates
 	// for each year that is displayed
-	list histo_colors {
+	list histo_colors() {
 		list<rgb> cl <- practices collect (each.color);
 		return first(practices).year_summary["Current year"] accumulate(cl);
 	}
 	
 	// defines the visilibity of charts
-	bool visibility{
+	bool visibility(){
 		return current_chart != "Adoption rate" and current_chart != "Expenses details";
 	}
 	
@@ -269,9 +269,9 @@ experiment generic_exp type:gui virtual: true {
 //				draw string("Seasons") at: {10 #px,10 #px}  anchor: #top_left color: #black font:overlay_font ; 
 //            }
 
-			chart histogram_info name: "" type: histogram y_label: y_label() visible: visibility() {
+			/*chart histogram_info name: "" type: histogram y_label: y_label() visible: visibility() {
 				datalist yearly_histo_labels() value: yearly_histo(current_chart)  color: histo_colors();
-			}
+			}*/
 			
 			chart "Adoption rate"  type: histogram  visible: current_chart = "Adoption rate" y_label: scale = "Total" ? "Area per practice":"Area (%)"{
 				datalist practices collect(each.short_name) value:  get_adoption_rate() color: practices collect(each.color) style: stack;

@@ -66,7 +66,7 @@ global {
 		if (the_weather = nil or not use_weather_generator) {
 			create Weather {
 				the_weather <- self; 
-				do load_real_data;
+				do load_real_data();
 				
 			}
 			
@@ -259,10 +259,10 @@ species Weather {
 	 	if not( current_date in _temp_min.keys) {
 	 		if not (mode_batch) {
 	 			ask world {
-	 				do pause;
+	 				do pause();
 	 			} 
 	 		} else {
-	 			ask world {do compute_fitness;}
+	 			ask world {do compute_fitness();}
 	 			end_of_sim <- true; 
 	 		}
 	 	} else {

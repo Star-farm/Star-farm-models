@@ -74,7 +74,7 @@ species Farmer  {
 	action decide_practice() {
 		switch innovation_diffusion_model {
 			match NEIGHBORS {
-				do innovation_diffusion_neighbors;
+				do innovation_diffusion_neighbors();
 			}
 		}
 	}
@@ -131,7 +131,7 @@ species Farmer  {
 	 */
 
 	reflex change_practices when:cycle > 0 and current_date.day_of_year = init_day_of_year {
-		do decide_practice;
+		do decide_practice();
 	} 
 
 
@@ -312,13 +312,13 @@ species Plot {
 		}
 		leftover_straw <- leftover_straw_base;
 		ask associated_crop {
-			do die; 
+			do die(); 
 		}
 		
 		associated_crop <- nil;
 	} 
 	
-	bool next_sowing_clean_straw {
+	bool next_sowing_clean_straw() {
 		int n <- current_date.day_of_year;
 		list<int> ns <- the_farmer.practice.sowing.implementation_days.keys where (each > n);
 		if empty(ns) {

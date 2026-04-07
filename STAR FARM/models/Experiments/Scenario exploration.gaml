@@ -106,14 +106,14 @@ experiment explore_strategies type: batch until: end_of_sim repeat: 20 keep_seed
 	//method exploration;
 	parameter possible_practices var: possible_practices <- [BAU_3S::1.0] among:[[OMRH:: 1.0],[BAU_3S::1.0], [BAU_3S_sust::1.0],[BAU_2S::1.0]];
 	parameter "weather scenario" var: weather_scenario  ;
-	
+	 
 	parameter "market scenario" var: market_scenario   ;
 	
 	init { 
 		mode_batch <- true;
 		save_results <- true; 
 		gama.pref_parallel_simulations_all <- false;
-		gama.pref_parallel_threads <- 20;
+		gama.pref_parallel_threads <- 10;
 		
 		write_results <- false;
 		day_start_of_year <- 300;
