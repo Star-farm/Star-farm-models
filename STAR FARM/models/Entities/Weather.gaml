@@ -282,8 +282,7 @@ species Weather {
         
         loop i from: 1 to: mat.rows - 1 {
             list<string> date_str <- string(mat[1, i]) split_with "-";
-           
-            date d <- date([date_str[0],date_str[1],date_str[2]]);
+            date d <- date([int(date_str[0]),int(date_str[1]),int(date_str[2])]);
             
             _temp_max[d] <- float(mat[2, i]);
             _temp_min[d] <- float(mat[3, i]);
