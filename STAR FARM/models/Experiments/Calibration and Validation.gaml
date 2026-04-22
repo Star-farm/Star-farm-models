@@ -95,7 +95,7 @@ global  {
 
 experiment check_result type: batch until: end_of_sim repeat: 4 keep_seed: true {
 	method exploration 
-	with: [[ "daily_water_loss_mm"::10.0]];
+	with: ( [["daily_water_loss_mm"::10.0]]);
 	
 
 

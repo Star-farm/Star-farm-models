@@ -79,7 +79,7 @@ global  {
 
 experiment test_strategy type: batch until: end_of_sim repeat: 1 keep_seed: true {
 	method exploration 
-	with: [["possible_practices"::[BAU_3S_sust::1.0], "weather_scenario"::PESSIMISTIC,	"market_scenario"::STANDARD]];
+	with: ([["possible_practices"::[BAU_3S_sust::1.0], "weather_scenario"::PESSIMISTIC,	"market_scenario"::STANDARD]]);
 	
 	
 	parameter possible_practices var: possible_practices <- [BAU_3S_sust::1.0] among:[[BAU_3S_sust::1.0]];

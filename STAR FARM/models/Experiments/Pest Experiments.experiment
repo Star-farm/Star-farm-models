@@ -15,7 +15,7 @@ global {
 	int init_predator_number <- 2; 
 }
 
-experiment "Pest experiment" parent: generic_exp virtual: false{
+experiment Pest_experiment title: "Pest experiment" parent: generic_exp virtual: false{
 	category "Map" expanded: true color: rgb(143, 156, 180);
 	parameter "Display" var: map_display among: ["Current practice","Pest density"] category: "Map";
 

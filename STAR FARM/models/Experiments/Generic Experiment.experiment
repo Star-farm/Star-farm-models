@@ -260,7 +260,7 @@ experiment generic_exp type:gui virtual: true {
 				legendPos <- {legendPos.x, legendPos.y + spaceY/2};
 			  }			
 			}
-			image background_image_file refresh: false visible: display_background;
+			picture background_image_file refresh: false visible: display_background;
 			species species(plot_species);  
 			species Farmer;    
 		} 
