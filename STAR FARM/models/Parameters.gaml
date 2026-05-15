@@ -23,12 +23,17 @@ global {
    
 	int day_start_of_year <- 300;
 	
-		
+	bool simple_spatial_data <- false;
+	
+   	bool custom_practices <- false;
+  
+  	bool add_market_retroaction <- false;
+  	
 	date starting_date <- date([2018,1,1]) add_days (day_start_of_year -1);
    		
 	image_file farmer_image <- image_file("../includes/Images/farmer.png");
 	
-	shape_file plots_shapefile <- shape_file("../includes/Dong Thap/2020/lu_dongthap2020_clean_2016_2023.shp");
+	shape_file plots_shapefile <- simple_spatial_data ? shape_file("../includes/Dong Thap/2020/lu_dongthap2020-clean-simple.shp"):  shape_file("../includes/Dong Thap/2020/lu_dongthap2020_clean_2016_2023.shp");
 	
 	bool use_weather_generator <- false;
 	string weather_id <- "Optimistic";
@@ -43,9 +48,9 @@ global {
 	
 	float neighbor_distance <- 10.0;
 	
-	
-   
+	 	
     map<string, float> possible_practices <- [BAU_3S::1.0];
+    
    
 	map<string,string> plots_to_keep <- [];
 		
@@ -59,7 +64,7 @@ global {
 	string id_xp ;
      
     bool use_real_data <- false; // use real data for local salinity
-    float spatial_discretization <- 5000.0; // length of the cell size for the salinity/pollution grid (m)
+    float spatial_discretization <- simple_spatial_data ? 20000.0 : 5000.0; // length of the cell size for the salinity/pollution grid (m)
    	float local_salinity_coefficient <- 0.1; //coefficient to apply to the local salinity
    	
     // =========================================================

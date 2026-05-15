@@ -13,6 +13,7 @@ import "Cultivar.gaml"
 global {
 	Market the_market;
 	
+	
     action init_market() {
 		if (the_market = nil) {
 			create Market {
@@ -89,6 +90,11 @@ species Market {
 	map<Cultivar,float> specific_volatility_crop;
 	map<Cultivar,float> specific_volatility_seeds;
 	
+	map<Cultivar,float>  coeff_saturation_price;
+	
+	reflex market_retroaction when: add_market_retroaction {
+		
+	}
 	
 	action define_specific_crop(Cultivar variety, float trend, float corr, float volatility) {
 		specific_trend_crop[variety] <- trend;
@@ -110,10 +116,14 @@ species Market {
 	}
 	
 	float r_for_crop (Cultivar variety){
+		float r_val <- 1.0;
 		if (variety in specific_r_crop.keys) {
-			return specific_r_crop[current_date.year][variety];
+			r_val <- specific_r_crop[current_date.year][variety];
 		}
-		return r_crop[current_date.year];
+		if (current_date.year in r_crop) {
+			r_val <- r_crop[current_date.year];
+		}
+		return r_val;
 	}
 	
     // --- GENERIC CALCULATION ACTION ---

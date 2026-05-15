@@ -42,6 +42,10 @@ global {
 	
 	bool first_year <- true;
 	
+	list<string> seasons_str;
+	
+	list<string> years_str;
+	
 
 // Output file paths
     string output_file_day <- "../results/daily_data.csv";
@@ -150,15 +154,20 @@ global {
 		do write_year_report();
 		ask Farmer {
 			ended_year <- false;
-			do decide_practice();
+			
 		}
+		do define_farmer_pratices();
 		ask practices {do switch_to_new_year();}
 			  // 4. Reset counters (Important: do this AFTER saving)
 	    ask Farmer { yearly_profit <- 0.0; }
 		
 	}
 	
-	
+	action define_farmer_pratices() {
+		ask Farmer {
+			do decide_practice();
+		}
+	}
 	  
     reflex update_rain_memory {
     	rain_last_days <- rain_last_days * rainfall_memory_decay + the_weather.rain; 
@@ -244,6 +253,7 @@ global {
 	            row <- row + "\n";
 	            save row to: output_file_season format: "text" rewrite: false;
 	        }
+	        seasons_str << string(current_date.year) + "_" + string(current_date.month);
 		}
     }
 
@@ -279,6 +289,7 @@ global {
 	            row <- row + "\n";
 	            save row to: output_file_year format: "text" rewrite: false;
 	        }
+	         years_str << string(current_date.year) ;
         }
       
     }

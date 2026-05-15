@@ -3,7 +3,7 @@
 * This wizard creates a new experiment file. 
 * Author: roiarthurb
 * Tags: 
-*/
+*/ 
 
 model AbstractStarFarm
 
@@ -37,8 +37,9 @@ global{
 	// List of the key indicators to be monitored
 	// the next list should be initialized using key_indicators from Practices.gaml, but presently there is a bug with Gama	
 
-	list<string> chart_list <- ["Harvest","Profit","Water consumption","Fertilizer consumption","Adoption rate","Expenses details"];
-	list<string> indicator_families_list <- ["Economy", "Practices seasons", "Biomass","GHG"];
+	//list<string> chart_list <- ["Harvest","Profit","Water consumption","Fertilizer consumption","Adoption rate","Expenses details"];
+	list<string> chart_list <- ["Yield","Profit","Water consumption","Fertilizer consumption","Pesticide Application"];
+//	list<string> indicator_families_list <- ["Economy", "Practices seasons", "Biomass","GHG"];
 	string current_chart <- first(chart_list);
  
 	
@@ -162,7 +163,7 @@ global{
 			return list<float>([]);
 		}
 		if (!visibility()){
-			return list_with(length(practices) * data_length, 0.0);
+			//return list_with(length(practices) * data_length, 0.0);
 		}
 
 		list<float> tmp;
@@ -227,21 +228,7 @@ global{
 
 // virtual generic experiment with common charts. All experiments inherit for this one, so it is not necessary to rewrite common charts
 experiment generic_exp type:gui virtual: true {
-	
-	category "Daily indicators" expanded: true color: category_color["Daily indicators"];
-	parameter "Indicators family" var: current_indicator_family among: indicator_families_list category: "Daily indicators";	
-	
-	category "Year evolution" expanded: true color: category_color["Year evolution"];
-	parameter "Chart" var: current_chart init: "Total crop biomass per practice" category: "Year evolution" among: chart_list;
-
-	
-	category  "Scale and time" expanded: true color: category_color["Scale and time"];
-	parameter "Time range" var: time_range_type among: ["All", "Last year", "Last 3 years", "Last 5 years"] category: "Scale and time";
-	parameter "Scale" var: scale init: "Total" category: "Scale and time" among: ["Total","Per ha"];
-	parameter "Show practice seasons" var: show_season category: "Scale and time" among: possible_practices.keys+"None";
-	 
-	output {
-		layout value: horizontal([vertical([0::50,1::50])::50,vertical([2::50,3::50])::50]) tabs:false;
+		output {
 		
 		display base_map axes: false toolbar: false virtual: true type: 3d{
 			overlay position:overlayPos size: {0.1, 0.1} background: background_color transparency: 0.0 border: background_color rounded:true visible:show_overlay{			 
@@ -264,117 +251,40 @@ experiment generic_exp type:gui virtual: true {
 			species species(plot_species);  
 			species Farmer;    
 		} 
-		display base_practices_information type: 2d toolbar: false antialias: true virtual: true{
-//			overlay position: {0, 0} size: {2000, 32#px} background: #white transparency: 0 rounded: false{
-//				draw string("Seasons") at: {10 #px,10 #px}  anchor: #top_left color: #black font:overlay_font ; 
-//            }
-
-			/*chart histogram_info name: "" type: histogram y_label: y_label() visible: visibility() {
-				datalist yearly_histo_labels() value: yearly_histo(current_chart)  color: histo_colors();
-			}*/
-			
-			chart "Adoption rate"  type: histogram  visible: current_chart = "Adoption rate" y_label: scale = "Total" ? "Area per practice":"Area (%)"{
-				datalist practices collect(each.short_name) value:  get_adoption_rate() color: practices collect(each.color) style: stack;
-			}
-
-			chart "Expenses details"  type: histogram  visible: current_chart = "Expenses details" y_label: scale = "Total" ? "Expenses per practice":"Expenses per ha"{
-				datalist expense_categories.keys value:   get_expenses_by_category() color: expense_categories.values style: stack;
-//				datalist expense_categories.keys value:   [[4,5],[7,5],[1,2], [4,5]] color: expense_categories.values style: stack;
-			}
-
-
-		} 
 		
-		display base_daily_indicators type: 2d toolbar: false antialias: true virtual: true {
+		display base_farmer_indicators type: 2d toolbar: false antialias: true virtual: true{
 			
-// overlay requires bug fix
-//
-//			overlay position: {0, 0} size: {0.1, 0.1} background: #white transparency: 1 rounded: false{
-//				draw string("Daily indicators") at: {10 #px,10 #px}  anchor: #top_left color: #black font:overlay_font ; 
-//          }
-
-			// economy indicators
-			
-			chart "Income/expenses (total)" type: series size: {0.5,1} visible: current_indicator_family = "Economy" and scale = "Total" x_range: time_range(time_range_type){
-				loop p over: reverse(practices.values) {
-					data "Total income of " + p.short_name value: p.day_income color: p.color style: bar;
-					data "Total expenses of " + p.short_name value: - p.day_expenses color: p.color style: bar;
-				}
+			chart first(Avg_net_income).legend + " (" + first(Avg_net_income).unit +")" type: histogram  visible: not empty(seasons_str) size: {1.0, 0.5} position:{0.0,0.0}{
+				datalist list(seasons_str) value: season_values[first(Avg_net_income).legend] color: color_values[first(Avg_net_income).legend];
 			}
+			chart first(Avg_yield).legend  +" (" + first(Avg_yield).unit +")"type: histogram visible: not empty(seasons_str) size: {1.0, 0.5} position:{0.0,0.5}{
+				datalist list(seasons_str) value: season_values[first(Avg_yield).legend] color: color_values[first(Avg_yield).legend];
 			
-			chart "Income/expenses (per ha)" type: series size: {0.5,1} visible: current_indicator_family = "Economy" and scale = "Per ha" x_range: time_range(time_range_type)  {
-				loop p over: reverse(practices.values) {
-					data "Income of " + p.short_name + " per ha" value: get_income_per_ha(p) color: p.color style: bar;
-					data "Expenses of " + p.short_name + " per ha" value: - get_expenses_per_ha(p) color: p.color style: bar;
-				}
 			}
+		
+		}
+		display base_environment_indicators type: 2d toolbar: false antialias: true virtual: true {
 			
-			chart "Balance (total)" type: series size: {0.5,1}  position: {0.5,0.0} visible: current_indicator_family = "Economy" and scale = "Total" x_range: time_range(time_range_type){
-				loop p over: reverse(practices.values) {
-					data "Balance " + p.short_name value: p.total_balance  color: p.color style: line marker: false accumulate_values: true;
-				}
+			chart first(Avg_irrigation_usage).legend +  " (" + first(Avg_irrigation_usage).unit +")"type: histogram  visible: not empty(seasons_str) size: {1.0, 0.5} position:{0.0,0.0}{
+				datalist list(seasons_str) value: season_values[first(Avg_irrigation_usage).legend] color: color_values[first(Avg_irrigation_usage).legend];
 			}
+			chart first(Avg_methane).legend +  " (" + first(Avg_methane).unit +")"type: histogram visible: not empty(seasons_str) size: {1.0, 0.5} position:{0.0,0.5}{
+				datalist list(seasons_str) value: season_values[first(Avg_methane).legend] color: color_values[first(Avg_methane).legend];
 			
-			chart "Balance (per ha)" type: series size: {0.5,1}  position: {0.5,0.0} visible: current_indicator_family = "Economy" and scale = "Per ha" x_range: time_range(time_range_type) {
-				loop p over: reverse(practices.values) {
-					data "Balance " + p.short_name value: p.balance_per_ha  color: p.color style: line marker: false accumulate_values: true;
-				}
 			}
+		}
+		display base_input_indicators type: 2d toolbar: false antialias: true virtual: true {
 			
-// should be simpler, but accumulate_values is not working ??
-// fix, test, then remove unecessary variables in practice: total_balance and balance_per_ha
-//
-//			chart "Balance" type: series size: {0.5,1} visible: current_indicator_family = "Economy" and scale = "Total" x_range: time_range(time_range_type) {
-//				loop p over: reverse(practices.values) {
-//					data "Balance" + p.short_name value: p.day_income  color: p.color_farmer style: line marker: false accumulate_values: true;
-//				}
-//			}
-			
-			
-			// season indicators
-			
-			chart SeasonsChart name: "Seasons" visible: current_indicator_family = "Practices seasons" type: series  lines: false y_range: [0, max(2.5,length(practices.values)+0.5)] y_tick_values_visible: false x_range: time_range(time_range_type)  {
-				loop i from: 0 to: length(practices.values)-1 step: 1 {
-					data ""+i value: (i+0.5) color: #white style: area line_visible: false marker: false;
-					data practices.values[i].short_name+" seasons" value: (i+1)*int(practices.values[i].is_active_season) color: practices.values[i].color style: area line_visible: false marker: false;
-				}
+			chart first(Avg_pesticide_applications).legend+ " (" + first(Avg_pesticide_applications).unit +")" type: histogram  visible: not empty(seasons_str) size: {1.0, 0.5} position:{0.0,0.0}{
+				datalist list(seasons_str) value: season_values[first(Avg_pesticide_applications).legend] color: color_values[first(Avg_pesticide_applications).legend];
 			}
+			chart first(Avg_fertilizer_usage).legend + " (" + first(Avg_fertilizer_usage).unit +")"type: histogram visible: not empty(seasons_str) size: {1.0, 0.5} position:{0.0,0.5}{
+				datalist list(seasons_str) value: season_values[first(Avg_fertilizer_usage).legend] color: color_values[first(Avg_fertilizer_usage).legend];
 			
-			//	Biomass indicators	
-
-			chart totalCropBiomass name: "Total crop biomass" visible: current_indicator_family = "Biomass" and scale = "Total" type: series x_range: time_range(time_range_type)  {
-				loop i from: 0 to: length(practices.values)-1 step: 1 {
-					data practices.values[i].short_name+" biomass" value: get_total_biomass(practices.values[i]) color: practices.values[i].color marker: false;
-				}
-			}
-			
-			chart CropBiomassPerHa name: "Crop biomass per ha" visible: current_indicator_family = "Biomass" and scale = "Per ha" type: series x_range: time_range(time_range_type)  {
-				loop i from: 0 to: length(practices.values)-1 step: 1 {
-					data practices.values[i].short_name+" biomass" value: get_biomass_per_ha(practices.values[i]) color: practices.values[i].color marker: false;
-				}
-			} 	
-			
-			
-			//	GHG indicators	
-
-			chart totalCropGHG name: "Total crop GHG" visible: current_indicator_family = "GHG" and scale = "Total" type: series x_range: time_range(time_range_type)  {
-				loop i from: 0 to: length(practices.values)-1 step: 1 {
-					data practices.values[i].short_name+" ghg" value: get_total_ghg(practices.values[i]) color: practices.values[i].color marker: false;
-				}
-			}
-			
-			chart CropGHGPerHa name: "Crop biomass per ha" visible: current_indicator_family = "Biomass" and scale = "Per ha" type: series x_range: time_range(time_range_type)  {
-				loop i from: 0 to: length(practices.values)-1 step: 1 {
-					data practices.values[i].short_name+" ghg" value: get_ghg_per_ha(practices.values[i]) color: practices.values[i].color marker: false;
-				}
 			}
 		}
 		
 		display base_weather type: 2d toolbar: false antialias: true virtual: true {
-//			overlay position: {0, 0} size: {2000, 32#px} background: #white transparency: 0 rounded: false{
-//				draw string("Weather") at: {10 #px,10 #px}  anchor: #top_left color: #black font:overlay_font ; 
-//            }
-
 			chart "Temperature" type: series size: {0.5,0.5} x_range: time_range(time_range_type) {
 				data "temperature min" value: the_weather.t_min  color: rgb(49, 130, 189) marker: false style: spline;
 				data "temperature max" value: the_weather.t_max color: rgb(230, 85, 13) marker: false style: spline; 

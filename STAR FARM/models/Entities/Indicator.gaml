@@ -22,6 +22,8 @@ global {
 	map<string, Indicator> seasonal_indicators;
 	map<string, Indicator> yearly_indicators;
 	
+	map<string,list<float>> season_values;
+	map<string, list<rgb>> color_values;
 	
 	action create_indicators() {
 		loop s over: Indicator.subspecies { 
@@ -33,6 +35,8 @@ global {
 			}
 			if(ct.is_seasonal) {
 				seasonal_indicators[ct.name] <- ct;
+				season_values[ct.legend] <- [];
+				color_values[ct.legend] <- [];
 			}
 			if(ct.is_yearly) {
 				yearly_indicators[ct.name] <- ct;
@@ -55,6 +59,8 @@ species Indicator virtual: true {
 	bool is_yearly;
 	bool is_dayly;
 	int float_precision ;
+	float critic_value;
+	bool critic_lower <- true;
 	
 	float value;
 	bool store_values <- false;
@@ -68,6 +74,11 @@ species Indicator virtual: true {
 		if (store_values) {
 			simulation_values << value;
 		}
+		if (is_seasonal) {
+			season_values[legend] << value;
+			color_values[legend] << critic_lower ? ((value <=  critic_value) ? #red: #green) :  ((value >=  critic_value)?  #red: #green);
+		
+		} 
 	}
 	action compute_value() virtual: true;
 	
@@ -136,6 +147,8 @@ species Avg_yield parent: Indicator {
 	bool is_yearly <- false;
 	bool is_dayly <- false;
 	int float_precision <- 2;
+	float critic_value <- 3.0;
+	
 	
 	action compute_value() {
 		// (CTU 12) Avg Rice Yield
@@ -152,7 +165,7 @@ species Avg_straw_value parent: Indicator {
 	bool is_seasonal <- true;
 	int float_precision <- 0;
 	
-	action compute_value() {
+ 	action compute_value() {
 		// (CTU 13) Value of By-products 
 		if empty(active_plots) { value <- 0.0; }
 		else { value <- mean(active_plots collect (each.straw_yield_ton_ha * 1000 * straw_market_price)); }
@@ -197,6 +210,7 @@ species Avg_profit_margin parent: Indicator {
 	string category <- AGRO_ECONOMIC_PERFORMANCE;
 	bool is_seasonal <- true;
 	int float_precision <- 1;
+	float critic_value <- 0.0;
 	
 	action compute_value() {
 		// (CTU 8) Profit Margin
@@ -232,6 +246,8 @@ species Avg_methane parent: Indicator {
 	string category <- CLIMATE_MITIGATION;
 	bool is_seasonal <- true;
 	int float_precision <- 0;
+	float critic_value <- 300.0;
+	bool critic_lower <- false;
 	
 	action compute_value() {
 		if empty(active_plots) { value <- 0.0; }
@@ -265,6 +281,8 @@ species Emission_intensity parent: Indicator {
 	string category <- CLIMATE_MITIGATION;
 	bool is_seasonal <- true;
 	int float_precision <- 3;
+	float critic_value <- 1.0;
+	bool critic_lower <- false;
 	
 	action compute_value() {
 		if empty(active_plots) { value <- 0.0; }
@@ -440,6 +458,10 @@ species Avg_irrigation_usage parent: Indicator {
 	bool is_seasonal <- true;
 	int float_precision <- 0;
 	
+	float critic_value <- 300.0;
+	bool critic_lower <- false;
+	
+	
 	action compute_value() {
 		// (CTU 39) Irrigation Water Usage
 		if empty(active_plots) { value <- 0.0; }
@@ -454,6 +476,8 @@ species Avg_pesticide_applications parent: Indicator {
 	string category <- RESOURCE_USE_SOIL;
 	bool is_seasonal <- true;
 	int float_precision <- 1;
+	float critic_value <- 5.0;
+	bool critic_lower <- false;
 	
 	action compute_value() {
 		if empty(active_plots) { value <- 0.0; }
@@ -464,10 +488,12 @@ species Avg_pesticide_applications parent: Indicator {
 species Avg_fertilizer_usage parent: Indicator {
 	string name <- "Fertilizer Usage";
 	string legend <- "Avg Fertilize usage";
-	string unit <- "count";
+	string unit <- "Kg N/ha";
 	string category <- RESOURCE_USE_SOIL;
 	bool is_seasonal <- true;
 	int float_precision <- 1;
+	float critic_value <- 100.0;
+	bool critic_lower <- false;
 	
 	action compute_value() {
 		if empty(active_plots) { value <- 0.0; }

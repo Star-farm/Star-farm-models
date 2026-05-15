@@ -29,7 +29,7 @@ global  {
     bool fitness_computed <- false;
     action compute_fitness() {
     	if not fitness_computed {
-	    	fitness <- 0.0;
+	    	fitness <- 0.0; 
 	    	string error_ <- "";
 	    	float sum_weight <- 0.0;
 	    	loop ind over: indicators.keys {
@@ -101,7 +101,7 @@ experiment check_result type: batch until: end_of_sim repeat: 4 keep_seed: true 
 
 	init {
 		gama.pref_parallel_simulations_all <- false;
-		gama.pref_parallel_threads <- 4;
+		gama.pref_parallel_threads <- 4; 
 		mode_batch <- true;
 		save_results <- false; 
 		write_results <- false;
@@ -113,7 +113,7 @@ experiment check_result type: batch until: end_of_sim repeat: 4 keep_seed: true 
 		possible_practices <- [BAU_3S::1.0];
    		starting_date <- date([2019,1,1]) add_days (day_start_of_year -1);
 	}
-}
+} 
 
 
 experiment calibration_yield_spray_water type: batch until: end_of_sim repeat: 4 keep_seed: true {

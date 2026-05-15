@@ -104,7 +104,7 @@ global {
 			}
 		} 
 	}
-	
+	 
 }
 
 
@@ -273,8 +273,8 @@ species Harvesting_practice parent:Practice {
  
  		float actual_sold_yield <- plot.final_yield_ton_ha * (1.0 - harvest_loss_rate);
 
-		float rice_rev <- (actual_sold_yield * 1000) * plot.associated_crop.variety.rice_market_price * the_market.r_for_crop(plot.associated_crop.variety);
-        float straw_rev <- 0.0;  
+		float rice_rev <- (actual_sold_yield * 1000) * plot.associated_crop.variety.rice_market_price * the_market.r_for_crop(plot.associated_crop.variety) ;
+      	float straw_rev <- 0.0;  
         
         if (collect_straw) { straw_rev <- (plot.straw_yield_ton_ha * 1000) * straw_market_price * the_market.r_straw[current_date.year] ; }
         
@@ -589,6 +589,31 @@ species BAU_rice_3_season parent:Crop_strategy {
 			do initialize();
 	}
 } 
+
+species Custom_practices parent: Crop_strategy {
+	string id <-  CUSTOM ; // Unique identifier for the practice
+	string short_name <- "Custom practices"; // Short name used for displays
+	rgb color <- practices_color[id];  // Color used for visual representation	
+
+	list<Practice> other_practices;
+	init {
+		 	sowing <- world.create_sowing_practice(Cultivar first_with (each.name = OM5451),[320::true,95::false, 215::false], false);
+		 	harvesting <- world.create_harvesting_practice(false);
+			ask world {
+				do add_CF_practice(myself);
+				do add_input_use_practice(cp: myself, 
+					    trigger_thresholds_:[320::bau_n_trigger_threshold*1.0,95::bau_n_trigger_threshold*1.0,215::bau_n_trigger_threshold*0.8 ] , 
+					    base_dose_: bau_n_dose_amount,               
+					    targets: [320::bau_nitrogen_goal*1.3,95::bau_nitrogen_goal*1.2,215::bau_nitrogen_goal*0.8 ], 
+					    mech: false
+					);			
+				
+				do add_pesticide_practice(myself, [320::bau_pesticide_threshold*0.4,95::bau_pesticide_threshold*1.0,215::bau_pesticide_threshold*1.6 ] , false, false); 
+			} 
+			do initialize();
+	}
+}
+
 
 species BAU_rice_3_season_sust parent:Crop_strategy {
 	string id <-  BAU_3S_sust  ; // Unique identifier for the practice

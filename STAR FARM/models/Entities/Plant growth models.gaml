@@ -154,7 +154,7 @@ species ceresModel parent: Plant_growth_model {
 	}
 	action initialize(){
 //		ask plot_species {soil_water <- 0.8 * self.theta_fc * my_cultivar.Zr_ini;}
-		water_stress <- create_map(list<Plot>(plot_species), list_with(length(plot_species), 1.0)) ;
+		//water_stress <- create_map(list<Plot>(plot_species), list_with(length(plot_species), 1.0)) ;
 	}
 	
 	

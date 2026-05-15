@@ -5,17 +5,10 @@
 * Tags:    
 */    
   
-model STARFARM   
+model STARFARM    
    
 import "Generic Experiment.experiment"  
-    
-global{
-	string current_indicator_family <- "Economy";
-	string show_season <- first(possible_practices.keys);
-	string time_range_type <- "All";
-	string scale <- "Total";
-}  
- 
+
 
 // ======================================================================
 // experiments
@@ -25,15 +18,12 @@ global{
 experiment Simple_experiment title: "Simple experiment" type:gui parent: generic_exp {	
 
 	output {		
-		display map axes: false toolbar: false parent: base_map{
-
-		}
-
-		display pc name: "Year evolution" type: 2d antialias: true parent: base_practices_information{}
-	
-		display daily_indicators type: 2d antialias: true parent: base_daily_indicators{}
+		layout horizontal([vertical([3::5000,1::5000])::5000,vertical([2::5000,0::5000])::5000]) tabs:true editors: false;
+		display map axes: false toolbar: false parent: base_map{}
+		display farmer_indicators parent:base_farmer_indicators {}
+		display environment_indicators parent:base_environment_indicators {}
+		display input_indicators parent:base_input_indicators {}
 		
-		display weather type: 2d antialias: true parent: base_weather{}
 		
 	} 
 }

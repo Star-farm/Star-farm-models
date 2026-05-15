@@ -56,14 +56,5 @@ experiment CleanShapefile type: gui {
 		display current_map {
 			species plot;
 		}
-		
-		
-		/*display init_map {
-			graphics "map" {
-				loop g over: Dongthap_shape_file {
-					draw g color: #yellow border: #black;
-				}
-			}
-		}*/
 	}
 }

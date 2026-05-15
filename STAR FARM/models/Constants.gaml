@@ -28,7 +28,9 @@ global {
 	string BAU_2S <- "BAU-2seasons"; //BUSINESS AS USUAL 2 SEASONS
 	string BAU_3S_sust <- "BAU-sust" ; //BUSINESS AS USUAL 3 SEASONS
 	string OMRH <- "OMRH" const: true; //ONE MILLION RICE HECTARES 
-	 
+	string CUSTOM <- "custom" ; //BUSINESS AS USUAL 3 SEASONS
+	
+	
 	/******* RICE IRRIGATION *******/
 	string CF <- "CF" const: true;
 	string AWD <- "AWD" const: true;

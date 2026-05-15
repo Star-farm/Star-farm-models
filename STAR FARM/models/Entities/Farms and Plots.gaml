@@ -32,8 +32,8 @@ species Farmer  {
 	Farm my_farm;  // Reference to the farm owned by this farmer
 	
 	// The current agricultural practice followed by the farmer
-	Crop_strategy practice <- practices[possible_practices.keys[rnd_choice(possible_practices.values)]];
- 	int num_seasons <- length(practice.sowing.implementation_days);
+	Crop_strategy practice <- custom_practices ? nil: practices[possible_practices.keys[rnd_choice(possible_practices.values)]];
+ 	int num_seasons ;
 	int ended_seasons <- 0;
 	
 	float money; // Economic capital of the farmer
@@ -57,6 +57,15 @@ species Farmer  {
 	
 	list<Farmer> neighbors;  // List of neighboring farmers (for diffusion of innovations)
 	 
+	 
+	 init {
+	 	if practice = nil {
+	 		create Custom_practices {
+	 			myself.practice <- self;
+	 		}
+	 	}
+	 	num_seasons <- length(practice.sowing.implementation_days);
+	 }
 	/**
 	 * Action: define_neighbors
 	 * Defines neighbors based on spatial proximity (distance = 1.0 m).
