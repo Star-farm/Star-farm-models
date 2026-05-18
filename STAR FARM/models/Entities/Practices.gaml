@@ -167,6 +167,7 @@ species Sowing_practice parent:Practice {
 		plot.date_sowing_ok <- false;
 		ready_to_end_season <- true; 
 		plot.the_farmer.ended_season <- false;
+		plot.last_variety <- type_of_cultivar;
 		 
 		create Crop (the_farmer:plot.the_farmer, variety:type_of_cultivar  ) {
 			seed_density_kg_ha <- myself.mechanical_seeding ? seed_density_kg_ha_mechanical : seed_density_kg_ha_broadcast;
@@ -271,9 +272,9 @@ species Harvesting_practice parent:Practice {
         plot.final_yield_ton_ha <- (dry_yield * biomass_to_ton_conv) / harvest_moisture_adjust;
         plot.straw_yield_ton_ha <- (plot.associated_crop.biomass * biomass_to_ton_conv) -  plot.final_yield_ton_ha; 
  
- 		float actual_sold_yield <- plot.final_yield_ton_ha * (1.0 - harvest_loss_rate);
+ 		plot.actual_sold_yield <- plot.final_yield_ton_ha * (1.0 - harvest_loss_rate);
 
-		float rice_rev <- (actual_sold_yield * 1000) * plot.associated_crop.variety.rice_market_price * the_market.r_for_crop(plot.associated_crop.variety) ;
+		//float rice_rev <- (actual_sold_yield * 1000) * plot.associated_crop.variety.rice_market_price * the_market.r_for_crop(plot.associated_crop.variety) ;
       	float straw_rev <- 0.0;  
         
         if (collect_straw) { straw_rev <- (plot.straw_yield_ton_ha * 1000) * straw_market_price * the_market.r_straw[current_date.year] ; }
@@ -283,7 +284,7 @@ species Harvesting_practice parent:Practice {
     		plot.methane_emissions_kg_ha <- plot.methane_emissions_kg_ha +  plot.straw_yield_ton_ha * straw_burn_emission_factor;
 		}
         
-        plot.the_farmer.revenue <- rice_rev + straw_rev;
+        plot.the_farmer.revenue <- straw_rev;
          
         float cost_labor <- plot.the_farmer.accumulated_labor_hours * labor_cost_per_hour; 
         float cost_fert <- plot.total_fertilizer_applied * fertilizer_unit_price * the_market.r_fertilizer[current_date.year];
@@ -293,9 +294,7 @@ species Harvesting_practice parent:Practice {
         float cost_meca <- plot.the_farmer.mechanization_costs * the_market.r_mech[current_date.year];  
     	plot.the_farmer.total_costs <- cost_labor+ cost_fert + cost_pest + cost_water + cost_seed + cost_meca ;
         
-        plot.the_farmer.profit_net <- plot.the_farmer.revenue - plot.the_farmer.total_costs;
-		
-       plot.the_farmer.yearly_profit <- plot.the_farmer.yearly_profit + plot.the_farmer.profit_net;
+     
 		
 		
 	} 

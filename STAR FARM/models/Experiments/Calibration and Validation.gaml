@@ -99,7 +99,7 @@ experiment check_result type: batch until: end_of_sim repeat: 4 keep_seed: true 
 	
 
 
-	init {
+	init { 
 		gama.pref_parallel_simulations_all <- false;
 		gama.pref_parallel_threads <- 4; 
 		mode_batch <- true;

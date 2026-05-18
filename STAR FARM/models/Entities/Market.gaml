@@ -8,6 +8,8 @@
 
 model STARFARM
 
+import "Farms and Plots.gaml"
+
 import "Cultivar.gaml"
 
 global {
@@ -27,6 +29,7 @@ global {
 
 
 species Market {
+	
     rgb color_code;
 	float global_inflation <- 0.03 ;
     float global_volatility <- 0.05 ;
@@ -90,9 +93,50 @@ species Market {
 	map<Cultivar,float> specific_volatility_crop;
 	map<Cultivar,float> specific_volatility_seeds;
 	
-	map<Cultivar,float>  coeff_saturation_price;
 	
-	reflex market_retroaction when: add_market_retroaction {
+	// Market capacity (in tons) before the price starts to drop.
+    // If the total harvest exceeds this threshold, the price falls.
+	map<Cultivar, float> market_saturation_threshold;
+	
+	// Sensitivity: the higher k is, the faster the price drops after hitting the threshold.
+	map<Cultivar, float> price_sensitivity_k;
+		
+	Cultivar floor_price_cultivar;
+	
+	
+	
+	action compute_farmer_revenu() {
+		
+		map<Cultivar,float> prices;
+		loop c over: Cultivar {
+			prices[c] <- the_market.r_for_crop(c) * c.rice_market_price ;
+		}
+		if (add_market_retroaction) {
+			float min_price <- prices[floor_price_cultivar];
+			map<Cultivar,float> sum_yields;
+			ask Plot {
+				sum_yields[last_variety] <- sum_yields[last_variety] +(actual_sold_yield * shape.area/ 10000.0);
+			} 
+			loop c over: sum_yields.keys {
+				// Calculate the saturation ratio
+	        	float supply_ratio <- (c in market_saturation_threshold.keys)  ? sum_yields[c] / market_saturation_threshold[c] : 0.0;
+	        
+	       		if (supply_ratio > 1.0) {
+	       	     // Overproduction: Exponential decay towards the floor price
+	           		float decay <- exp(- price_sensitivity_k[c] * (supply_ratio - 1.0));
+	            	prices[c] <- min_price + (prices[c] - min_price)* decay;
+	         	}
+	      	}
+		}
+		
+		ask Plot { 
+			float rice_rev <- (actual_sold_yield * 1000) * prices[last_variety] ;
+      		the_farmer.revenue <- the_farmer.revenue + rice_rev ;
+		}
+		ask Farmer {
+			 profit_net <- revenue - total_costs;
+			 yearly_profit <- yearly_profit + profit_net;
+		}
 		
 	}
 	
@@ -143,33 +187,33 @@ species Market {
         return new_ratio;
     }
     
-    action generate_data(int first_year, int last_year) {
-    	loop y from: first_year to: last_year{
+    action generate_data(int first_y, int last_y) {
+    	loop y from: first_y to: last_y{
     		do annual_update(y);
     	} 
-    }
+    }  
 
     action annual_update(int year) {
         // The "Economic Climate" of the year (Same for all inputs in this scenario)
         float world_shock <- gauss(0, global_volatility);
 
 		int prev_year <- year - 1;
-		bool first_year <- prev_year in r_crop.keys;
+		bool first_y <- prev_year in r_crop.keys;
 		
         // Update all ratios via the generic action
-        r_crop[year] <- calculate_ratio(first_year ? 1.0 : r_crop[prev_year], trend_crop, corr_crop, volatility_crop, world_shock);
-        r_seeds[year] <- calculate_ratio(first_year ? 1.0 : r_seeds[prev_year], trend_seeds, corr_seeds, volatility_seeds, world_shock);
-        r_fertilizer[year] <- calculate_ratio(first_year ? 1.0 : r_fertilizer[prev_year], trend_fertilizer, corr_fertilizer,volatility_fertilizer , world_shock);
-        r_pesticides[year] <- calculate_ratio(first_year ? 1.0 : r_pesticides[prev_year], trend_pesticides, corr_pesticides, volatility_pesticides, world_shock);
-        r_water[year] <- calculate_ratio(first_year ? 1.0 : r_water[prev_year], trend_water, corr_water, volatility_water, world_shock);
-        r_straw[year] <- calculate_ratio(first_year ? 1.0 : r_straw[prev_year], trend_straw, corr_straw, volatility_straw, world_shock);
-        r_mech[year] <- calculate_ratio(first_year ? 1.0 : r_mech[prev_year], trend_mech, corr_mech, volatility_mech, world_shock);
+        r_crop[year] <- calculate_ratio(first_y ? 1.0 : r_crop[prev_year], trend_crop, corr_crop, volatility_crop, world_shock);
+        r_seeds[year] <- calculate_ratio(first_y ? 1.0 : r_seeds[prev_year], trend_seeds, corr_seeds, volatility_seeds, world_shock);
+        r_fertilizer[year] <- calculate_ratio(first_y ? 1.0 : r_fertilizer[prev_year], trend_fertilizer, corr_fertilizer,volatility_fertilizer , world_shock);
+        r_pesticides[year] <- calculate_ratio(first_y ? 1.0 : r_pesticides[prev_year], trend_pesticides, corr_pesticides, volatility_pesticides, world_shock);
+        r_water[year] <- calculate_ratio(first_y ? 1.0 : r_water[prev_year], trend_water, corr_water, volatility_water, world_shock);
+        r_straw[year] <- calculate_ratio(first_y ? 1.0 : r_straw[prev_year], trend_straw, corr_straw, volatility_straw, world_shock);
+        r_mech[year] <- calculate_ratio(first_y ? 1.0 : r_mech[prev_year], trend_mech, corr_mech, volatility_mech, world_shock);
         loop variety over: specific_trend_seeds.keys {
-        	specific_r_crop[year][variety] <- calculate_ratio(first_year ? 1.0 : specific_r_crop[prev_year][variety] , specific_trend_crop[variety] , specific_corr_crop[variety] , specific_volatility_crop[variety] , world_shock);
+        	specific_r_crop[year][variety] <- calculate_ratio(first_y ? 1.0 : specific_r_crop[prev_year][variety] , specific_trend_crop[variety] , specific_corr_crop[variety] , specific_volatility_crop[variety] , world_shock);
         
         }
         loop variety over: specific_trend_seeds.keys {
-        	specific_r_seeds[year][variety] <- calculate_ratio(first_year ? 1.0 : specific_r_seeds[prev_year][variety] , specific_trend_seeds[variety] , specific_corr_seeds[variety] , specific_volatility_seeds[variety] , world_shock);
+        	specific_r_seeds[year][variety] <- calculate_ratio(first_y ? 1.0 : specific_r_seeds[prev_year][variety] , specific_trend_seeds[variety] , specific_corr_seeds[variety] , specific_volatility_seeds[variety] , world_shock);
         
         }
     }

@@ -145,13 +145,14 @@ global {
 	}
 	
 	reflex end_of_season when: ready_to_end_season and empty(Farmer where (each.is_active and (not each.ended_season))) {
+		ask the_market {do compute_farmer_revenu();}
 		do write_season_report();
 		ready_to_end_season <- false;
 	}
 	
 	
 	reflex end_of_year when: (Farmer first_with not(each.ended_year)) = nil{
-		do write_year_report();
+		do write_year_report(); 
 		ask Farmer {
 			ended_year <- false;
 			

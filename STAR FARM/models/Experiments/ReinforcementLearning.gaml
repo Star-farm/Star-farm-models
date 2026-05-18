@@ -33,6 +33,21 @@ global {
 			}
 		}
 	}
+	
+	 action init_market() {
+		if (the_market = nil) {
+			create Market {
+				the_market <- self; 
+				ask Cultivar where (each.name = ST25) {
+					myself.floor_price_cultivar <- Cultivar first_with (each.name = OM5451);
+					myself.market_saturation_threshold[self] <- 900000;
+					myself.price_sensitivity_k[self] <- 1.5;
+				} 
+			}	
+		}
+	}
+	
+	
 }
 
 experiment ReinforcementLearning title: "Reinforcement Learning" type:gui parent: generic_exp {	

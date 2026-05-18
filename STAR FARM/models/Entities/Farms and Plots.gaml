@@ -28,7 +28,6 @@ species Farmer  {
 	bool is_active <- false;
 	bool ended_year <- false;
 	bool ended_season <- false;
-	
 	Farm my_farm;  // Reference to the farm owned by this farmer
 	
 	// The current agricultural practice followed by the farmer
@@ -42,7 +41,7 @@ species Farmer  {
 	
 	
 	float profit_margin <- 0.0;
-    
+   
     float yearly_profit;
     float profit_net;
     float total_costs;
@@ -172,6 +171,7 @@ species Plot {
 	Farmer the_farmer;        // The farmer managing this plot
 	Crop associated_crop;     // The crop currently growing on the plot (if any)
 	float surface_in_ha;      // surface in ha
+	Cultivar last_variety;
 	
 	// Soil parameters
 	float soil_water <- 200.0; 	     // water level in mm
@@ -215,6 +215,7 @@ species Plot {
 	
 	float target_nitrogen;
 	float trigger_threshold;
+	float actual_sold_yield;
 	
 	
 	/**

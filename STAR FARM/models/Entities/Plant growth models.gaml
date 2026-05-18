@@ -172,7 +172,7 @@ species ceresModel parent: Plant_growth_model {
 		}else{
 			Zr[c] <- min(c.variety.Zr_max, Zr[c] + 5.0); // 5 mm / jour
 		}
-	}
+	} 
 	
 	 
 	reflex phenology {
