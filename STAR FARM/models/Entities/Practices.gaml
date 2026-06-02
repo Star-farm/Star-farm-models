@@ -40,7 +40,18 @@ global {
 	list<string> key_indicators <- ["Harvest","Profit","Crop area","Water consumption","Fertilizer consumption","Current year","Current season"];
 	// List of the expense categories, and the corresponding color for display
 	map<string,rgb> expense_categories <- ["Seed"::rgb(22, 160, 133),"Fertilizer"::rgb(241, 196, 15),"Irrigation"::rgb(52, 152, 219),"Manpower"::rgb(230, 126, 34),"Other"::rgb(127, 140, 141)];
-		
+	
+	map<int, bool> three_seasons_sowing <- [320::true,95::false, 215::false];
+	map<int, bool> two_seasons_sowing <- [305::true, 115::false];
+	list<float> fert_trigger_thresholds_coeff_3_seasons <- [0.8, 1.0,1.2];
+	list<float> fert_targets_coeff_3_seasons <- [1.3, 1.3,0.8];
+	list<float> fert_trigger_thresholds_coeff_2_seasons <- [0.8, 1.0];
+	list<float> fert_targets_coeff_2_seasons <- [1.2, 1.0];
+
+	list<float> pesticide_thresholds_2_seasons <- [0.4,1.0];		
+	list<float> pesticide_thresholds_3_seasons <- [0.4,1.0, 1.6];		
+	int fallow_day <- 290;
+	
 	// Action to create all practice instances from their species definitions
 	action create_practices() {
 		loop s over: Crop_strategy.subspecies { 
@@ -576,14 +587,22 @@ species BAU_rice_3_season parent:Crop_strategy {
 		 	harvesting <- world.create_harvesting_practice(false);
 			ask world {
 				do add_CF_practice(myself);
+				map<int,float> ftr;
+				map<int,float> fta;
+				map<int,float> pta;
+				loop i from: 0 to: length(three_seasons_sowing) -1 {
+					ftr[three_seasons_sowing.keys[i]] <-  bau_n_trigger_threshold*fert_trigger_thresholds_coeff_3_seasons[i];
+					fta[three_seasons_sowing.keys[i]] <-  bau_nitrogen_goal*fert_targets_coeff_3_seasons[i];
+					pta[three_seasons_sowing.keys[i]] <- bau_pesticide_threshold * pesticide_thresholds_3_seasons[i];
+				}
 				do add_input_use_practice(cp: myself, 
-					    trigger_thresholds_:[320::bau_n_trigger_threshold*1.0,95::bau_n_trigger_threshold*1.0,215::bau_n_trigger_threshold*0.8 ] , 
+					    trigger_thresholds_: ftr, 
 					    base_dose_: bau_n_dose_amount,               
-					    targets: [320::bau_nitrogen_goal*1.3,95::bau_nitrogen_goal*1.2,215::bau_nitrogen_goal*0.8 ], 
+					    targets: fta, 
 					    mech: false
 					);			
 				
-				do add_pesticide_practice(myself, [320::bau_pesticide_threshold*0.4,95::bau_pesticide_threshold*1.0,215::bau_pesticide_threshold*1.6 ] , false, false); 
+				do add_pesticide_practice(myself, pta , false, false); 
 			} 
 			do initialize();
 	}
@@ -596,21 +615,29 @@ species Custom_practices parent: Crop_strategy {
 
 	list<Practice> other_practices;
 	init {
-		 	sowing <- world.create_sowing_practice(Cultivar first_with (each.name = OM5451),[320::true,95::false, 215::false], false);
+		 	sowing <- world.create_sowing_practice(Cultivar first_with (each.name = OM5451),three_seasons_sowing, false);
 		 	harvesting <- world.create_harvesting_practice(false);
 			ask world {
 				do add_CF_practice(myself);
+				map<int,float> ftr;
+				map<int,float> fta;
+				map<int,float> pta;
+				loop i from: 0 to: length(three_seasons_sowing) -1 {
+					ftr[three_seasons_sowing.keys[i]] <-  bau_n_trigger_threshold*fert_trigger_thresholds_coeff_3_seasons[i];
+					fta[three_seasons_sowing.keys[i]] <-  bau_nitrogen_goal*fert_targets_coeff_3_seasons[i];
+					pta[three_seasons_sowing.keys[i]] <- bau_pesticide_threshold * pesticide_thresholds_3_seasons[i];
+				}
 				do add_input_use_practice(cp: myself, 
-					    trigger_thresholds_:[320::bau_n_trigger_threshold*1.0,95::bau_n_trigger_threshold*1.0,215::bau_n_trigger_threshold*0.8 ] , 
+					    trigger_thresholds_: ftr, 
 					    base_dose_: bau_n_dose_amount,               
-					    targets: [320::bau_nitrogen_goal*1.3,95::bau_nitrogen_goal*1.2,215::bau_nitrogen_goal*0.8 ], 
+					    targets: fta, 
 					    mech: false
 					);			
 				
-				do add_pesticide_practice(myself, [320::bau_pesticide_threshold*0.4,95::bau_pesticide_threshold*1.0,215::bau_pesticide_threshold*1.6 ] , false, false); 
+				do add_pesticide_practice(myself, pta , false, false); 	
 			} 
 			do initialize();
-	}
+		}
 }
 
 
@@ -621,18 +648,28 @@ species BAU_rice_3_season_sust parent:Crop_strategy {
 
 	list<Practice> other_practices;
 	init {
-		 	sowing <- world.create_sowing_practice(Cultivar first_with (each.name = OM5451),[320::true,95::false, 215::false], false);
+		 	sowing <- world.create_sowing_practice(Cultivar first_with (each.name = OM5451),three_seasons_sowing, false);
 		 	harvesting <- world.create_harvesting_practice(false);
 			ask world {
 				do add_AWD_practice(myself);
+				
+				map<int,float> ftr;
+				map<int,float> fta;
+				map<int,float> pta;
+				loop i from: 0 to: length(three_seasons_sowing) -1 {
+					ftr[three_seasons_sowing.keys[i]] <-  sust_n_trigger_threshold*fert_trigger_thresholds_coeff_3_seasons[i];
+					fta[three_seasons_sowing.keys[i]] <-  sust_nitrogen_goal*fert_targets_coeff_3_seasons[i];
+					pta[three_seasons_sowing.keys[i]] <- sust_pesticide_threshold * pesticide_thresholds_3_seasons[i];
+				}
 				do add_input_use_practice(cp: myself, 
-					    trigger_thresholds_:[320::sust_n_trigger_threshold*1.0,95::sust_n_trigger_threshold*1.0,215::sust_n_trigger_threshold*0.8 ] , 
+					    trigger_thresholds_: ftr, 
 					    base_dose_: sust_n_dose_amount,               
-					    targets: [320::sust_nitrogen_goal*1.3,95::sust_nitrogen_goal*1.2,215::sust_nitrogen_goal*0.8 ], 
+					    targets: fta, 
 					    mech: false
 					);			
 				
-				do add_pesticide_practice(myself, [320::sust_pesticide_threshold*0.4,95::sust_pesticide_threshold*1.0,215::sust_pesticide_threshold*1.6 ] , false, true); 
+				do add_pesticide_practice(myself, pta , false, true); 	
+				
 			} 
 			do initialize();
 	}
@@ -646,19 +683,28 @@ species BAU_rice_2_season parent:Crop_strategy {
 
 	list<Practice> other_practices;
 	init {
-		 	sowing <- world.create_sowing_practice(Cultivar first_with (each.name = OM5451),[305::true, 115::false], false);
+		 	sowing <- world.create_sowing_practice(Cultivar first_with (each.name = OM5451),two_seasons_sowing, false);
 		 	harvesting <- world.create_harvesting_practice(false);
 			ask world {
 				do add_CF_practice(myself);
+				
+				map<int,float> ftr;
+				map<int,float> fta;
+				map<int,float> pta;
+				loop i from: 0 to: length(two_seasons_sowing) -1 {
+					ftr[two_seasons_sowing.keys[i]] <-  bau_n_trigger_threshold*fert_trigger_thresholds_coeff_2_seasons[i];
+					fta[two_seasons_sowing.keys[i]] <-  bau_nitrogen_goal*fert_targets_coeff_2_seasons[i];
+					pta[two_seasons_sowing.keys[i]] <- bau_pesticide_threshold * pesticide_thresholds_2_seasons[i];
+				}
 				do add_input_use_practice(cp: myself, 
-					    trigger_thresholds_: [305::bau_n_trigger_threshold*0.8,115::bau_n_trigger_threshold*1.0], 
+					    trigger_thresholds_: ftr, 
 					    base_dose_: bau_n_dose_amount,               
-					    targets: [305::bau_nitrogen_goal*1.2,115::bau_nitrogen_goal*1.0], 
+					    targets: fta, 
 					    mech: false
 					);			
-				do add_pesticide_practice(myself, [305::bau_pesticide_threshold*0.4,115::bau_pesticide_threshold*1.0], false, false); 
-				do add_fallow_practice(myself,290);
 				
+				do add_pesticide_practice(myself, pta , false, false); 	
+				do add_fallow_practice(myself,fallow_day);
 			} 
 			do initialize();
 	}
@@ -674,17 +720,30 @@ species OMH_rice parent:Crop_strategy {
 	list<Practice> other_practices;
 	
 	init {
-		 	sowing <- world.create_sowing_practice(Cultivar first_with (each.name = ST25),[305::true, 115::false], true);
+		 	sowing <- world.create_sowing_practice(Cultivar first_with (each.name = ST25),two_seasons_sowing, true);
 		 	harvesting <- world.create_harvesting_practice(true);
 			ask world {
 				do add_AWD_practice(myself);
-				do add_input_use_practice(cp:myself, 
-				    trigger_thresholds_:[305::sust_n_trigger_threshold*0.8,115::sust_n_trigger_threshold*1.0] , 
-				    base_dose_: sust_n_dose_amount,            
-				    targets: [305::sust_nitrogen_goal*1.2,115::sust_nitrogen_goal*1.0], 
-				    mech: true);
-				do add_pesticide_practice(myself,[305::sust_pesticide_threshold*0.4,115::sust_pesticide_threshold*1.0], true, true);
-				do add_fallow_practice(myself,290); 
+				
+				map<int,float> ftr;
+				map<int,float> fta;
+				map<int,float> pta;
+				loop i from: 0 to: length(two_seasons_sowing) -1 {
+					ftr[two_seasons_sowing.keys[i]] <-  sust_n_trigger_threshold*fert_trigger_thresholds_coeff_2_seasons[i];
+					fta[two_seasons_sowing.keys[i]] <-  sust_nitrogen_goal*fert_targets_coeff_2_seasons[i];
+					pta[two_seasons_sowing.keys[i]] <- sust_pesticide_threshold * pesticide_thresholds_2_seasons[i];
+				}
+				do add_input_use_practice(cp: myself, 
+					    trigger_thresholds_: ftr, 
+					    base_dose_: sust_n_dose_amount,               
+					    targets: fta, 
+					    mech: false
+					);			
+				
+				do add_pesticide_practice(myself, pta , true, true); 	
+				do add_fallow_practice(myself,fallow_day);
+				
+			
 			} 
 			do initialize();
 	}

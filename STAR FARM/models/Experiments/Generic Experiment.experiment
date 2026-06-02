@@ -241,9 +241,10 @@ experiment generic_exp type:gui virtual: true {
 			  legendPos <- {legendPos.x, legendPos.y + spaceY};
 			  draw string("Nb Famers: " + length(Farmer)) at: legendPos color: text_color font: titleFont;	
 			  legendPos <- {legendPos.x, legendPos.y + spaceY};
-			  loop p over: practices_color.keys {
+			  map<string, list<Farmer>> pts <- Farmer group_by (each.practice.id);
+			  loop p over: pts.keys {
 				draw square(10 #px) at: legendPos color: practices_color[p] border: #white;
-				draw p + ": "+ length(Farmer where (each.practice.short_name = p)) at: legendPos + {20 #px, 5 #px} color: practices_color[p]  font:titleFont;
+				draw p + ": "+ length(pts[p]) at: legendPos + {20 #px, 5 #px} color: practices_color[p]  font:titleFont;
 				legendPos <- {legendPos.x, legendPos.y + spaceY/2};
 			  }			
 			}
