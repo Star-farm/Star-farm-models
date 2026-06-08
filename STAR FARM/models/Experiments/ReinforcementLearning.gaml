@@ -14,6 +14,73 @@ import "Generic Experiment.experiment"
 
 global {
 	
+	
+	int start_year <- 2025;
+    int end_year <- 2050;
+    string OPTIMISTIC <- "Optimistic" ; 
+    string BASELINE <- "Baseline" ;
+    string PESSIMISTIC <- "Pessimistic";
+     
+    string STANDARD <- "Standard";
+    string RESOURCE_CRISIS <- "Crisis"; 
+     
+      
+	string weather_scenario <- PESSIMISTIC among: [OPTIMISTIC, PESSIMISTIC]   ;
+	string market_scenario <- RESOURCE_CRISIS among: [STANDARD, RESOURCE_CRISIS]   ;
+	
+	action init_action() {
+		switch weather_scenario {
+			match OPTIMISTIC {
+				do generate_scenario(OPTIMISTIC,start_year, end_year, 0.5, 1.0, 1.2, 0.0,0,0);
+			}
+			match BASELINE {
+				do generate_scenario(BASELINE,start_year, end_year,1.2, 2.5, 1.4, 0.03,15,10);
+			}
+			match PESSIMISTIC{
+				do generate_scenario(PESSIMISTIC,start_year, end_year, 2.5, 4.5, 1.6, 0.06,30,20);
+			}
+		} 
+		
+		switch market_scenario {
+			match STANDARD {
+				create Market { 
+           			market_id <- "Standard";
+            		// Setup: We leave specific trends at 0.0 (neutral)
+            		// We set high correlation (0.8) with the global economy
+            		corr_water <- 0.8; trend_water <- 0.0;
+            		corr_fertilizer <- 0.9; trend_fertilizer <- 0.0; // Follows oil/gas prices
+            		the_market <- self;
+        		}
+			}
+			match RESOURCE_CRISIS {
+				create Market {
+           			market_id <- "Resource-Crisis";
+           			
+		            // WATER: Becomes expensive (+5% per year ON TOP of inflation) and uncorrelated (0.2)
+		            corr_water <- 0.2; 
+		            trend_water <- 0.05; 
+		            volatility_water <- 0.15; // Very unstable (random droughts)
+		
+		            // FERTILIZERS: Carbon taxes or shortages (+4% per year)
+		            corr_fertilizer <- 0.5;
+		            trend_fertilizer <- 0.04;
+		
+		            // MECHANIZATION: Becomes cheaper (technical progress / efficiency)
+		            corr_mech <- 0.5;
+		            trend_mech <- -0.01;
+		            
+		            the_market <- self;
+        		}
+			}
+		}
+		ask the_market {
+			do generate_data(start_year,end_year);
+		}	
+	}
+	
+		
+
+
 	action change_irrigation(Farmer f, bool to_awd) {
 		ask f {
 			string pract <- practice.irrigation.name;
@@ -146,8 +213,27 @@ global {
 		do change_pesticide_management(f, is_ipm_pest);
 	}
 	
+	
+	float area_premium_rice_rate() {
+		
+		list<Farmer> farmer_premium <- Farmer where (each.practice.sowing.type_of_cultivar.name = ST25);
+		if (empty(farmer_premium)) {
+			return 0.0;
+		}
+		
+		return (farmer_premium accumulate (each.my_farm.plots)) sum_of (each.shape.area) / sum(Plot collect each.shape.area);
+		
+	}
+	
 	action define_farmer_pratices() {
 		ask Farmer {
+			//possible observations (in addition to the current used ones)
+			write string(current_date) + " -> "+ name +" - " +
+			sample(world.area_premium_rice_rate()) + ", " +
+			sample(my_farm.plots mean_of (each.my_cell.pollution_level))+ ", " +
+			sample(my_farm.plots mean_of (each.my_cell.salinity_level))
+			
+			;	 
 			if flip(0.5) {
 				string pract <- practice.irrigation.name;
 				practice.other_practices >> pract;
@@ -186,6 +272,11 @@ global {
 experiment ReinforcementLearning title: "Reinforcement Learning" type:gui parent: generic_exp {	
 
 	action _init_() {
+		
+		day_start_of_year <- 300;
+		starting_date <- date([2025,1,1]) add_days (day_start_of_year -1);
+		use_weather_generator <- true;	
+		use_dynamic_market <- true;
 		create AbstractStarFarm_model (simple_spatial_data:true, custom_practices: true, add_market_retroaction: true);
 	}
 	
