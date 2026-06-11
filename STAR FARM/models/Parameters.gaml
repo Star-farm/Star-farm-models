@@ -29,7 +29,7 @@ global {
   
   	bool add_market_retroaction <- false;
   	
-	date starting_date <- date([2018,1,1]) add_days (day_start_of_year -1);
+	date starting_date <- date([2015,1,1]) add_days (day_start_of_year -1);
    		
 	image_file farmer_image <- image_file("../includes/Images/farmer.png");
 	
@@ -38,11 +38,12 @@ global {
 	bool use_weather_generator <- false;
 	string weather_id <- "Optimistic";
 	//string weather_folder <- "../includes/weather_generated/Optimistic" ;
-	string weather_file <- "../includes/Dong Thap/Weather_Dong_Thap_01_09_2018-31_12_2023.csv" ;
+	string weather_file <- "../includes/Dong Thap/Dong Thap Weather Data - 01.01.2015 - 31.12.2025.csv";
 	float default_salinity <- 0.0;
 	bool use_dynamic_market <- false;
 	string market_id <- "neutral";
   
+	
 	
 	string innovation_diffusion_model <- NONE; //NONE, NEIGHBORS
 	

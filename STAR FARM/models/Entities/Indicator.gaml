@@ -114,7 +114,10 @@ species Indicator virtual: true {
 				write "\n *** " + name + " obs: " + observed_values_avg_seasons + " sim: "+ (f collect (mean(each)));
 			}
 			loop i from: 0 to: nb -1 {
-				RMSE <- RMSE + (mean(f[i]) - observed_values_avg_seasons[i]) ^ 2;	
+				list<float> v <- f[i];
+				float val_m <- sum(v);
+				
+				RMSE <- RMSE + (val_m/length(v) - observed_values_avg_seasons[i]) ^ 2;	
 				sum_obs <- sum_obs + observed_values_avg_seasons[i];
 			}
 			RMSE <- sqrt(RMSE/nb);

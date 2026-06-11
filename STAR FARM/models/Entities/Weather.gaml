@@ -277,19 +277,19 @@ species Weather {
     }
      
     action load_real_data() {
-    	csv_file f <- csv_file(weather_file, ";");
+    	csv_file f <- csv_file(weather_file, ";", true);
      	matrix mat <- matrix(f);
         
         loop i from: 1 to: mat.rows - 1 {
-            list<string> date_str <- string(mat[1, i]) split_with "-";
-            date d <- date([int(date_str[0]),int(date_str[1]),int(date_str[2])]);
+            list<string> date_str <- string(mat[1, i]) split_with "/";
+            date d <- date([int(date_str[2]),int(date_str[1]),int(date_str[0])]);
             
             _temp_max[d] <- float(mat[2, i]);
             _temp_min[d] <- float(mat[3, i]);
-            _humidity[d] <- float(mat[5, i]);
-            _rainfall[d] <- float(mat[6, i]);      
-            _windspeed[d] <- float(mat[7, i]);
-            _solar_radiation[d] <- float(mat[10, i]) * 1000.0;  
+            _humidity[d] <- float(mat[6, i]);
+            _rainfall[d] <- float(mat[7, i]);      
+            _windspeed[d] <- float(mat[8, i]);
+            _solar_radiation[d] <- float(mat[13, i]) * 1000.0;  
             
             
             _salinity[d] <- default_salinity; 
