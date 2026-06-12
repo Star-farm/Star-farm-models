@@ -87,40 +87,40 @@ species Indicator virtual: true {
 	float compute_error() {
 		float RMSE <- 0.0;
 		float sum_obs ; 
+		int n <- 1;
 		if not empty(observed_values_per_seasons) {
-			if (write_calibration_result) {
-				write "\n *** " + name + " obs: " + observed_values_per_seasons collect (each with_precision 2) + " sim: "+ simulation_values collect (each with_precision 2);
-			}
-			int n <- min(length(observed_values_per_seasons), length(simulation_values));
+			
+			n <- min(length(observed_values_per_seasons), length(simulation_values));
 			if (n > 0) {
 				loop i from: 0 to: n -1 {
 					RMSE <- RMSE + (simulation_values[i] - observed_values_per_seasons[i]) ^ 2;	
 					sum_obs <- sum_obs + observed_values_per_seasons[i];
+					
 				}
 				RMSE <- sqrt(RMSE/n);
 				
 			}
 		} else if not empty(observed_values_avg_seasons) {
 			list<list<float>> f;
-			int nb <- length(observed_values_avg_seasons) ;
-			loop times: nb{
+			n <- length(observed_values_avg_seasons) ;
+			loop times: n{
 				f << [];
 			}
 			loop i from: 0 to: length(simulation_values) -1 {
-				int ind <- i mod nb;
+				int ind <- i mod n;
 				f[ind] << simulation_values[i];
 			}
 			if (write_calibration_result) {
 				write "\n *** " + name + " obs: " + observed_values_avg_seasons + " sim: "+ (f collect (mean(each)));
 			}
-			loop i from: 0 to: nb -1 {
+			loop i from: 0 to: n -1 {
 				list<float> v <- f[i];
 				float val_m <- sum(v);
 				
 				RMSE <- RMSE + (val_m/length(v) - observed_values_avg_seasons[i]) ^ 2;	
 				sum_obs <- sum_obs + observed_values_avg_seasons[i];
 			}
-			RMSE <- sqrt(RMSE/nb);
+			RMSE <- sqrt(RMSE/n);
 		} else {
 			if (write_calibration_result) {
 				write "\n *** " + name + " obs: " + observed_values_avg_total + " sim: "+ mean(simulation_values);
@@ -131,7 +131,8 @@ species Indicator virtual: true {
 		if (sum_obs = 0) {
 			return 0.0;
 		}
-		return RMSE/sum_obs;
+		float mean_obs <- (sum_obs /n);
+		return RMSE/mean_obs;
 		
 		
 	}

@@ -57,16 +57,14 @@ global  {
 		ask Avg_yield {
 			store_values <- true;
 			list<list<float>> data <- yield_values_per_case_study[case_study];
-			list<float> spring_2019_2023 <- data[0];
-			list<float> autumn_2019_2023 <- data[1];
-			list<float> winter_2019_2023 <-(length(data) > 2) ? data[2] : nil;
-			loop i from: 0 to: length(spring_2019_2023) -1  {
+			list<float> spring_2016_2023 <- data[0];
+			list<float> autumn_2016_2023 <- data[1];
+			list<float> winter_2016_2023 <- data[2] ;
+			loop i from: 0 to: length(spring_2016_2023) -1  {
 				//conversion -> t/ha
-				observed_values_per_seasons << spring_2019_2023[i];
-				observed_values_per_seasons << autumn_2019_2023[i];
-				if (winter_2019_2023 != nil) {
-					observed_values_per_seasons << winter_2019_2023[i];
-				}
+				observed_values_per_seasons << spring_2016_2023[i];
+				observed_values_per_seasons << autumn_2016_2023[i];
+				observed_values_per_seasons << winter_2016_2023[i];
 				
 			}
 			
@@ -103,9 +101,9 @@ global  {
 }
 
 
-experiment check_result type: batch until: end_of_sim repeat: 4 keep_seed: true {
+experiment check_result type: batch until: end_of_sim repeat: 1 keep_seed: true {
 	method exploration 
-	with: ( [["daily_water_loss_mm"::10.0]]);
+	with: ( [["write_calibration_result"::true]]);
 	
 
 
@@ -146,7 +144,7 @@ experiment calibration_ type: batch until: end_of_sim repeat: 4 keep_seed: true 
 	
 	parameter daily_n_consumption var: daily_n_consumption min: 0.3 max:1.5 step: 0.1;
 	
-	parameter toxicity_per_straw_unit var: toxicity_per_straw_unit min: 0.001 max: 0.7 step: 0.001;
+	parameter toxicity_per_straw_unit var: toxicity_per_straw_unit min: 0.001 max: 0.1 step: 0.001;
 	init {
 		gama.pref_parallel_simulations_all <- false;
 		gama.pref_parallel_threads <- 4;
