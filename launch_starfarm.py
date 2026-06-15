@@ -11,17 +11,22 @@ CSV_PATH = os.path.join(BASE_DIR, "STAR FARM", "models", "Experiments", "Calibra
 EXPERIMENT_NAME = "single_evaluation"
 PORT = 6868
 
+
+x = [0.57,0.6,0.08,11.0,101.0,0.1,0.011215817939350649,0.2075636039539783,0.08279824749708323]
+ 
+
 GIVEN_PARAMS = {
-    "rue_efficiency_factor": 0.7,
-    "pest_infection_prob": 0.6,
-    "pest_daily_increment": 0.03,
-    "daily_water_loss_mm": 5.0,
-    "max_water_capacity": 80.0,
-    "lateral_leakage_coefficient": 0.01,
-    "water_excess_coefficient": 0.1,
-    "daily_n_consumption": 0.8,
-    "toxicity_per_straw_unit": 0.01
+    "rue_efficiency_factor": x[0],
+    "pest_infection_prob": x[1],
+    "pest_daily_increment": x[2],
+    "daily_water_loss_mm": x[3],
+    "max_water_capacity": x[4],
+    "lateral_leakage_coefficient": x[5],
+    "water_excess_coefficient": x[6],
+    "daily_n_consumption": x[7],
+    "toxicity_per_straw_unit": x[8]
 }
+
 
 def format_parameters(params_dict):
     return [

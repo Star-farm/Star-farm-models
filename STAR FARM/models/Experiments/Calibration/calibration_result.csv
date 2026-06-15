@@ -1,1 +1,1 @@
-0,2.5677734640537907E18,0.7,0.6,0.03,5.0,80.0,0.01,0.1,0.8,0.01,0.3184565740700398,0.6879106837310034,0.1648513494852619,0.13506575827800893,4.172393532194673
+id,seed,rue_efficiency_factor,pest_infection_prob,pest_daily_increment,daily_water_loss_mm,max_water_capacity,lateral_leakage_coefficient,water_excess_coefficient,daily_n_consumption,toxicity_per_straw_unit,error_yield,error_pesticide,error_water,error_fertilizer,fitness

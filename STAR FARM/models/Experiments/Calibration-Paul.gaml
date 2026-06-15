@@ -40,7 +40,8 @@ global  {
 	    	}
 	    	
 	    	string result <- "" + int(self)+ ","+ seed+","+ rue_efficiency_factor+ ","+pest_infection_prob+","+pest_daily_increment+"," +daily_water_loss_mm +","+max_water_capacity + "," + lateral_leakage_coefficient +","+ water_excess_coefficient+","+daily_n_consumption+","+toxicity_per_straw_unit;
-	    	result <- result + ","+ error_+fitness+"\n";
+	    	result <- result + ","+// error_
+	    	fitness+"\n";
 	    	if (save_calibration_results) {
 	    		save result format: "text" to: calibration_output rewrite: false;
 	    	
@@ -119,6 +120,7 @@ experiment check_result type: batch until: end_of_sim repeat: 1 keep_seed: true 
 		innovation_diffusion_model <- NONE;
 		possible_practices <- [BAU_3S::1.0];
    		starting_date <- date([2015,1,1]) add_days (day_start_of_year -1);
+   		ending_date <-  date([2024,1,1]);
 	}
 } 
 
@@ -137,22 +139,13 @@ experiment single_evaluation type: batch until: end_of_sim repeat: 1 keep_seed: 
 	parameter daily_n_consumption var: daily_n_consumption;
 	parameter toxicity_per_straw_unit var: toxicity_per_straw_unit;
 	
-//    float rue_efficiency_factor <-0.57 ;
-  //  float pest_infection_prob <- 0.6 ;
-   // float pest_daily_increment <- 0.08 ; 
-  //  float daily_water_loss_mm <- 11.0 ; 
-  //  float max_water_capacity <- 101.0 ;
-  //  float lateral_leakage_coefficient <- 0.1 ; 
-  //  float water_excess_coefficient <- 0.011215817939350649 ; 
-   // float daily_n_consumption <- 0.2075636039539783 ; 
-   // float toxicity_per_straw_unit <- 0.08279824749708323; 
 	method exploration 
 	with: ( [["save_calibration_results"::true]]);
 	
 	
 	init {
 		gama.pref_parallel_simulations_all <- false;
-		gama.pref_parallel_threads <- 8;
+		gama.pref_parallel_threads <- 4;
 		mode_batch <- true;
 		save_results <- false; 
 		write_results <- false;
@@ -163,6 +156,7 @@ experiment single_evaluation type: batch until: end_of_sim repeat: 1 keep_seed: 
 		innovation_diffusion_model <- NONE;
 		possible_practices <- [BAU_3S::1.0];
    		starting_date <- date([2015,1,1]) add_days (day_start_of_year -1);
+   		ending_date <-  date([2024,1,1]);
    		string header <- "id,seed,rue_efficiency_factor,pest_infection_prob,pest_daily_increment,daily_water_loss_mm,max_water_capacity,lateral_leakage_coefficient,water_excess_coefficient,daily_n_consumption,toxicity_per_straw_unit,error_yield,error_pesticide,error_water,error_fertilizer,fitness\n";
    		save header format: "text" to: calibration_output rewrite: true; 
 	}
