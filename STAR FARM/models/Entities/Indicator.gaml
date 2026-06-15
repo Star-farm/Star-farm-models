@@ -98,6 +98,9 @@ species Indicator virtual: true {
 					
 				}
 				RMSE <- sqrt(RMSE/n);
+				if (write_calibration_result) {
+					write "\n *** " + name + " obs: " + observed_values_per_seasons collect (each with_precision 2) + " sim: "+ simulation_values collect (each with_precision 2);
+				}
 				
 			}
 		} else if not empty(observed_values_avg_seasons) {
