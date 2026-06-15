@@ -2,19 +2,15 @@
 import asyncio
 import os
 import time
-import subprocess
 from gama_client.sync_client import GamaSyncClient
 
 # --- CONFIGURATION ---
-GAMA_PATH = r"C:\Program Files\Gama\headless\gama-headless.bat"
-# Resolving model path relative to this script's location
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "STAR FARM", "models", "Experiments", "Calibration_and_Validation.gaml")
-EXPERIMENT_NAME = "calibration_"
+MODEL_PATH = os.path.join(BASE_DIR, "STAR FARM", "models", "Experiments", "Calibration-Paul.gaml")
+CSV_PATH = os.path.join(BASE_DIR, "STAR FARM", "models", "Experiments", "Calibration", "calibration_result.csv")
+EXPERIMENT_NAME = "single_evaluation"
 PORT = 6868
 
-# Given values for calibration parameters
-# These will be passed to the GAMA experiment
 GIVEN_PARAMS = {
     "rue_efficiency_factor": 0.7,
     "pest_infection_prob": 0.6,
@@ -28,21 +24,14 @@ GIVEN_PARAMS = {
 }
 
 def format_parameters(params_dict):
-    """Converts a dictionary to GAMA parameters format."""
     return [
         {"name": name, "type": "float" if isinstance(val, float) else "int", "value": str(val)}
         for name, val in params_dict.items()
     ]
 
 async def run_calibration():
-    # 1. Start GAMA Server (if not already running)
-    print("Starting GAMA Headless Server...")
-    # Using a simple check to see if we should start it
-    # For now, we assume we need to start it or it's already running.
-    # We won't block here but you might need to run: 
-    # gama-headless.bat -socket 6868
+    print("Starting GAMA Headless Server connection...")
     
-    # 2. Connect Client
     async def async_command_answer_handler(message): pass
     async def gama_server_message_handler(message): pass
 
@@ -52,27 +41,48 @@ async def run_calibration():
         print(f"Connecting to GAMA on port {PORT}...")
         await client.connect(False)
         
-        # 3. Load Experiment
+        # Load Experiment
         print(f"Loading experiment '{EXPERIMENT_NAME}'...")
         params = format_parameters(GIVEN_PARAMS)
         
-        # We use the absolute path for the model
         response = client.sync_load(os.path.abspath(MODEL_PATH), EXPERIMENT_NAME, parameters=params)
         
-        if "content" in response:
+        if "content" in response and isinstance(response["content"], str):
             exp_id = response["content"]
             print(f"Experiment loaded successfully. ID: {exp_id}")
             
-            # 4. Start Simulation
-            print("Launching PSO Calibration...")
+            # Delete old CSV file if it exists so we start fresh
+            if os.path.exists(CSV_PATH):
+                try:
+                    os.remove(CSV_PATH)
+                except Exception:
+                    pass
+
+            # Start Simulation
+            print("Launching single evaluation...")
             client.sync_play(exp_id)
             
-            print("Simulation is running. Batch experiments run until they finish their optimization.")
-            print("You can check the output file at: " + os.path.dirname(MODEL_PATH) + "/Calibration/calibration_result.csv")
+            print(f"Simulation is running. Waiting for output in {CSV_PATH}...")
             
-            # Optional: Wait or monitor progress
-            # For this example, we'll just exit after launching
+            # Wait for CSV file to contain more than the header
+            timeout = 3600 # 1 hour max
+            elapsed = 0
+            while elapsed < timeout:
+                if os.path.exists(CSV_PATH):
+                    with open(CSV_PATH, 'r', encoding='utf-8') as f:
+                        lines = f.readlines()
+                        if len(lines) > 1:
+                            print(f"Success! Evaluation finished. Results written to CSV:")
+                            print("--------------------------------------------------")
+                            print(lines[-1].strip())
+                            print("--------------------------------------------------")
+                            break
+                await asyncio.sleep(2)
+                elapsed += 2
             
+            if elapsed >= timeout:
+                print("TIMEOUT: Simulation took too long.")
+                
         else:
             print("Failed to load experiment. Response:", response)
             
@@ -83,7 +93,6 @@ async def run_calibration():
         print("Disconnected.")
 
 if __name__ == "__main__":
-    # Ensure the model path is absolute and exists
     if not os.path.exists(MODEL_PATH):
         print(f"ERROR: Model file not found at {MODEL_PATH}")
     else:
