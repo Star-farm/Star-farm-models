@@ -30,6 +30,8 @@ global {
   	bool add_market_retroaction <- false;
   	
 	date starting_date <- date([2015,1,1]) add_days (day_start_of_year -1);
+	
+	date ending_date <-  nil;
    		
 	image_file farmer_image <- image_file("../includes/Images/farmer.png");
 	
@@ -91,10 +93,10 @@ global {
     float drought_water_scarcity_threshold <- 5.0; // If cumulative rainfall over 7 days is < 5 mm, water becomes scarce in the canals
   	
   // --- Water Availability & Rain Memory Logic ---
-    float max_water_capacity <- 100.0; //in mm
+    float max_water_capacity <- 74.0; //in mm
 	float dilution_factor_coefficient <- 0.1; 
-  	float lateral_leakage_coefficient <- 0.015;
-  	float water_excess_coefficient <- 0.2;
+  	float lateral_leakage_coefficient <- 0.005;
+  	float water_excess_coefficient <- 0.4;
   	float rainfall_memory_decay <- 0.9;    // Factor (0.0-1.0) determining how fast past rainfall is forgotten. 0.85 means 85% of yesterday's rain "memory" is kept.
     float min_rain_for_access <- 1.0;       // Threshold (mm) of accumulated rain memory required to consider canal water easily accessible/abundant.
   // Hydraulic network capacity (tertiary canals) per hectare.
@@ -104,7 +106,7 @@ global {
    // =========================================================
     // 4. BIOLOGICAL & CROP MANAGEMENT PARAMETERS
     // =========================================================
-    float rue_efficiency_factor <- 0.64; // Correction factor to adjust theoretical RUE to field conditions (0.0 to 1.0)
+    float rue_efficiency_factor <- 0.7; // Correction factor to adjust theoretical RUE to field conditions (0.0 to 1.0)
     float daily_water_loss_mm <- 10.0;     // Sum of evapotranspiration and deep percolation (mm/day)
   	float straw_burn_emission_factor <- 0.0;// 1460.0; // kg CO2-eq emitted per ton of burned straw
    	
@@ -146,14 +148,14 @@ global {
     // Nitrogen (N) Management
     float n_application_dose <- 40.0;     // Quantity of nitrogen per application (kg/ha)
     float n_late_stage_limit <- 0.8;      // Maximum growth stage for N input (80% of cycle)
-    float daily_n_consumption <- 0.8;     // Daily nitrogen uptake by the plant (kg/ha/day)
+    float daily_n_consumption <- 0.9;     // Daily nitrogen uptake by the plant (kg/ha/day)
     
     // Pest and Disease Logic
     float min_k_pest <- 0.5;
     float pest_humidity_limit <- 80.0;    // Humidity threshold for pest infection (%)
     float pest_temp_limit <- 27.0;        // Minimum temperature for pest infection (°C)
-    float pest_infection_prob <- 0.8;     // Probability of outbreak if weather conditions are met
-    float pest_daily_increment <- 0.03;   // Daily increase in pest load during infection
+    float pest_infection_prob <- 0.6;     // Probability of outbreak if weather conditions are met
+    float pest_daily_increment <- 0.04;   // Daily increase in pest load during infection
     float pest_daily_decrease_coeff <- 0.9; 
     int pest_spray_cooldown_days <- 15;    // Minimum required delay between spray treatments (days)
     float pest_pollution_feedback <- 0.05;// Pollution impact on pest resurgence (killing natural predators)
@@ -174,7 +176,7 @@ global {
   // Number of days required for the soil to fully decompose the straw safely
     float safe_rest_period <- 30.0; 
     // Defines how much penalty 1 unit of straw generates
-    float toxicity_per_straw_unit <- 0.002;
+    float toxicity_per_straw_unit <- 0.001;
     // =========================================================
     // 5. STRATEGY-SPECIFIC CONSTANTS
     // =========================================================
