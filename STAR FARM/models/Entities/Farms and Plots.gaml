@@ -425,6 +425,9 @@ species Crop  {
 	
 	float seed_density_kg_ha;       
 	
+	 // Variables for dynamic climate-driven Harvest Index
+    float sum_tmin_ripening <- 0.0;
+    int days_ripening <- 0;
 	
 	reflex plantGrow  {
 		ask  PG_models[the_farmer.practice.id] {

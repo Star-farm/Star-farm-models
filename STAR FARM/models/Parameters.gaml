@@ -106,7 +106,7 @@ global {
    // =========================================================
     // 4. BIOLOGICAL & CROP MANAGEMENT PARAMETERS
     // =========================================================
-    float rue_efficiency_factor <- 0.7; // Correction factor to adjust theoretical RUE to field conditions (0.0 to 1.0)
+    float rue_efficiency_factor <- 0.69; // Correction factor to adjust theoretical RUE to field conditions (0.0 to 1.0)
     float daily_water_loss_mm <- 10.0;     // Sum of evapotranspiration and deep percolation (mm/day)
   	float straw_burn_emission_factor <- 0.0;// 1460.0; // kg CO2-eq emitted per ton of burned straw
    	
@@ -174,9 +174,18 @@ global {
     float min_soil_health <- 0.6;   // Soil never drops below 60% of its potential
     
   // Number of days required for the soil to fully decompose the straw safely
-    float safe_rest_period <- 30.0; 
+    float safe_rest_period <- 20.0; 
     // Defines how much penalty 1 unit of straw generates
-    float toxicity_per_straw_unit <- 0.001;
+    float toxicity_per_straw_unit <- 0.01; 
+    
+     // --- Parameters to control the diffuse light effect ---
+    float solar_rad_threshold <- 20.0; // Solar radiation threshold (MJ/m²) below which the sky is considered cloudy
+    float max_diffuse_bonus <- 0.4;  // Maximum RUE increase under 100% overcast conditions
+        // ------------------------------------------------------
+ 	  
+ 	float max_light_limit <- 23.0; // The absolute unbreakable ceiling (Asymptote)
+    float steepness_factor <- 6.0; // Controls how fast it climbs. Lower value = steeper initial climb.
+               
     // =========================================================
     // 5. STRATEGY-SPECIFIC CONSTANTS
     // =========================================================

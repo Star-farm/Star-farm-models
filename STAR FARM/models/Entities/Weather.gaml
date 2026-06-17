@@ -246,11 +246,13 @@ species Weather {
 	map<date,float> _windspeed;
 	map<date,float> _rainfall;
 	map<date,float> _salinity;
+	map<date,float> _cloud_clover;
 	
 	float t_mean;  
 	float t_max; 
 	float t_min;
     float solar_rad; 
+    float cloud_cover;
     float humidity; 
     float rain;
     float salinity <- 0.0;  
@@ -267,6 +269,7 @@ species Weather {
 	 		}
 	 	} else {
 	 		t_min <- _temp_min[current_date]; 
+	 		cloud_cover <- _cloud_clover[current_date]; 
 	 		t_max <- _temp_max[current_date];
 		 	t_mean <- (t_min + t_max)/2; 
 		 	solar_rad <- _solar_radiation[current_date] / 1000.0;
@@ -291,6 +294,7 @@ species Weather {
             _humidity[d] <- float(mat[6, i]);
             _rainfall[d] <- float(mat[7, i]);      
             _windspeed[d] <- float(mat[8, i]);
+            _cloud_clover[d] <- float(mat[11, i]);
             _solar_radiation[d] <- float(mat[13, i]) * 1000.0;  
             
             

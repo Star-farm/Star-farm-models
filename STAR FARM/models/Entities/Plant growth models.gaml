@@ -242,6 +242,7 @@ species ceresModel parent: Plant_growth_model {
         }
     }
      
+	
     float compute_stress(Crop c){
         float N_demand <- compute_N_demand(c);
         float N_uptake <- min(c.concerned_plot.N_avail, N_demand) * c.concerned_plot.N_uptake_eff;
@@ -378,23 +379,55 @@ species lua_mdModel parent: Plant_growth_model {
 		               	c. is_dead <- true; 
 		                c.biomass <- 0.0;
 		                
-		            }
+		            } 
         		}
     		} 
     		float k_nitrogen <- compute_k_nitrogen(c);
 			
-			float fAPAR <- compute_fAPAR(c);
+			float fAPAR <- compute_fAPAR(c); 
     
     		
-			
-    // 3. Calculate daily  biomass with the integrated fAPAR
-       		float daily_growth <- c.potential_rue_calibrated * the_weather.solar_rad * fAPAR * k_water * k_salt * k_pest * k_flood * k_nitrogen ;
+			// ----------------------------------------------------------------------
+	        // NEW : DYNAMIC RUE (Diffuse Light Effect using cloud cover)
+	        // ----------------------------------------------------------------------
+	        float current_rue <- c.potential_rue_calibrated;
+	        
+	        // If the day is cloudy (e.g., autumn monsoon), light becomes diffuse.
+	        // It penetrates the canopy better, increasing the overall plant efficiency.
+	        if (the_weather.solar_rad < solar_rad_threshold)  {
+	            // Calculate a factor from 0.0 to 1.0 based on how cloudy it is above the threshold
+	             float diffuse_factor <- max(0.0, (solar_rad_threshold - the_weather.solar_rad) / solar_rad_threshold);
+           		if (first_) {
+	            	first_ <- false;
+	            //	write string(current_date) + " -> " + sample(diffuse_factor) + " " + sample(the_weather.cloud_cover) + " " + sample(the_weather.solar_rad);
+	            }
+	            // Increase the RUE up to +25% on completely overcast days
+	            current_rue <- current_rue * (1.0 + (diffuse_factor * max_diffuse_bonus));
+	        }
+  
+       		float effective_solar_rad <- (max_light_limit * the_weather.solar_rad) / (steepness_factor + the_weather.solar_rad);
+		
+	      
+    	    // 3. Calculation of raw daily growth with dynamic RUE
+	        float daily_growth <- current_rue * effective_solar_rad * fAPAR * k_nitrogen * k_water * k_salt * k_pest * k_flood;
+
 	   		c.biomass <- c.biomass + daily_growth;
 	        
+	        // ======================================================================
+            // NEW: Record night temperature ONLY during the grain filling phase
+            // (Typically the last 20-25% of the crop cycle)
+            // ======================================================================
+            if (c.growth_stage > 0.75) {
+                c.sum_tmin_ripening <- c.sum_tmin_ripening + the_weather.t_min;
+                c.days_ripening <- c.days_ripening + 1;
+            }
 	     
         }	
 		
 	}	
+	
+	bool first_ <- true update: true;
+	
 	float compute_k_nitrogen (Crop c) {
 		float k_nitrogen <- 1.0;
     		if (c.growth_stage < n_late_stage_limit) {
@@ -430,6 +463,9 @@ species lua_mdModel parent: Plant_growth_model {
 			} 
 			return k_nitrogen;
 	}
+	
+	
+ 
 	float compute_fAPAR (Crop c) {
 		float fAPAR <- 0.0;
 		  	// 1. Define the cumulative phenological thresholds for this cultivar

@@ -271,8 +271,13 @@ species Harvesting_practice parent:Practice {
 	
 	
  	action effect(Plot plot) {
-		
-    	float dry_yield <- plot.associated_crop.biomass * plot.associated_crop.variety.harvest_index_potential;
+		// 1. Get the base Harvest Index
+        float current_HI <- plot.associated_crop.variety.harvest_index_potential;
+        
+              // 3. Calculate dry yield with the dynamic HI
+        float dry_yield <- plot.associated_crop.biomass * current_HI;
+      
+    	//float dry_yield <- plot.associated_crop.biomass * plot.associated_crop.variety.harvest_index_potential;
 	  
 	  	// Applying the Soil Fatigue Factor ---
         dry_yield <- dry_yield * plot.soil_health;

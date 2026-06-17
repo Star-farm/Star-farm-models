@@ -13,13 +13,29 @@ global {
 	float min_area <- 500000.0;
 	float dist_simp <- 10.0;
 	
-	shape_file lu_dongthap_shape_file <- shape_file("../includes/Dong Thap/2020/lu_dongthap2020.shp");
+	//shape_file lu_dongthap_shape_file <- shape_file("../includes/Dong Thap/2020/lu_dongthap2020.shp");
 
-	geometry shape <- envelope(lu_dongthap_shape_file);
+	shape_file lua_2019_shape_file <- shape_file("../includes/General data/lua_2019.shp");
+
+	string province_choice <- "Dong Thap";
+	shape_file province_shapefile <- shape_file("../includes/General data/vnm_admin1.shp");
+	string output <- "../includes/" +  province_choice+ "/plot_shapefile.shp";
+	geometry shape <- envelope(lua_2019_shape_file);
 	
 	init {
-		create plot from: lu_dongthap_shape_file  ;
+		geometry province <- province_shapefile first_with (each.attributes["adm1_name"] = province_choice);
+		create plot from: lua_2019_shape_file accumulate (each.geometries) ;
+		write "plot created loaded";	
+		list<plot> plots <- plot overlapping province;
+		ask plot- plots {
+			do die();
+		}
+		write "first filter of plots";	
+		
+		
 		list<list<plot>> clusters <- list<list<plot>>(simple_clustering_by_distance(plot, max_dist));
+     	write "end of clustering";	
+		
         loop cluster over: clusters {
         	if length(cluster) > 1 {
         		ask first(cluster) {
@@ -39,7 +55,7 @@ global {
         }
 		
 		write length(plot);
-		save plot format: "shp" to: "../includes/Dong Thap/2020/lu_dongthap2020-clean.shp";
+		save plot format: "shp" to: output;
 	}
 
 }
