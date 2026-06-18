@@ -72,7 +72,7 @@ global  {
 				
 			}
 			
-			indicators[self] <- 10.0;
+			indicators[self] <- 2.0;
 			
 		}
 		ask Avg_pesticide_applications {
