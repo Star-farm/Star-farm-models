@@ -67,7 +67,7 @@ global {
 	
 	string id_xp ;
      
-    bool use_real_data <- false; // use real data for local salinity
+    bool use_real_data <- true; // use real data for local salinity
    	float local_salinity_coefficient <- 0.1; //coefficient to apply to the local salinity
    	
     // =========================================================

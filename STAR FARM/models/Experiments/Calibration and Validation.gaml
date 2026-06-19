@@ -19,7 +19,7 @@ global  {
     
     string calibration_output <- "Calibration/calibration_result.csv";
     
-    string case_study <- DONG_THAP;
+    string province <- DONG_THAP;
     
     
     //2016-2022
@@ -60,7 +60,7 @@ global  {
 	action prepare_indicators() {
 		ask Avg_yield {
 			store_values <- true;
-			list<list<float>> data <- yield_values_per_case_study[case_study];
+			list<list<float>> data <- yield_values_per_case_study[province];
 			list<float> spring_2016_2023 <- data[0];
 			list<float> autumn_2016_2023 <- data[1];
 			list<float> winter_2016_2023 <- data[2] ;
