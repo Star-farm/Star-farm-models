@@ -56,6 +56,10 @@ global {
    
     float base_wind <- 2.2;
     float base_salinity <- 0.1; 
+    
+    
+	// The peak salinity of a "normal" year today (e.g., 15.0 g/L at the coast)
+	float initial_salt_peak <- 15.0; 
    
     // Base historique : Jours 60 à 120 (Mars-Avril)
     int salt_start_doy <- 60;
@@ -98,7 +102,11 @@ global {
             
             float progress <- (year - start_year) / (end_year - start_year);
             float current_warming <- temp_rise_total * progress;
-            float current_salt_risk <- salt_max_intrusion * progress;
+            
+            // The total risk for the current year (Today + future aggravation)
+			float current_salt_risk <- initial_salt_peak + (salt_max_intrusion * progress);
+
+            
             float current_rain_intensity <- 1.0 + ((rain_intensity_max - 1.0) * progress);
             float current_typhoon_prob <- typhoon_probability_max * progress;
              
@@ -209,6 +217,8 @@ global {
                 // ----------------------------------------------------------------
                 // 6. SALINITY
                 // ----------------------------------------------------------------
+                
+                
                 float salinity <- base_salinity;
                 if (doy > (salt_start_doy - int(salt_start_doy_coeff * progress)) and doy < (salt_end_doy + int(salt_end_doy_coeff * progress))) {
                     float daily_salt <- abs(gauss(current_salt_risk, 0.5));
@@ -298,7 +308,13 @@ species Weather {
             _solar_radiation[d] <- float(mat[13, i]) * 1000.0;  
             
             
-            _salinity[d] <- default_salinity; 
+             if (d.day_of_year > salt_start_doy  and d.day_of_year  < salt_end_doy) {
+             	_salinity[d] <- initial_salt_peak; 
+             }
+              else {
+              	 _salinity[d] <- default_salinity; 
+              }
+           
         }
         
     }

@@ -28,7 +28,7 @@ global {
 	        // Mekong Delta: use real data or The South (large y) is closer to the sea, the North (small y) is protected.
 	        // Factor ranges from 0.0 (North) to 1.0 (South)
 	       float location_vulnerability <- use_real_data ? 
-    				grid_value :   local_salinity_coefficient * (grid_y / grid_resolution);
+    				grid_value :   (local_salinity_coefficient * (grid_y / grid_resolution));
 	          
 	        // --- 2. BASE SALINITY (Climate Dynamics) ---
 	        // We combine the daily threat (CSV) with the location vulnerability.
