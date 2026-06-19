@@ -32,15 +32,16 @@ global {
 	date starting_date <- date([2015,1,1]) add_days (day_start_of_year -1);
 	
 	date ending_date <-  nil;
-   		
+   	
 	image_file farmer_image <- image_file("../includes/Images/farmer.png");
 	
-	shape_file plots_shapefile <- simple_spatial_data ? shape_file("../includes/Dong Thap/2020/lu_dongthap2020-clean-simple.shp"):  shape_file("../includes/Dong Thap/2020/lu_dongthap2020_clean_2016_2023.shp");
+	string province <- "Dong Thap old";
+	shape_file plots_shapefile <- simple_spatial_data ? shape_file("../includes/" + province+ "/plot_shapefile-simple.shp"):  shape_file("../includes/" + province+ "/plot_shapefile.shp");
+	grid_file vuln_map_file <- grid_file("../includes/" + province+ "/salinity_vulnerability_map.tif");
 	
 	bool use_weather_generator <- false;
 	string weather_id <- "Optimistic";
-	//string weather_folder <- "../includes/weather_generated/Optimistic" ;
-	string weather_file <- "../includes/Dong Thap/Dong Thap Weather Data - 01.01.2015 - 31.12.2025.csv";
+	string weather_file <- "../includes/General data/Weather Data - 01.01.2015 - 31.12.2025.csv";
 	float default_salinity <- 0.0;
 	bool use_dynamic_market <- false;
 	string market_id <- "neutral";
@@ -60,14 +61,13 @@ global {
 	map<string,string> plant_grow_models <-[];
 	string default_plant_grow_model <- LUA_MD;
 	
-	csv_file cultivars_csv_file <- csv_file("../includes/cultivars.csv", true);
+	csv_file cultivars_csv_file <- csv_file("../includes/General data/cultivars.csv", true);
 	
 	string output_folder <- "../../results";
 	
 	string id_xp ;
      
     bool use_real_data <- false; // use real data for local salinity
-    float spatial_discretization <- simple_spatial_data ? 20000.0 : 5000.0; // length of the cell size for the salinity/pollution grid (m)
    	float local_salinity_coefficient <- 0.1; //coefficient to apply to the local salinity
    	
     // =========================================================
@@ -154,8 +154,8 @@ global {
     float min_k_pest <- 0.5;
     float pest_humidity_limit <- 80.0;    // Humidity threshold for pest infection (%)
     float pest_temp_limit <- 27.0;        // Minimum temperature for pest infection (°C)
-    float pest_infection_prob <- 0.65;     // Probability of outbreak if weather conditions are met
-    float pest_daily_increment <- 0.05;   // Daily increase in pest load during infection
+    float pest_infection_prob <- 0.6;     // Probability of outbreak if weather conditions are met
+    float pest_daily_increment <- 0.04;   // Daily increase in pest load during infection
     float pest_daily_decrease_coeff <- 0.9; 
     int pest_spray_cooldown_days <- 15;    // Minimum required delay between spray treatments (days)
     float pest_pollution_feedback <- 0.05;// Pollution impact on pest resurgence (killing natural predators)
@@ -176,15 +176,15 @@ global {
   // Number of days required for the soil to fully decompose the straw safely
     float safe_rest_period <- 20.0; 
     // Defines how much penalty 1 unit of straw generates
-    float toxicity_per_straw_unit <- 0.09; 
+    float toxicity_per_straw_unit <- 0.024; 
     
      // --- Parameters to control the diffuse light effect ---
-    float solar_rad_threshold <- 17.0; // Solar radiation threshold (MJ/m²) below which the sky is considered cloudy
-    float max_diffuse_bonus <- 1.1;  // Maximum RUE increase under 100% overcast conditions
+    float solar_rad_threshold <- 15.0; // Solar radiation threshold (MJ/m²) below which the sky is considered cloudy
+    float max_diffuse_bonus <- 0.9;  // Maximum RUE increase under 100% overcast conditions
         // ------------------------------------------------------
  	  
- 	float max_light_limit <- 24.1; // The absolute unbreakable ceiling (Asymptote)
-    float steepness_factor <- 6.5; // Controls how fast it climbs. Lower value = steeper initial climb.
+ 	float max_light_limit <- 23.7; // The absolute unbreakable ceiling (Asymptote)
+    float steepness_factor <- 4.8; // Controls how fast it climbs. Lower value = steeper initial climb.
                
     // =========================================================
     // 5. STRATEGY-SPECIFIC CONSTANTS

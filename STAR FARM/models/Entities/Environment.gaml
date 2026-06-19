@@ -88,7 +88,7 @@ global {
    	} 
 }
 
-grid unit_cell cell_width: spatial_discretization cell_height: spatial_discretization neighbors: 8{
+grid unit_cell file: vuln_map_file neighbors: 8{
     float pollution_level <- 0.0 min: 0.0 max: 1.0;
     float salinity_level <- 0.0;
     float pollution_level_tmp <- 0.0;

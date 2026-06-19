@@ -12,7 +12,7 @@ import "../Global.gaml"
   
 global  {   
 	 
-	 string DONG_THAP <- "Dong Thap";
+	 string DONG_THAP <- "Dong Thap old";
 	 float fitness;  
      
      map<Indicator, float> indicators;

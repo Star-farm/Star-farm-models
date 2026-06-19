@@ -87,7 +87,7 @@ global {
     // -------------------------------------------------------------------------
      
     action init_all_headers() {
-        if save_results {
+        if save_results { 
 			string pr <- string(possible_practices.keys) replace("[","") replace("]","")replace("'","")  ;
 			id_xp <- pr + "-" + weather_id +"-"+market_id;
 		} 
