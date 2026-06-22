@@ -6,7 +6,7 @@ global {
 	 
     // 1. Input files
     
-    string folder <- "Dong Thap";
+    string folder <- "Tra Vinh old";
    	shape_file bounds_shapefile <- shape_file("../includes/" + folder+ "/plot_shapefile.shp");
 	shape_file stations_shapefile <- shape_file("../includes/General data/stations.shp");
     csv_file timeseries_file <- csv_file("../includes/General data/salinity_timeseries.csv", ",",string, false);
