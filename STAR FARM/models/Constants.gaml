@@ -41,6 +41,17 @@ global {
 	
 	string OM5451 <- "OM5451";
 	string ST25 <- "ST25";
+	
+	
+	/******* PROVINCE *******/
+	string BEN_TRE <- "Ben Tre old";
+	string DONG_THAP <- "Dong Thap";
+	string DONG_THAP_OLD <- "Dong Thap old";
+	string LONG_AN <- "Long An old";
+	string TRA_VINH <- "Tra Vinh old";
+
 }
+
+
 
 

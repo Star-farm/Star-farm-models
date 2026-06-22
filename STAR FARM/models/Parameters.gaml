@@ -35,7 +35,7 @@ global {
    	
 	image_file farmer_image <- image_file("../includes/Images/farmer.png");
 	
-	string province <- "Dong Thap old";
+	string province <- DONG_THAP;
 	shape_file plots_shapefile <- simple_spatial_data ? shape_file("../includes/" + province+ "/plot_shapefile-simple.shp"):  shape_file("../includes/" + province+ "/plot_shapefile.shp");
 	grid_file vuln_map_file <- grid_file("../includes/" + province+ "/salinity_vulnerability_map.tif");
 	
