@@ -49,14 +49,29 @@ def _global_profit(infos):
         return 0.0
 
 
-def run_episode(env, choose_action):
+def run_episode(env, choose_action, sequential=False, rng=None):
     """Run one full episode with a callable choose_action(agent, obs) -> np.array.
-    Returns the true global return = sum over years of sum(Farmer.yearly_profit)."""
+    With sequential=True the yearly decisions are taken farmer by farmer in random order
+    (each seeing the earlier commitments) — same protocol as sequential training. Fixed
+    baselines ignore the observation so the protocol does not change their behaviour.
+    Returns the true global return = sum over the episode of sum(Farmer.yearly_profit)."""
     obs, _ = env.reset()
     agents = list(obs.keys())
     total = 0.0
+    actions = None
     while True:
-        actions = {a: choose_action(a, obs[a]) for a in agents}
+        if actions is None or env.needs_new_action:
+            if sequential:
+                turn = list(agents)
+                (rng if rng is not None else np.random).shuffle(turn)
+                actions = {}
+                for a in turn:
+                    o = env.observe_one(a)
+                    actions[a] = choose_action(a, o)
+                    env.inject_one(a, actions[a])
+                env.end_decision_round()
+            else:
+                actions = {a: choose_action(a, obs[a]) for a in agents}
         obs, rewards, terminated, truncated, infos = env.step(actions)
         total += _global_profit(infos)
         if (truncated and all(truncated.values())) or (terminated and any(terminated.values())):
@@ -108,18 +123,37 @@ def main():
     env.MIN_DAYS_PER_YEAR = int(g.get("min_days_per_year", env.MIN_DAYS_PER_YEAR))
     env.MAX_DAYS_PER_YEAR = int(g.get("max_days_per_year", env.MAX_DAYS_PER_YEAR))
     env.YEAR_END_MARGIN = int(g.get("year_end_margin", env.YEAR_END_MARGIN))
+    env.SUBSTEP_DAYS = int(g.get("substep_days", 0))
+    sequential = bool(t.get("sequential_decisions", False))
+    print(f"Decision mode: {'SEQUENTIAL' if sequential else 'simultaneous'} | "
+          f"substep_days={env.SUBSTEP_DAYS}")
 
     sample = list(env.possible_agents)[0]
     obs_dim = int(np.prod(env.observation_space(sample).shape))
     act_dim = int(np.prod(env.action_space(sample).shape))
 
-    agent = PPOAgent(
-        obs_dim=obs_dim, act_dim=act_dim,
-        hidden_dim=t["hidden_dim"], lr=t["lr"], gamma=t["gamma"],
-        gae_lambda=t["gae_lambda"], clip_eps=t["clip_eps"], k_epochs=t["k_epochs"],
-        minibatch_size=t["minibatch_size"], entropy_coef=t["entropy_coef"],
-        value_coef=t["value_coef"], normalize_obs=t["normalize_obs"],
-    )
+    # Pick the agent class from the config ("ippo" default, or "mappo"). Both expose the
+    # same act_greedy(obs) interface, so evaluation is identical either way.
+    algo = str(t.get("algo", "ippo")).lower()
+    if algo == "mappo":
+        from mappo_agent import MAPPOAgent
+        agent = MAPPOAgent(
+            obs_dim=obs_dim, act_dim=act_dim, n_agents=len(env.possible_agents),
+            hidden_dim=t["hidden_dim"], lr=t["lr"], gamma=t["gamma"],
+            gae_lambda=t["gae_lambda"], clip_eps=t["clip_eps"], k_epochs=t["k_epochs"],
+            minibatch_size=t["minibatch_size"], entropy_coef=t["entropy_coef"],
+            value_coef=t["value_coef"], normalize_obs=t["normalize_obs"],
+            critic_hidden_dim=t.get("critic_hidden_dim"),
+        )
+    else:
+        agent = PPOAgent(
+            obs_dim=obs_dim, act_dim=act_dim,
+            hidden_dim=t["hidden_dim"], lr=t["lr"], gamma=t["gamma"],
+            gae_lambda=t["gae_lambda"], clip_eps=t["clip_eps"], k_epochs=t["k_epochs"],
+            minibatch_size=t["minibatch_size"], entropy_coef=t["entropy_coef"],
+            value_coef=t["value_coef"], normalize_obs=t["normalize_obs"],
+        )
+    print(f"Algo: {algo}")
     have_ckpt = os.path.exists(ckpt_path)
     if have_ckpt:
         agent.load(ckpt_path)
@@ -155,12 +189,13 @@ def main():
 
     n = args.episodes
     print(f"\nEvaluating {len(policies)} policies x {n} episodes each "
-          f"(global return = sum over 10 years of sum(Farmer.yearly_profit)):\n")
+          f"(global return = sum over the episode of sum(Farmer.yearly_profit)):\n")
 
     means = {}
     try:
+        eval_rng = np.random.default_rng(t.get("seed", 0))
         for name, fn in policies.items():
-            returns = [run_episode(env, fn) for _ in range(n)]
+            returns = [run_episode(env, fn, sequential=sequential, rng=eval_rng) for _ in range(n)]
             means[name] = summarize(name, returns)
     finally:
         env.close()

@@ -21,6 +21,7 @@ import json
 import traceback
 
 import nest_asyncio
+import numpy as np
 from gama_client.message_types import MessageTypes
 from gama_gymnasium import GamaEnvironmentError
 from gama_gymnasium.exceptions import GamaCommandError
@@ -55,6 +56,23 @@ class StarfarmParallelEnv(GamaParallelEnv):
     last_days_stepped = 0
     last_coarse_jump = 0
 
+    # Sub-step (seasonal reward) mode: when > 0, one env.step advances at most this many
+    # days (or up to year_done) and returns the PROFIT DELTA of that window as reward.
+    # Decisions stay annual: actions are only injected when `needs_new_action` is True
+    # (episode start and right after each completed year); other steps repeat in-force
+    # practices. 0 = legacy annual mode (one step = one full year).
+    SUBSTEP_DAYS = 0
+    # Days actually advanced by the most recent sub-step (for variable-gamma GAE).
+    last_substep_days = 0
+
+    @property
+    def needs_new_action(self):
+        """True when the next step starts a new decision (new year). In annual mode every
+        step is a decision."""
+        if self.SUBSTEP_DAYS <= 0:
+            return True
+        return getattr(self, "_needs_injection", True)
+
     def __init__(self, *args, **kwargs):
         # gama_client builds its GamaSyncClient with `asyncio.get_running_loop()`
         # in __init__, which raises "no running event loop" when (as here) the env
@@ -74,23 +92,56 @@ class StarfarmParallelEnv(GamaParallelEnv):
 
             loop.run_until_complete(_build())
 
-    # Reward mode: False = shared global reward (project objective), True = per-farmer
-    # profit. Stored on the env and (re)applied to GAMA after every reset, because the
-    # reload that reset() performs resets the GAML flag back to its default.
-    _per_agent_reward = False
+    # Reward objective: 0=global profit, 1=per-farm profit, 2=minimise pollution,
+    # 3=balanced (profit - balance_weight*pollution). Stored on the env and re-applied to
+    # GAMA after every reset (the reload that reset() performs resets the GAML defaults).
+    _reward_mode = 0
+    _balance_weight = 1.0
+    _REWARD_MODES = {"global": 0, "per_agent": 1, "pollution": 2, "balanced": 3}
 
-    def set_reward_mode(self, per_agent: bool):
-        self._per_agent_reward = bool(per_agent)
+    def set_reward_mode(self, mode, balance_weight=None):
+        """mode: int 0-3, a bool (True->per_agent / False->global), or a string
+        ('global' / 'per_agent' / 'pollution' / 'balanced'). balance_weight = lambda for
+        the balanced objective."""
+        if isinstance(mode, bool):
+            self._reward_mode = 1 if mode else 0
+        elif isinstance(mode, int):
+            self._reward_mode = int(mode)
+        else:
+            self._reward_mode = self._REWARD_MODES.get(str(mode).lower(), 0)
+        if balance_weight is not None:
+            self._balance_weight = float(balance_weight)
         self._apply_reward_mode()
 
     def _apply_reward_mode(self):
         try:
             self.gama_client._execute_expression(
-                self.experiment_id,
-                f"PetzAgent[0].set_reward_mode({1 if self._per_agent_reward else 0})",
-            )
+                self.experiment_id, f"PetzAgent[0].set_reward_mode({self._reward_mode})")
+            self.gama_client._execute_expression(
+                self.experiment_id, f"PetzAgent[0].set_balance_weight({self._balance_weight})")
         except Exception as e:
             print(f"Could not set reward mode: {e}")
+
+    # ---- Sequential decision round (random turn order, orchestrated by the trainer) ----
+
+    def observe_one(self, agent_name):
+        """Fresh observation for ONE farmer at its decision turn. The premium-share and
+        decided-fraction signals already include the commitments injected earlier in the
+        round, which is what lets a deterministic shared policy diversify."""
+        state = self.gama_client._execute_expression(
+            self.experiment_id, f'PetzAgent[0].observe_one("{agent_name}")')
+        return np.asarray(state, dtype=np.float32)
+
+    def inject_one(self, agent_name, action):
+        """Inject and apply ONE farmer's yearly action immediately."""
+        js = json.dumps([float(v) for v in action], separators=(",", ":"))
+        self.gama_client._execute_expression(
+            self.experiment_id, f"PetzAgent[0].set_rl_action_one(\"{agent_name}\", '{js}')")
+
+    def end_decision_round(self):
+        """All farmers have committed this year's actions: the upcoming step() must not
+        run the batch injection path."""
+        self._needs_injection = False
 
     def reset(self, *args, **kwargs):
         out = super().reset(*args, **kwargs)
@@ -101,6 +152,9 @@ class StarfarmParallelEnv(GamaParallelEnv):
         self._episode_year = 0
         if not hasattr(self, "_year_lengths"):
             self._year_lengths = {}
+        # Sub-step mode bookkeeping.
+        self._needs_injection = True
+        self._days_into_year = 0
         return out
 
     def step(self, actions):
@@ -111,13 +165,15 @@ class StarfarmParallelEnv(GamaParallelEnv):
         }
         actions_json = json.dumps(gama_actions, separators=(",", ":"))
 
-        # Macro-step: apply actions, advance day-by-day until the crop year ends,
-        # then snapshot the transition. We drive this ourselves (instead of the
-        # library's single-step execute_step) and inject via an ACTION-CALL expression
-        # because this GAMA-server build rejects the assignment form
-        # `PetzAgent[0].actions <- from_json(...)` (UnableToExecuteRequest). The
+        # Macro-step: apply actions, advance the simulation, snapshot the transition.
+        # We drive this ourselves (instead of the library's single-step execute_step)
+        # and inject via an ACTION-CALL expression because this GAMA-server build
+        # rejects the assignment form `PetzAgent[0].actions <- from_json(...)`. The
         # library itself is left untouched; this lives only in the subclass.
-        step_data = self._macro_step_one_year(actions_json)
+        if self.SUBSTEP_DAYS > 0:
+            step_data = self._macro_substep(actions_json)
+        else:
+            step_data = self._macro_step_one_year(actions_json)
 
         observations = {}
         try:
@@ -214,4 +270,71 @@ class StarfarmParallelEnv(GamaParallelEnv):
         client._execute_expression(exp_id, "PetzAgent[0].finalize_rl()")
 
         # 4. Read the published transition bundle.
+        return client._execute_expression(exp_id, "PetzAgent[0].data")
+
+    def _macro_substep(self, actions_json):
+        """One env.step == one SUB-STEP of at most SUBSTEP_DAYS simulated days (less if the
+        crop year ends inside the window). Reward = profit delta over the window. Actions
+        are injected only at year starts (decisions stay annual); the coarse multi-cycle
+        jump + fine daily polling near the expected year end is kept, so the round-trip
+        batching survives the sub-step granularity."""
+        client = self.gama_client
+        exp_id = self.experiment_id
+
+        # Inject this year's actions only at a decision point (episode start / new year).
+        if self._needs_injection:
+            client._execute_expression(exp_id, f"PetzAgent[0].set_rl_actions('{actions_json}')")
+            self._needs_injection = False
+
+        def _do_steps(n):
+            if n <= 0:
+                return
+            response = client.client.step(exp_id, nb_step=n, sync=True)
+            if response["type"] != MessageTypes.CommandExecutedSuccessfully.value:
+                raise GamaCommandError(f"Failed to execute step: {response}")
+
+        k = getattr(self, "_episode_year", 0)
+        expected = self._year_lengths.get(k, self.MIN_DAYS_PER_YEAR)
+        fine_zone_start = max(0, expected - self.YEAR_END_MARGIN)
+
+        consumed = 0
+        year_done = False
+        while consumed < self.SUBSTEP_DAYS:
+            if self._days_into_year < fine_zone_start:
+                # Coarse: one batched jump to the end of this sub-step OR the fine zone.
+                jump = min(self.SUBSTEP_DAYS - consumed, fine_zone_start - self._days_into_year)
+                _do_steps(jump)
+                consumed += jump
+                self._days_into_year += jump
+                # One check after the jump (the year can end early if the memo over-estimated).
+                if bool(client._execute_expression(exp_id, "year_done")):
+                    year_done = True
+                    break
+            else:
+                # Fine zone: daily stepping with year_done polling.
+                _do_steps(1)
+                consumed += 1
+                self._days_into_year += 1
+                if bool(client._execute_expression(exp_id, "year_done")):
+                    year_done = True
+                    break
+            if self._days_into_year >= self.MAX_DAYS_PER_YEAR:
+                raise GamaEnvironmentError(
+                    f"year_done never raised within {self.MAX_DAYS_PER_YEAR} simulated days")
+
+        if year_done:
+            # Bank the completed year (profit trackers + year counter + clears year_done),
+            # update the year-length memo, and require a fresh decision next step.
+            client._execute_expression(exp_id, "PetzAgent[0].finalize_rl_year()")
+            self._year_lengths[k] = min(self._year_lengths.get(k, self._days_into_year),
+                                        self._days_into_year)
+            self.last_days_stepped = self._days_into_year
+            self._episode_year = k + 1
+            self._days_into_year = 0
+            self._needs_injection = True
+
+        self.last_substep_days = consumed
+
+        # Publish the sub-step transition (profit delta, obs, truncation) and read it.
+        client._execute_expression(exp_id, "PetzAgent[0].publish_rl_substep()")
         return client._execute_expression(exp_id, "PetzAgent[0].data")

@@ -297,13 +297,31 @@ global {
 	map<string, list<float>> rl_last_action;
 	// Episode bookkeeping.
 	int rl_year_count <- 0;
-	int rl_max_years <- 10;
-	// 4 state features + 6 last-action floats + 1 normalised year index.
-	int rl_obs_dim <- 11;
+	// Longer horizon (25 years). The colleague's scenario data spans 2025-2050, so 25 is the
+	// safe maximum; going higher would step past the generated weather/market series.
+	int rl_max_years <- 25;
+	// --- Sub-step (seasonal) reward tracking. Decisions stay ANNUAL; the Python env can
+	// advance in sub-steps of ~a season and read the PROFIT DELTA accrued in each window,
+	// densifying the credit-assignment signal at zero extra simulation cost. ---
+	// Cumulative profit of all COMPLETED years (in-progress year lives in Farmer.yearly_profit,
+	// which Global.gaml resets at end_of_year after snapshotting last_year_global_profit).
+	float rl_completed_profit <- 0.0;
+	// Cumulative profit already reported to Python (global + per farmer).
+	float rl_prev_cum_profit <- 0.0;
+	map<string, float> rl_completed_profit_f;
+	map<string, float> rl_prev_cum_f;
+	// 11 state features + 6 last-action floats + 1 normalised year index.
+	int rl_obs_dim <- 18;
 	int rl_act_dim <- 6;
+	// Sequential decision round: number of farmers that have already committed their action
+	// for the CURRENT year. Exposed in the observation as a fraction so a later decider can
+	// interpret the (dynamic) premium-share signal: "30% premium with 2/10 decided" reads
+	// very differently from "30% with 9/10 decided". Reset at each year boundary.
+	int rl_decided_count <- 0;
 	// Reward mode: false = shared global reward (project objective); true = per-farmer profit.
 	// Set from Python via PetzAgent[0].set_reward_mode(...) after each reset.
-	bool rl_per_agent_reward <- false;
+	int rl_reward_mode <- 0;        // 0=global profit, 1=per-farm profit, 2=min pollution, 3=balanced
+	float rl_balance_weight <- 1.0; // lambda for mode 3: reward = profit_delta - lambda * pollution
 
 	// Apply one farmer's yearly decision — a continuous Box(6) action, each dim in [0,1] —
 	// by driving the colleague's regime-switch functions:
@@ -354,16 +372,42 @@ global {
 		}
 	}
 
-	// Per-farmer observation (farm/plot state part, 4 floats). publish_rl appends the
-	// previous action (6 Box floats) and the normalised year index -> 11 floats total.
+	// Per-farmer observation: 11 state features = 4 local farm + 2 local environment +
+	// 2 static farm descriptors + 2 GLOBAL market signals + 1 decision-round progress.
+	// publish appends the 6 last-action floats and the normalised year index -> 18 floats
+	// total. The static descriptors let the SHARED actor specialize per farm; the global
+	// signals let the AI perceive market saturation / coupling; the decision-round fraction
+	// lets a deterministic shared policy DIVERSIFY (threshold rule on the dynamic premium
+	// share seen during the sequential decision round).
 	list<float> rl_obs(Farmer f) {
 		list<Plot> ps <- f.my_farm.plots;
+		Cultivar premium <- Cultivar first_with (each.name = ST25);
 		return [
+			// --- local farm state ---
 			f.last_yearly_profit,
 			empty(ps) ? 0.0 : (ps mean_of (each.total_fertilizer_applied)),
 			empty(ps) ? 0.0 : (ps mean_of (each.soil_health)),
-			empty(ps) ? 0.0 : (ps mean_of (each.final_yield_ton_ha))
+			empty(ps) ? 0.0 : (ps mean_of (each.final_yield_ton_ha)),
+			// --- local environment ---
+			empty(ps) ? 0.0 : (ps mean_of (each.my_cell.pollution_level)),
+			empty(ps) ? 0.0 : (ps mean_of (each.my_cell.salinity_level)),
+			// --- static farm descriptors (shared-actor specialization) ---
+			float(length(ps)),
+			empty(ps) ? 0.0 : (ps sum_of (each.shape.area)) / 10000.0,
+			// --- GLOBAL market signals (identical for all farmers) ---
+			// Premium share is DYNAMIC during the sequential decision round: it already
+			// reflects the commitments of the farmers that decided earlier this year.
+			area_premium_rice_rate(),
+			(the_market = nil or premium = nil) ? 1.0 : the_market.r_for_crop(premium),
+			// --- decision-round progress: fraction of farmers already committed this year ---
+			empty(rl_possible_agents) ? 0.0 : float(rl_decided_count) / float(length(rl_possible_agents))
 		];
+	}
+
+	// Mean pollution level across a farmer's plots (used by the pollution / balanced rewards).
+	float rl_farm_pollution(Farmer f) {
+		list<Plot> ps <- f.my_farm.plots;
+		return empty(ps) ? 0.0 : (ps mean_of (each.my_cell.pollution_level));
 	}
 
 	// Build the PetzAgent bridge once the world (farmers included) is initialised.
@@ -372,6 +416,8 @@ global {
 		loop f over: Farmer {
 			farmer_by_name[string(f)] <- f;
 			rl_last_action[string(f)] <- list_with(rl_act_dim, 0.0);
+			rl_completed_profit_f[string(f)] <- 0.0;
+			rl_prev_cum_f[string(f)] <- 0.0;
 		}
 		create PetzAgent {
 			agents <- copy(myself.rl_possible_agents);
@@ -417,25 +463,74 @@ global {
 	action publish_rl() {
 		rl_year_count <- rl_year_count + 1;
 		bool done <- rl_year_count >= rl_max_years;
+		float gpoll <- empty(Farmer) ? 0.0 : (Farmer mean_of (rl_farm_pollution(each)));
 		ask PetzAgent[0] {
 			loop a over: possible_agents {
 				list<float> la <- world.rl_last_action[a];
 				observations[a] <- world.rl_obs(world.farmer_by_name[a]) + la + [
 					float(world.rl_year_count) / float(world.rl_max_years)
 				];
-				// Learning reward: per-farmer profit or shared global, per the mode flag.
-				rewards[a] <- world.rl_per_agent_reward
-					? world.farmer_by_name[a].last_yearly_profit
-					: world.last_year_global_profit;
-				// Always expose the TRUE global objective in infos so evaluation can
-				// measure total profit regardless of which reward the policy trained on.
-				infos[a] <- ["global_profit"::world.last_year_global_profit];
+				// Learning reward depends on the objective mode (profit / pollution / balanced).
+				rewards[a] <- (world.rl_reward_mode = 0) ? world.last_year_global_profit :
+					((world.rl_reward_mode = 1) ? world.farmer_by_name[a].last_yearly_profit :
+					((world.rl_reward_mode = 2) ? (- world.rl_farm_pollution(world.farmer_by_name[a])) :
+					(world.farmer_by_name[a].last_yearly_profit - world.rl_balance_weight * world.rl_farm_pollution(world.farmer_by_name[a]))));
+				// Expose the TRUE global objectives (profit AND pollution) so evaluation is
+				// independent of which reward the policy trained on.
+				infos[a] <- ["global_profit"::world.last_year_global_profit, "global_pollution"::gpoll];
 				terminations[a] <- false;
 				truncations[a] <- done;
 			}
 			do update_data();
 		}
 		year_done <- false;
+	}
+
+	// ============ Sub-step (seasonal reward) variants — decisions stay annual ============
+
+	// Called by Python when it detects year_done: bank the completed year's profit into the
+	// cumulative trackers, advance the year counter and clear the flag. Must run BEFORE
+	// rl_publish_substep so the substep delta includes the completed year's tail.
+	action rl_finalize_year() {
+		rl_completed_profit <- rl_completed_profit + last_year_global_profit;
+		loop a over: rl_possible_agents {
+			rl_completed_profit_f[a] <- rl_completed_profit_f[a] + farmer_by_name[a].last_yearly_profit;
+		}
+		rl_year_count <- rl_year_count + 1;
+		year_done <- false;
+		// New year -> nobody has committed a decision yet.
+		rl_decided_count <- 0;
+	}
+
+	// Publish one SUB-STEP transition: reward = profit accrued since the previous publish
+	// (completed years + the in-progress year), per farmer or global per the mode flag.
+	action rl_publish_substep() {
+		float cum <- rl_completed_profit + (Farmer sum_of (each.yearly_profit));
+		float delta <- cum - rl_prev_cum_profit;
+		rl_prev_cum_profit <- cum;
+		bool done <- rl_year_count >= rl_max_years;
+		float gpoll <- empty(Farmer) ? 0.0 : (Farmer mean_of (rl_farm_pollution(each)));
+		ask PetzAgent[0] {
+			loop a over: possible_agents {
+				list<float> la <- world.rl_last_action[a];
+				observations[a] <- world.rl_obs(world.farmer_by_name[a]) + la + [
+					float(world.rl_year_count) / float(world.rl_max_years)
+				];
+				float cum_f <- world.rl_completed_profit_f[a] + world.farmer_by_name[a].yearly_profit;
+				float delta_f <- cum_f - world.rl_prev_cum_f[a];
+				world.rl_prev_cum_f[a] <- cum_f;
+				float poll <- world.rl_farm_pollution(world.farmer_by_name[a]);
+				rewards[a] <- (world.rl_reward_mode = 0) ? delta :
+					((world.rl_reward_mode = 1) ? delta_f :
+					((world.rl_reward_mode = 2) ? (- poll) :
+					(delta_f - world.rl_balance_weight * poll)));
+				// True global objectives for this window (profit + pollution).
+				infos[a] <- ["global_profit"::delta, "global_pollution"::gpoll];
+				terminations[a] <- false;
+				truncations[a] <- done;
+			}
+			do update_data();
+		}
 	}
 
 }
@@ -474,11 +569,50 @@ species PetzAgent {
 		ask world { do publish_rl(); }
 	}
 
-	// Select the reward mode (0 = shared global, 1 = per-farmer). Called as an
-	// action-call expression from Python after each reset (reload resets the flag).
+	// Sub-step mode wrappers (called as action-call expressions from Python).
+	action finalize_rl_year() {
+		ask world { do rl_finalize_year(); }
+	}
+
+	action publish_rl_substep() {
+		ask world { do rl_publish_substep(); }
+	}
+
+	// ---- Sequential decision round (random turn order, driven from Python) ----
+
+	// Fresh observation for ONE farmer at its decision turn. Crucially, the premium-share
+	// and decided-fraction signals already reflect the commitments of the farmers that
+	// decided EARLIER this year -> a deterministic shared policy can diversify.
+	list<float> observe_one(string a) {
+		list<float> la <- world.rl_last_action[a];
+		return world.rl_obs(world.farmer_by_name[a]) + la + [
+			float(world.rl_year_count) / float(world.rl_max_years)
+		];
+	}
+
+	// Inject and APPLY one farmer's yearly action immediately (so the next farmer in the
+	// round observes its effect), and advance the decided counter.
+	int set_rl_action_one(string a, string js) {
+		list<float> raw <- list(from_json(js)) collect float(each);
+		ask world {
+			rl_last_action[a] <- raw;
+			do apply_rl_action(farmer_by_name[a], raw);
+			rl_decided_count <- rl_decided_count + 1;
+		}
+		return world.rl_decided_count;
+	}
+
+	// Select the reward objective (0=global profit, 1=per-farm profit, 2=min pollution,
+	// 3=balanced). Called as an action-call expression from Python after each reset.
 	int set_reward_mode(int m) {
-		ask world { rl_per_agent_reward <- (m = 1); }
+		ask world { rl_reward_mode <- m; }
 		return m;
+	}
+
+	// Set the balance weight (lambda) used by the balanced reward (mode 3).
+	float set_balance_weight(float w) {
+		ask world { rl_balance_weight <- w; }
+		return w;
 	}
 }
 //---------------------------------------------------------------------------------------
