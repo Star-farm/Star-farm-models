@@ -353,12 +353,10 @@ species lua_mdModel parent: Plant_growth_model {
 		        c.concerned_plot.local_salinity <- c.concerned_plot.my_cell.salinity_level;
 		        float k_salt <- 1.0;
 		        if ( c.concerned_plot.local_salinity > c.salt_threshold_val) { 
-		        	k_salt <- 1.0 - (salinity_sensitivity_slope * max(0, c.concerned_plot.local_salinity - c.salt_threshold_val));
+		        	k_salt <- 1.0 - (salinity_sensitivity_slope * (c.concerned_plot.local_salinity - c.salt_threshold_val));
 		        }
-		        
-		        if (k_salt < 0) { k_salt <- 0.0; c.is_dead <- true;c.biomass <- 0.0; }
-		  
-		        float k_pest <- max(min_k_pest,1.0 - c.concerned_plot.pest_load); // Impact direct des pestes
+		       
+		         float k_pest <- max(min_k_pest,1.0 - c.concerned_plot.pest_load); // Impact direct des pestes
 		       	
 		     	 
 		    	// 3. FLOOD IMPACT (Progressive Mode / Decay)
@@ -389,7 +387,7 @@ species lua_mdModel parent: Plant_growth_model {
     		
 			// ----------------------------------------------------------------------
 	        // NEW : DYNAMIC RUE (Diffuse Light Effect using cloud cover)
-	        // ----------------------------------------------------------------------
+	        // ---------------------------------------------------------------------- 
 	        float current_rue <- c.potential_rue_calibrated;
 	        
 	        // If the day is cloudy (e.g., autumn monsoon), light becomes diffuse.
@@ -413,14 +411,12 @@ species lua_mdModel parent: Plant_growth_model {
 
 	   		c.biomass <- c.biomass + daily_growth;
 	        
-	        // ======================================================================
-            // NEW: Record night temperature ONLY during the grain filling phase
-            // (Typically the last 20-25% of the crop cycle)
-            // ======================================================================
-            if (c.growth_stage > 0.75) {
-                c.sum_tmin_ripening <- c.sum_tmin_ripening + the_weather.t_min;
-                c.days_ripening <- c.days_ripening + 1;
-            }
+	       
+            
+	   		 if (c.concerned_plot.local_salinity > c.salt_threshold_val ) {
+	        	c.cumulative_salt_stress_ripening <- c.cumulative_salt_stress_ripening + (c.concerned_plot.local_salinity - c.salt_threshold_val);
+	    	}
+
 	     
         }	
 		

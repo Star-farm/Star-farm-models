@@ -63,6 +63,7 @@ global {
   
 	init { 
 		do init_action();
+		do load_specific_parameters();
 		do create_indicators();
 		do init_all_headers();
 		do load_cultivars();
@@ -80,6 +81,15 @@ global {
 		
 	}
 	
+	
+	action load_specific_parameters() {
+		if file_exists(specific_parameter_file) {
+			matrix mat <- matrix(csv_file(specific_parameter_file,","));
+			loop i from: 0 to: mat.rows -1 {
+				world[mat[0,i]] <-(mat[1,i]);
+			}	
+		}
+	}
 	
 	
 	// -------------------------------------------------------------------------
@@ -100,7 +110,7 @@ global {
         	do write_header_season();
         	do write_header_year();
 		}
-       
+        
     }
     
 	action write_header_day() {
@@ -330,6 +340,7 @@ global {
 		ask Farmer {
 			do define_neighbors();
 		}
+	
 	}
 	
 }

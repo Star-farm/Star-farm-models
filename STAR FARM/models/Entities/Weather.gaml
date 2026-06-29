@@ -15,7 +15,6 @@ global {
 	
 	Weather the_weather;
 	
-	   
 	  // ==========================================
     // --- DONG THAP CLIMATE BASELINE (2018-2023)
     // ==========================================
@@ -58,9 +57,11 @@ global {
     float base_salinity <- 0.1; 
     
     
+	list<list<date>> elNino <- [[date([2015,11]),date([2016,6])],[date([2019,11]),date([2020,6])]];
+	
 	// The peak salinity of a "normal" year today (e.g., 15.0 g/L at the coast)
-	float initial_salt_peak <- 15.0; 
-   
+	float initial_salt_peak <-6.0; 
+	 
     // Base historique : Jours 60 à 120 (Mars-Avril)
     int salt_start_doy <- 60;
     int salt_end_doy   <- 120;
@@ -77,7 +78,13 @@ global {
 		}
 	}
 	
-	
+	bool is_elNino (date d) {
+		loop el over: elNino {
+			bool is_el <- d between (el[0],el[1]);
+			if is_el {return true;}
+		}
+		return false;
+	}
 	
 	action generate_scenario(string scen_name, int start_year, int end_year, float temp_rise_total, float salt_max_intrusion, float rain_intensity_max, float typhoon_probability_max,  int salt_start_doy_coeff, int salt_end_doy_coeff) {
         
@@ -219,14 +226,13 @@ global {
                 // ----------------------------------------------------------------
                 
                 
-                float salinity <- base_salinity;
-                if (doy > (salt_start_doy - int(salt_start_doy_coeff * progress)) and doy < (salt_end_doy + int(salt_end_doy_coeff * progress))) {
+                float salinity <- base_salinity + current_salt_risk * compute_salinity_factor(doy,(salt_start_doy - int(salt_start_doy_coeff * progress)) ,(salt_end_doy + int(salt_end_doy_coeff * progress)), rain_amount, false );
+               /*  if (doy > (salt_start_doy - int(salt_start_doy_coeff * progress)) and doy < (salt_end_doy + int(salt_end_doy_coeff * progress))) {
                     float daily_salt <- abs(gauss(current_salt_risk, 0.5));
                     if (daily_salt > salinity) { salinity <- daily_salt; }
-                }
+                }*/
                 
-                // Rain flushes the salt out of the canals
-                if (rain_amount > 10.0) { salinity <- base_salinity; }
+                
                 
                 // ----------------------------------------------------------------
                 // 7. DATA FORMATTING & RECORDING
@@ -243,9 +249,36 @@ global {
                 the_weather._salinity[d] <- salinity; 
                 the_weather._rainfall[d] <- rain_amount; 
                 the_weather._humidity[d] <- humidity; 
-            }
+            } 
         }
     }
+    
+   
+	float compute_salinity_factor(int current_doy, int salt_start_doy_, int salt_end_doy_, float rain_amount_, bool is_el_nino) {
+    
+	    if (is_el_nino) {
+	    	if (current_doy >= 335 or current_doy <= 140) { 
+	            if (current_doy >= 335) {
+	                // Monte en flèche en décembre (DOY 335 à 365)
+	                return min(1.0, 0.3 + (0.7 * (current_doy - 335) / 30)); 
+	            } else if (current_doy <= 120) {
+	                // Pic absolu et plateau de janvier à fin avril
+	                return 1.0; 
+	            } else if (current_doy > 120 and current_doy <= 140) {
+	                // Redescend et disparaît en mai grâce aux premières pluies
+	                return max(0.0, 1.0 - ((current_doy - 120) / 20)); 
+	            }
+	        }
+		} else {
+		    	// Rain flushes the salt out of the canals
+			//if (rain_amount_ > 10.0) { return 0.0; }
+		    if (current_doy >= salt_start_doy_ and current_doy <= salt_end_doy_) {
+		     	// Le pic normal est plus court et moins violent
+		        return 0.6 * sin(((current_doy - salt_start_doy_) / (salt_end_doy_/2)) * 180); 
+		    }
+		}
+	   	return 0.0;
+   	}
 	
 }
 species Weather {
@@ -284,7 +317,7 @@ species Weather {
 		 	t_mean <- (t_min + t_max)/2; 
 		 	solar_rad <- _solar_radiation[current_date] / 1000.0;
 		 	humidity <-  _humidity[current_date]; 
-		 	rain <- _rainfall[current_date];
+		 	rain <- _rainfall[current_date]; 
 		 	salinity <- empty(_salinity) ? 1.0 : _salinity[current_date];
 	 	}
     }
@@ -300,20 +333,14 @@ species Weather {
             	continue;
             }
             _temp_max[d] <- float(mat[2, i]);
-            _temp_min[d] <- float(mat[3, i]);
+            _temp_min[d] <- float(mat[3, i]); 
             _humidity[d] <- float(mat[6, i]);
             _rainfall[d] <- float(mat[7, i]);      
             _windspeed[d] <- float(mat[8, i]);
             _cloud_clover[d] <- float(mat[11, i]);
             _solar_radiation[d] <- float(mat[13, i]) * 1000.0;  
-            
-            
-             if (d.day_of_year > salt_start_doy  and d.day_of_year  < salt_end_doy) {
-             	_salinity[d] <- initial_salt_peak; 
-             }
-              else {
-              	 _salinity[d] <- default_salinity; 
-              }
+            float f_ <- world.compute_salinity_factor(d.day_of_year,salt_start_doy,salt_end_doy, float(mat[7, i]), world.is_elNino(d) );
+         	_salinity[d] <- base_salinity + initial_salt_peak * f_;              
            
         }
         

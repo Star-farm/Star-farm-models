@@ -12,7 +12,7 @@ import "Plant growth models.gaml"
  
 global {
 	 float total_province_pumping <- 0.0;  
-	 int grid_resolution <- (unit_cell max_of (each.grid_x)) +1;
+	 int grid_resolution <- (unit_cell max_of (each.grid_x)) +1; 
 	  
 	 reflex environmental_dynamics {
     	total_province_pumping <- sum(Crop collect (each.water_pumped_today));
@@ -47,7 +47,7 @@ global {
 	        }
 	    	
 	      // --- 4. FINAL CALCULATION & RAIN DILUTION ---
-	        float potential_salinity <- (base_sal + human_impact)* location_vulnerability;
+	        float potential_salinity <- (base_sal + human_impact)* location_vulnerability * ( 1 - protection_coefficient);
 	       
 	     	
 	        salinity_level <- potential_salinity * dilution_factor;

@@ -68,10 +68,11 @@ species Indicator virtual: true {
 	list<float> observed_values_per_seasons;
 	list<float> observed_values_avg_seasons;
 	float observed_values_avg_total;
+	list<int> non_representative_years ;
 	
 	action generic_compute_value() {
 		do compute_value();
-		if (store_values) {
+		if (store_values and not(current_date.year in non_representative_years)) {
 			simulation_values << value;
 		}
 		if (is_seasonal) {

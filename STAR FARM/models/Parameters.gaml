@@ -11,6 +11,8 @@ model STARFARM
 import "Visual_Parameters.gaml"
 
 global {
+	string province <- LONG_AN;
+	
 	float step <- 1 #day;
 	
 	bool write_results <- true;
@@ -35,7 +37,8 @@ global {
    	
 	image_file farmer_image <- image_file("../includes/Images/farmer.png");
 	
-	string province <- DONG_THAP;
+	
+	
 	shape_file plots_shapefile <- simple_spatial_data ? shape_file("../includes/" + province+ "/plot_shapefile-simple.shp"):  shape_file("../includes/" + province+ "/plot_shapefile.shp");
 	grid_file vuln_map_file <- grid_file("../includes/" + province+ "/salinity_vulnerability_map.tif");
 	
@@ -45,8 +48,9 @@ global {
 	float default_salinity <- 0.0;
 	bool use_dynamic_market <- false;
 	string market_id <- "neutral";
-  
+ 	string specific_parameter_file <-"../../includes/" + province+ "/specific_parameters.csv";
 	
+
 	
 	string innovation_diffusion_model <- NONE; //NONE, NEIGHBORS
 	
@@ -92,9 +96,11 @@ global {
 	float max_pumping_salinity <- 4.0; // Salinity threshold (g/L) above which the farmer refuses to pump water to avoid burning the rice crop
     float drought_water_scarcity_threshold <- 5.0; // If cumulative rainfall over 7 days is < 5 mm, water becomes scarce in the canals
   	
+  	float protection_coefficient <- 0.5;
+  	
   // --- Water Availability & Rain Memory Logic ---
     float max_water_capacity <- 74.0; //in mm
-	float dilution_factor_coefficient <- 0.1; 
+	float dilution_factor_coefficient <- 0.2; 
   	float lateral_leakage_coefficient <- 0.005;
   	float water_excess_coefficient <- 0.4;
   	float rainfall_memory_decay <- 0.9;    // Factor (0.0-1.0) determining how fast past rainfall is forgotten. 0.85 means 85% of yesterday's rain "memory" is kept.
@@ -106,7 +112,7 @@ global {
    // =========================================================
     // 4. BIOLOGICAL & CROP MANAGEMENT PARAMETERS
     // =========================================================
-    float rue_efficiency_factor <- 0.65; // Correction factor to adjust theoretical RUE to field conditions (0.0 to 1.0)
+    float rue_efficiency_factor <- 0.6; // Correction factor to adjust theoretical RUE to field conditions (0.0 to 1.0)
     float daily_water_loss_mm <- 10.0;     // Sum of evapotranspiration and deep percolation (mm/day)
   	float straw_burn_emission_factor <- 0.0;// 1460.0; // kg CO2-eq emitted per ton of burned straw
    	
@@ -166,13 +172,24 @@ global {
     float harvest_moisture_adjust <- 0.86; // Adjustment for 14% commercial moisture content
 
 	float drought_growth_reduction_factor <- 0.5; // Growth multiplier during drought stress (0.5 = 50% reduction)
-    float salinity_sensitivity_slope <- 0.2;      // Yield reduction rate per unit of salinity above tolerance (e.g., 0.2 = 20% loss per g/L)
+    float salinity_sensitivity_slope <- 0.3;      // Yield reduction rate per unit of salinity above tolerance (e.g., 0.2 = 20% loss per g/L)
+    
+    // --- SALINITY-INDUCED STERILITY PARAMETERS ---
+    // Cumulative salt stress threshold above which sterile grains start to form
+    float salinity_sterility_threshold <- 5.0; 
+    
+    // Sterility/yield penalty rate per unit of cumulative salt stress exceeding the threshold (0.02 = 2% loss)
+    float sterility_penalty_rate <- 0.02; 
+    
+    // Absolute cap of allowed yield loss due to late salinity sterility (0.25 = 25% maximum loss)
+    float max_sterility_penalty <- 0.25; 
     
     
-    float degradation_rate <- 0.005; // Loss of 0.5% potential per cultivation season
+    float degradation_rate <- 0.001; // Loss of 0.5% potential per cultivation season
     float regeneration_rate <- 0.02; // Gain of 2% per fallow/flood season
     float min_soil_health <- 0.6;   // Soil never drops below 60% of its potential
-    
+    float max_soil_health <- 1.0;   // 
+   
   // Number of days required for the soil to fully decompose the straw safely
     float safe_rest_period <- 20.0; 
     // Defines how much penalty 1 unit of straw generates

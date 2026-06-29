@@ -204,7 +204,7 @@ species Plot {
 	bool date_sowing_ok <- false;
 	
    // 1.0 = Perfect soil, 0.6 = Highly degraded soil
-    float soil_health <- 1.0 min: min_soil_health max: 1.0;
+    float soil_health <- 1.0 min: min_soil_health max: max_soil_health;
     
     // PESTICIDES & PESTS
     float pest_load <- 0.0;          // 0.0 (not infected) à 1.0 (Infected)
@@ -408,7 +408,7 @@ species Crop  {
     float thermal_units_total;         // number of total cycle required
     float potential_rue_calibrated;    // RUE 
     float salt_threshold_val;          
-    
+    float cumulative_salt_stress_ripening <- 0.0;
    
     float current_harvest_index;       // HI that decrease with stress
     
@@ -427,8 +427,8 @@ species Crop  {
 	
 	 // Variables for dynamic climate-driven Harvest Index
     float sum_tmin_ripening <- 0.0;
-    int days_ripening <- 0;
-	
+   // int days_ripening <- 0;
+	 
 	reflex plantGrow  {
 		ask  PG_models[the_farmer.practice.id] {
 			do day_biomass_growth(myself);

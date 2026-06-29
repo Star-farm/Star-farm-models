@@ -5,7 +5,7 @@
 * Tags: 
 */
 
-model CleanShapefile
+model GeneratePlotShapefile
 
 global {
 	

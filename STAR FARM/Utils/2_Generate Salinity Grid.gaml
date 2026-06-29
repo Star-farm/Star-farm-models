@@ -20,6 +20,7 @@ global {
     float max_influence_radius <- 30000.0; // 30 km max
     float safe_radius <- 10000.0; 
     float salinity_max_threshold ;
+    float protection_coefficient <- 1.0;
     
 
     init {

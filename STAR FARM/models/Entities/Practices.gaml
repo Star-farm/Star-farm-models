@@ -40,9 +40,11 @@ global {
 	list<string> key_indicators <- ["Harvest","Profit","Crop area","Water consumption","Fertilizer consumption","Current year","Current season"];
 	// List of the expense categories, and the corresponding color for display
 	map<string,rgb> expense_categories <- ["Seed"::rgb(22, 160, 133),"Fertilizer"::rgb(241, 196, 15),"Irrigation"::rgb(52, 152, 219),"Manpower"::rgb(230, 126, 34),"Other"::rgb(127, 140, 141)];
-	
-	map<int, bool> three_seasons_sowing <- [320::true,95::false, 215::false];
-	map<int, bool> two_seasons_sowing <- [305::true, 115::false];
+	int season_spring_3s <- 320;
+	int season_autumn_3s <- 95;
+	int season_winter_3s <- 215;
+	int season_spring_2s <- 305;
+	int season_autumn_2s <- 115;
 	list<float> fert_trigger_thresholds_coeff_3_seasons <- [0.8, 1.0,1.2];
 	list<float> fert_targets_coeff_3_seasons <- [1.3, 1.3,0.8];
 	list<float> fert_trigger_thresholds_coeff_2_seasons <- [0.8, 1.0];
@@ -52,8 +54,15 @@ global {
 	list<float> pesticide_thresholds_3_seasons <- [0.4,1.0, 1.6];		
 	int fallow_day <- 290;
 	
+	map<int, bool> three_seasons_sowing ;
+	map<int, bool> two_seasons_sowing ;
+	
 	// Action to create all practice instances from their species definitions
 	action create_practices() {
+		three_seasons_sowing <- [int(season_spring_3s)::true,int(season_autumn_3s)::false, int(season_winter_3s)::false];
+		
+		two_seasons_sowing <- [season_spring_2s::true, season_autumn_2s::false];
+	
 		loop s over: Crop_strategy.subspecies { 
 			create s returns: new_practices;
 			Crop_strategy ct <- Crop_strategy(first(new_practices));
@@ -64,7 +73,7 @@ global {
 		} 
 	}
 	
-	
+	 
 	Sowing_practice create_sowing_practice(Cultivar cultivar, map<int,bool> days_cleaning, bool mechanical) {
 		create Sowing_practice (type_of_cultivar: cultivar, implementation_days: days_cleaning,  mechanical_seeding:mechanical) returns: sow_pract;
 		return first(sow_pract);
@@ -273,15 +282,28 @@ species Harvesting_practice parent:Practice {
  	action effect(Plot plot) {
 		// 1. Get the base Harvest Index
         float current_HI <- plot.associated_crop.variety.harvest_index_potential;
+       
+        if (plot.associated_crop.cumulative_salt_stress_ripening > salinity_sterility_threshold) {
+            // Calculate sterility penalty based on cumulative ripening stress
+            float sterility_penalty <- (plot.associated_crop.cumulative_salt_stress_ripening * sterility_penalty_rate); 
+            
+            // Cap the penalty to the maximum biological threshold defined globally
+            sterility_penalty <- min(sterility_penalty, max_sterility_penalty); 
+            
+            // Apply the dynamic sterility penalty to the Harvest Index (HI)
+            current_HI <- current_HI * (1.0 - sterility_penalty);
+        }
+
+		plot.associated_crop.cumulative_salt_stress_ripening <- 0.0;
         
               // 3. Calculate dry yield with the dynamic HI
         float dry_yield <- plot.associated_crop.biomass * current_HI;
-      
+      	
     	//float dry_yield <- plot.associated_crop.biomass * plot.associated_crop.variety.harvest_index_potential;
 	  
 	  	// Applying the Soil Fatigue Factor ---
         dry_yield <- dry_yield * plot.soil_health;
-       
+       	
         // Update soil status: "False" because we just harvested a crop (it was not fallow)
         ask plot { do update_soil_status(false); }
         
@@ -588,7 +610,7 @@ species BAU_rice_3_season parent:Crop_strategy {
 
 	list<Practice> other_practices;
 	init {
-		 	sowing <- world.create_sowing_practice(Cultivar first_with (each.name = OM5451),[320::true,95::false, 215::false], false);
+		 	sowing <- world.create_sowing_practice(Cultivar first_with (each.name = OM5451),three_seasons_sowing, false);
 		 	harvesting <- world.create_harvesting_practice(false);
 			ask world {
 				do add_CF_practice(myself);
