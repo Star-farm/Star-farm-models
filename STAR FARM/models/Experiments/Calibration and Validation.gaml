@@ -171,22 +171,22 @@ experiment check_result type: batch until: end_of_sim repeat: 1 keep_seed: true 
  
 
 experiment calibration_ type: batch until: end_of_sim repeat: 1 keep_seed: true {
-	//method genetic pop_dim: 10 crossover_prob: 0.7 mutation_prob: 0.1 improve_sol: false stochastic_sel: false
-//		nb_prelim_gen: 2 max_gen: 10000  minimize: fitness  aggregation: "avr";
-	 method pso num_particles: 10 weight_inertia:0.7 weight_cognitive: 1.5 weight_social: 1.5  iter_max: 100 aggregation:"avr"  minimize: fitness  ; 
-	parameter rue_efficiency_factor var: rue_efficiency_factor min: 0.5 max: 0.95 step: 0.01;
+	method genetic pop_dim: 10 crossover_prob: 0.7 mutation_prob: 0.1 improve_sol: false stochastic_sel: false
+		nb_prelim_gen: 2 max_gen: 10000  minimize: fitness  aggregation: "avr";
+	// method pso num_particles: 10 weight_inertia:0.7 weight_cognitive: 1.5 weight_social: 1.5  iter_max: 100 aggregation:"avr"  minimize: fitness  ; 
+	parameter rue_efficiency_factor var: rue_efficiency_factor min: 0.5 max: 0.85 step: 0.01;
 	
 	parameter pest_infection_prob var: pest_infection_prob min: 0.4 max: 1.0 step: 0.1;
 	
 	parameter pest_daily_increment var: pest_daily_increment min: 0.01 max: 0.1 step:0.01;
 	
 	
-	parameter toxicity_per_straw_unit var: toxicity_per_straw_unit min: 0.0 max: 0.1 step: 0.001;
+	parameter toxicity_per_straw_unit var: toxicity_per_straw_unit min: 0.0 max: 0.02 step: 0.001;
 	
 	parameter solar_rad_threshold var: solar_rad_threshold min: 10.0 max: 20.0 step: 0.1;   
-    parameter max_diffuse_bonus var:max_diffuse_bonus min: 0.0 max: 0.9 step: 0.01;   
+    parameter max_diffuse_bonus var:max_diffuse_bonus min: 0.0 max: 0.35 step: 0.01;   
      
-	parameter max_light_limit var:max_light_limit min: 22.0 max: 30.0 step: 0.1;   
+	parameter max_light_limit var:max_light_limit min: 18.0 max: 26.0 step: 0.1;   
 	parameter steepness_factor var:steepness_factor min: 2.0 max: 10.0 step: 0.1;   
     
     parameter max_water_capacity var: max_water_capacity min: 70.0 max: 120.0 step: 1.0 <- 74.0; //in mm
