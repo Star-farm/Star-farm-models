@@ -67,6 +67,10 @@ global  {
 	    		sum_weight <- sum_weight + indicators[ind];
 	    	}
 	    	
+	    	
+	    	
+	    	
+	    	
 	    	string result <- "" + int(self)+ ","+ seed+","+ rue_efficiency_factor+ ","+pest_infection_prob+","+ pest_daily_increment 
 	    	     +","+toxicity_per_straw_unit+ ","+  solar_rad_threshold +","+  max_diffuse_bonus   +","+ max_light_limit +","+steepness_factor
 	    		 +","+max_water_capacity +","+ lateral_leakage_coefficient +","+ water_excess_coefficient 
@@ -141,7 +145,7 @@ global  {
 }
 
  
-experiment check_result type: batch until: end_of_sim repeat: 20 keep_seed: true {
+experiment check_result type: batch until: end_of_sim repeat: 1 keep_seed: true {
 	method exploration 
 	with: ( [["write_calibration_result"::true]]);
 	
@@ -151,7 +155,7 @@ experiment check_result type: batch until: end_of_sim repeat: 20 keep_seed: true
 		gama.pref_parallel_simulations_all <- false;
 		gama.pref_parallel_threads <- 4; 
 		mode_batch <- true;
-		save_results <- true; 
+		save_results <- false; 
 		write_results <- false;
 		write_calibration_result <- true;     
 		save_calibration_results <- false; 
@@ -162,15 +166,15 @@ experiment check_result type: batch until: end_of_sim repeat: 20 keep_seed: true
    		starting_date <- date([2015,1,1]) add_days (day_start_of_year -1);
    		ending_date <-  date([2023,1,1]);
 	}
-}  
+}   
 
+ 
 
-
-experiment calibration_ type: batch until: end_of_sim repeat: 4 keep_seed: true {
-	method genetic pop_dim: 10 crossover_prob: 0.7 mutation_prob: 0.1 improve_sol: false stochastic_sel: false
-		nb_prelim_gen: 2 max_gen: 10000  minimize: fitness  aggregation: "avr";
-	// method pso num_particles: 10 weight_inertia:0.7 weight_cognitive: 1.5 weight_social: 1.5  iter_max: 100 aggregation:"avr"  minimize: fitness  ; 
-	parameter rue_efficiency_factor var: rue_efficiency_factor min: 0.5 max: 0.9 step: 0.01;
+experiment calibration_ type: batch until: end_of_sim repeat: 1 keep_seed: true {
+	//method genetic pop_dim: 10 crossover_prob: 0.7 mutation_prob: 0.1 improve_sol: false stochastic_sel: false
+//		nb_prelim_gen: 2 max_gen: 10000  minimize: fitness  aggregation: "avr";
+	 method pso num_particles: 10 weight_inertia:0.7 weight_cognitive: 1.5 weight_social: 1.5  iter_max: 100 aggregation:"avr"  minimize: fitness  ; 
+	parameter rue_efficiency_factor var: rue_efficiency_factor min: 0.5 max: 0.95 step: 0.01;
 	
 	parameter pest_infection_prob var: pest_infection_prob min: 0.4 max: 1.0 step: 0.1;
 	
@@ -179,17 +183,17 @@ experiment calibration_ type: batch until: end_of_sim repeat: 4 keep_seed: true 
 	
 	parameter toxicity_per_straw_unit var: toxicity_per_straw_unit min: 0.0 max: 0.1 step: 0.001;
 	
-	parameter solar_rad_threshold var: solar_rad_threshold min: 10.0 max: 60.0 step: 1.0;   
-    parameter max_diffuse_bonus var:max_diffuse_bonus min: 0.0 max: 2.0 step: 0.1;   
+	parameter solar_rad_threshold var: solar_rad_threshold min: 10.0 max: 20.0 step: 0.1;   
+    parameter max_diffuse_bonus var:max_diffuse_bonus min: 0.0 max: 0.9 step: 0.01;   
      
-	parameter max_light_limit var:max_light_limit min: 17.0 max: 26.0 step: 0.1;   
-	parameter steepness_factor var:steepness_factor min: 2.0 max: 20.0 step: 0.1;   
+	parameter max_light_limit var:max_light_limit min: 22.0 max: 30.0 step: 0.1;   
+	parameter steepness_factor var:steepness_factor min: 2.0 max: 10.0 step: 0.1;   
     
     parameter max_water_capacity var: max_water_capacity min: 70.0 max: 120.0 step: 1.0 <- 74.0; //in mm
 	parameter lateral_leakage_coefficient var: lateral_leakage_coefficient min: 0.001 max: 0.1 step: 0.001 <- 0.005;
   	parameter water_excess_coefficient var: water_excess_coefficient min: 0.1 max: 0.6 step: 0.01 <- 0.4;
   
-    
+	
 	
 	init {
 		gama.pref_parallel_simulations_all <- false;
