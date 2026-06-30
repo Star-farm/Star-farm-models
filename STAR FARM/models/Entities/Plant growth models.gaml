@@ -354,7 +354,10 @@ species lua_mdModel parent: Plant_growth_model {
 		        float k_salt <- 1.0;
 		        if ( c.concerned_plot.local_salinity > c.salt_threshold_val) { 
 		        	k_salt <- 1.0 - (salinity_sensitivity_slope * (c.concerned_plot.local_salinity - c.salt_threshold_val));
+		        	   
+		        	if (k_salt < 0) { k_salt <- 0.0; c.is_dead <- true;c.biomass <- 0.0; }
 		        }
+		        
 		       
 		         float k_pest <- max(min_k_pest,1.0 - c.concerned_plot.pest_load); // Impact direct des pestes
 		       	
