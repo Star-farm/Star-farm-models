@@ -99,10 +99,10 @@ global {
   	float protection_coefficient <- 0.5;
   	
   // --- Water Availability & Rain Memory Logic ---
-    float max_water_capacity <- 74.0; //in mm
+    float max_water_capacity <- 79.0; //in mm
 	float dilution_factor_coefficient <- 0.2; 
-  	float lateral_leakage_coefficient <- 0.005;
-  	float water_excess_coefficient <- 0.4;
+  	float lateral_leakage_coefficient <- 0.01;
+  	float water_excess_coefficient <- 0.6;
   	float rainfall_memory_decay <- 0.9;    // Factor (0.0-1.0) determining how fast past rainfall is forgotten. 0.85 means 85% of yesterday's rain "memory" is kept.
     float min_rain_for_access <- 1.0;       // Threshold (mm) of accumulated rain memory required to consider canal water easily accessible/abundant.
   // Hydraulic network capacity (tertiary canals) per hectare.
@@ -112,7 +112,7 @@ global {
    // =========================================================
     // 4. BIOLOGICAL & CROP MANAGEMENT PARAMETERS
     // =========================================================
-    float rue_efficiency_factor <- 0.6; // Correction factor to adjust theoretical RUE to field conditions (0.0 to 1.0)
+    float rue_efficiency_factor <- 0.68; // Correction factor to adjust theoretical RUE to field conditions (0.0 to 1.0)
     float daily_water_loss_mm <- 10.0;     // Sum of evapotranspiration and deep percolation (mm/day)
   	float straw_burn_emission_factor <- 0.0;// 1460.0; // kg CO2-eq emitted per ton of burned straw
    	
@@ -154,7 +154,7 @@ global {
     // Nitrogen (N) Management
     float n_application_dose <- 40.0;     // Quantity of nitrogen per application (kg/ha)
     float n_late_stage_limit <- 0.8;      // Maximum growth stage for N input (80% of cycle)
-    float daily_n_consumption <- 0.9;     // Daily nitrogen uptake by the plant (kg/ha/day)
+    float daily_n_consumption <- 0.85;     // Daily nitrogen uptake by the plant (kg/ha/day)
     
     // Pest and Disease Logic
     float min_k_pest <- 0.5;
@@ -193,14 +193,14 @@ global {
   // Number of days required for the soil to fully decompose the straw safely
     float safe_rest_period <- 20.0; 
     // Defines how much penalty 1 unit of straw generates
-    float toxicity_per_straw_unit <- 0.024; 
+    float toxicity_per_straw_unit <- 0.005; 
     
      // --- Parameters to control the diffuse light effect ---
-    float solar_rad_threshold <- 15.0; // Solar radiation threshold (MJ/m²) below which the sky is considered cloudy
-    float max_diffuse_bonus <- 0.9;  // Maximum RUE increase under 100% overcast conditions
+    float solar_rad_threshold <- 18.0; // Solar radiation threshold (MJ/m²) below which the sky is considered cloudy
+    float max_diffuse_bonus <- 0.32;  // Maximum RUE increase under 100% overcast conditions
         // ------------------------------------------------------
  	  
- 	float max_light_limit <- 23.7; // The absolute unbreakable ceiling (Asymptote)
+ 	float max_light_limit <- 21.5; // The absolute unbreakable ceiling (Asymptote)
     float steepness_factor <- 4.8; // Controls how fast it climbs. Lower value = steeper initial climb.
                
     // =========================================================

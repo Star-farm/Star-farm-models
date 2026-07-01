@@ -20,7 +20,10 @@ global  {
     
     string province <- DONG_THAP_OLD;
     
+    string BIO_PHYSICS <- "bio-physics";
+    string SOCIO_ENVIRONMENTAL <- "socio-environmental";
     
+    string calibration_type <- BIO_PHYSICS;
    
    map<string, list<list<float>>> historical_yields <- [
     
