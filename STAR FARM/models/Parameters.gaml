@@ -184,7 +184,17 @@ global {
     // Absolute cap of allowed yield loss due to late salinity sterility (0.25 = 25% maximum loss)
     float max_sterility_penalty <- 0.25; 
     
-    
+    // Abiotic thresholds during ripening phase
+	float wet_harvest_water_threshold <- 30.0;     // Field water depth (mm) indicating muddy/flooded conditions at harvest
+	float wet_harvest_rain_threshold <- 40.0;      // Cumulative rainfall (mm) during ripening signaling muddy soil conditions
+	float high_humidity_harvest_threshold <- 82.0; // Average relative humidity (%) during ripening signaling high fungal risk
+	float high_humidity_rain_threshold <- 20.0;    // Cumulative rainfall (mm) during ripening signaling high humidity risk
+	
+	// Economic penalty and surcharge multipliers
+	float grain_quality_discount_factor <- 0.85;   // Price discount multiplier (15% reduction) under high ripening humidity
+	float fungicide_surcharge_factor <- 1.30;      // Curative treatment cost multiplier (+30% surcharge) under high ripening humidity
+	float muddy_harvest_logistics_factor <- 1.40;  // Mechanization harvest surcharge multiplier (+40% surcharge) in flooded/muddy fields
+	    
     float degradation_rate <- 0.001; // Loss of 0.5% potential per cultivation season
     float regeneration_rate <- 0.02; // Gain of 2% per fallow/flood season
     float min_soil_health <- 0.6;   // Soil never drops below 60% of its potential

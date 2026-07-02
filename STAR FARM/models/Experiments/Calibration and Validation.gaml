@@ -71,17 +71,36 @@ global  {
 	    	}
 	    	
 	    	
+	    	string result <- "";
 	    	
-	    	
-	    	
-	    	string result <- "" + int(self)+ ","+ seed+","+ rue_efficiency_factor+ ","+pest_infection_prob+","+ pest_daily_increment 
+	    	 if (calibration_type = BIO_PHYSICS) {
+	    		result <- "" + int(self)+ ","+ seed+","+ rue_efficiency_factor+ ","+pest_infection_prob+","+ pest_daily_increment 
 	    	     +","+toxicity_per_straw_unit+ ","+  solar_rad_threshold +","+  max_diffuse_bonus   +","+ max_light_limit +","+steepness_factor
-	    		 +","+max_water_capacity +","+ lateral_leakage_coefficient +","+ water_excess_coefficient 
-  
-    
-	    		 
-	    		  ;
-	
+	    		 +","+max_water_capacity +","+ lateral_leakage_coefficient +","+ water_excess_coefficient ;
+	    		
+	    	}
+	    	else {
+	    		result <- "" + int(self) + "," + seed 
+			    + "," + daily_ch4_base 
+			    + "," + ch4_straw_multiplier 
+			    + "," + leftover_straw_decrease_coefficient 
+			    + "," + labor_land_prep_hours_manual 
+			    + "," + labor_pest_management_hours 
+			    + "," + labor_sowing_manual_hours 
+			    + "," + labor_fertilizer_manual_hours 
+			    + "," + labor_spray_manual_hours 
+			    + "," + daily_labor_water_awd 
+			    + "," + daily_labor_water_cf 
+			    + "," + labor_cost_per_hour 
+			    + "," + pumping_cost_per_mm 
+			    + "," + fertilizer_unit_price 
+			    + "," + pesticide_unit_cost 
+			    + "," + straw_market_price 
+			    + "," + muddy_harvest_logistics_factor 
+			    + "," + grain_quality_discount_factor 
+			    + "," + fungicide_surcharge_factor;
+	    	}
+	    	
 	    	result <- result + ","+ error_+fitness+"\n";
 	    	if (save_calibration_results) {
 	    		save result format: "text" to: calibration_output rewrite: false;
@@ -95,52 +114,77 @@ global  {
    	
    
 	action prepare_indicators() {
-		ask Avg_yield {
-			store_values <- true;
-			list<list<float>> data <- historical_yields[province];
-			list<float> spring_2016_2023 <- data[0];
-			list<float> autumn_2016_2023 <- data[1];
-			list<float> winter_2016_2023 <- data[2] ;
-			loop i from: 0 to: length(spring_2016_2023) -1  {
-				//conversion -> t/ha
-				observed_values_per_seasons << spring_2016_2023[i];
-				observed_values_per_seasons << autumn_2016_2023[i];
-				observed_values_per_seasons << winter_2016_2023[i];
+		if (calibration_type = BIO_PHYSICS) {
+			ask Avg_yield {
+				store_values <- true;
+				list<list<float>> data <- historical_yields[province];
+				list<float> spring_2016_2023 <- data[0];
+				list<float> autumn_2016_2023 <- data[1];
+				list<float> winter_2016_2023 <- data[2] ;
+				loop i from: 0 to: length(spring_2016_2023) -1  {
+					//conversion -> t/ha
+					observed_values_per_seasons << spring_2016_2023[i];
+					observed_values_per_seasons << autumn_2016_2023[i];
+					observed_values_per_seasons << winter_2016_2023[i];
+					
+				}
+				
+				indicators[self] <- 5.0;
 				
 			}
+			ask Avg_pesticide_applications {
+				store_values <- true;
+				observed_values_avg_seasons << 6;
+				observed_values_avg_seasons << 5.5;
+				observed_values_avg_seasons << 5;
+				indicators[self] <- 1.0;
+				non_representative_years <- [2016,2020];
+			}
 			
-			indicators[self] <- 5.0;
-			
-		}
-		ask Avg_pesticide_applications {
-			store_values <- true;
-			observed_values_avg_seasons << 6;
-			observed_values_avg_seasons << 5.5;
-			observed_values_avg_seasons << 5;
-			indicators[self] <- 1.0;
-			non_representative_years <- [2016,2020];
-		}
+			ask Avg_fertilizer_usage {
+				store_values <- true;
+				observed_values_avg_seasons << 132.0;
+				observed_values_avg_seasons << 108.0;
+				observed_values_avg_seasons << 84.0;
+				indicators[self] <- 1.0;
+				non_representative_years <- [2016,2020];
+			}
 		
-		ask Avg_fertilizer_usage {
-			store_values <- true;
-			observed_values_avg_seasons << 132.0;
-			observed_values_avg_seasons << 108.0;
-			observed_values_avg_seasons << 84.0;
-			indicators[self] <- 1.0;
-			non_representative_years <- [2016,2020];
+			ask Avg_irrigation_usage {
+				store_values <- true;
+				//conversion m3/ha -> mm/ha
+				observed_values_avg_seasons << (8186 / 10.0);
+				observed_values_avg_seasons << (5830 / 10.0);
+				observed_values_avg_seasons << (2204 / 10.0);
+				indicators[self] <- 1.0;
+				non_representative_years <- [2016,2020];
+			}
+		} else {
+			ask Avg_methane {
+				store_values <- true;
+				observed_values_avg_seasons << 275.0;
+				observed_values_avg_seasons << 375.0;
+				observed_values_avg_seasons << 700.0;
+				indicators[self] <- 1.0;
+				non_representative_years <- [2016,2020];
+			}
+			
+			ask Avg_labor_intensity {
+				store_values <- true;
+				observed_values_avg_total <- 280.0;
+				indicators[self] <- 1.0;
+				non_representative_years <- [2016,2020];
+			}
+			ask Avg_net_income {
+				store_values <- true;
+				observed_values_avg_seasons << 650.0;
+				observed_values_avg_seasons << 570.0;
+				observed_values_avg_seasons << 410.0;
+				indicators[self] <- 1.0;
+				non_representative_years <- [2016,2020];
+			}
 		}
 	
-		ask Avg_irrigation_usage {
-			store_values <- true;
-			//conversion m3/ha -> mm/ha
-			observed_values_avg_seasons << (8186 / 10.0);
-			observed_values_avg_seasons << (5830 / 10.0);
-			observed_values_avg_seasons << (2204 / 10.0);
-			indicators[self] <- 1.0;
-			non_representative_years <- [2016,2020];
-		}
-		
-		
 	
 	}
 	
@@ -172,6 +216,100 @@ experiment check_result type: batch until: end_of_sim repeat: 1 keep_seed: true 
 }   
 
  
+
+
+experiment calibration_Profit type: batch until: end_of_sim repeat: 1 keep_seed: true {
+	method genetic pop_dim: 10 crossover_prob: 0.7 mutation_prob: 0.1 improve_sol: false stochastic_sel: false
+		nb_prelim_gen: 2 max_gen: 10000  minimize: fitness  aggregation: "avr";
+	// method pso num_particles: 10 weight_inertia:0.7 weight_cognitive: 1.5 weight_social: 1.5  iter_max: 100 aggregation:"avr"  minimize: fitness  ; 
+	// ======================================================================
+// 1. METHANE EMISSIONS CALIBRATION PARAMETERS
+// ======================================================================
+parameter "Base Daily CH4 Emission (kg/ha/day)" 
+    var: daily_ch4_base min: 1.0 max: 5.0 step: 0.1;
+    
+parameter "Straw CH4 Decomposition Multiplier" 
+    var: ch4_straw_multiplier min: 0.1 max: 1.5 step: 0.05;
+    
+parameter "Undecomposed Straw Decay Rate (Daily)" 
+    var: leftover_straw_decrease_coefficient min: 0.80 max: 0.98 step: 0.01;
+
+
+// ======================================================================
+// 2. LABOR TIME-MOTION CALIBRATION PARAMETERS
+// ======================================================================
+parameter "Manual Land Prep Labor (hours/ha)" 
+    var: labor_land_prep_hours_manual min: 15.0 max: 50.0 step: 1.0;
+    
+parameter "Manual Weeding/Pest Management (hours/ha)" 
+    var: labor_pest_management_hours min: 10.0 max: 40.0 step: 1.0;
+    
+parameter "Manual Sowing Labor (hours/ha)" 
+    var: labor_sowing_manual_hours min: 5.0 max: 20.0 step: 0.5;
+    
+parameter "Manual Fertilization Labor (hours/ha/app)" 
+    var: labor_fertilizer_manual_hours min: 2.0 max: 12.0 step: 0.5;
+    
+parameter "Manual Pesticide Spraying Labor (hours/ha/app)" 
+    var: labor_spray_manual_hours min: 2.0 max: 15.0 step: 0.5;
+    
+parameter "Daily AWD Water Management Labor (hours/day)" 
+    var: daily_labor_water_awd min: 0.5 max: 3.0 step: 0.1;
+    
+parameter "Daily CF Water Management Labor (hours/day)" 
+    var: daily_labor_water_cf min: 0.1 max: 2.0 step: 0.1;
+
+
+// ======================================================================
+// 3. ECONOMIC & INCOME CALIBRATION PARAMETERS
+// ======================================================================
+parameter "Rural Labor Wage ($/hour)" 
+    var: labor_cost_per_hour min: 0.2 max: 2.5 step: 0.1;
+    
+parameter "Pumping Energy Cost ($/mm/ha)" 
+    var: pumping_cost_per_mm min: 0.1 max: 1.5 step: 0.05;
+    
+parameter "Synthetic Nitrogen Unit Cost ($/kg)" 
+    var: fertilizer_unit_price min: 0.5 max: 2.5 step: 0.05;
+    
+parameter "Pesticide Spray Unit Cost ($/app/ha)" 
+    var: pesticide_unit_cost min: 5.0 max: 30.0 step: 1.0;
+    
+parameter "Straw Farm-gate Price ($/kg)" 
+    var: straw_market_price min: 0.005 max: 0.05 step: 0.005;
+
+// Environmental Surcharges & Quality Penalties
+parameter "Muddy Harvest Logistics Surcharge Multiplier" 
+    var: muddy_harvest_logistics_factor min: 1.0 max: 2.0 step: 0.05;
+    
+parameter "Wet/Humid Grain Quality Discount" 
+    var: grain_quality_discount_factor min: 0.70 max: 1.00 step: 0.01;
+    
+parameter "High Humidity Fungicide Cost Surcharge" 
+    var: fungicide_surcharge_factor min: 1.00 max: 1.80 step: 0.05;
+	
+	init {
+		string path_result <- "Calibration/calibration_result_profit.csv";
+		calibration_output <- path_result;
+		calibration_type <- SOCIO_ENVIRONMENTAL;
+		gama.pref_parallel_simulations_all <- false;
+		gama.pref_parallel_threads <- 4;
+		mode_batch <- true;
+		save_results <- false; 
+		write_results <- false;
+		write_calibration_result <- false;     
+		save_calibration_results <- true;
+ 
+		use_weather_generator <- false;
+		innovation_diffusion_model <- NONE;
+		possible_practices <- [BAU_3S::1.0];
+   		starting_date <- date([2015,1,1]) add_days (day_start_of_year -1);
+   		ending_date <-  date([2024,1,1]);
+   		string header <- "id,seed,daily_ch4_base,ch4_straw_multiplier,leftover_straw_decrease_coefficient,labor_land_prep_hours_manual,labor_pest_management_hours,labor_sowing_manual_hours,labor_fertilizer_manual_hours,labor_spray_manual_hours,daily_labor_water_awd,daily_labor_water_cf,labor_cost_per_hour,pumping_cost_per_mm,fertilizer_unit_price,pesticide_unit_cost,straw_market_price,muddy_harvest_logistics_factor,grain_quality_discount_factor,fungicide_surcharge_factor,error_methane,error_labor,error_income,fitness\n";
+   		save header format: "text" to: path_result rewrite: true; 
+	}
+}
+
 
 experiment calibration_ type: batch until: end_of_sim repeat: 1 keep_seed: true {
 	method genetic pop_dim: 10 crossover_prob: 0.7 mutation_prob: 0.1 improve_sol: false stochastic_sel: false

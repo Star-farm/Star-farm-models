@@ -414,6 +414,14 @@ species lua_mdModel parent: Plant_growth_model {
 
 	   		c.biomass <- c.biomass + daily_growth;
 	        
+	       if (c.growth_stage > 0.75) {
+                c.concerned_plot.sum_tmin_ripening <-  c.concerned_plot.sum_tmin_ripening + the_weather.t_min;
+                 c.concerned_plot.sum_humidity_ripening <-  c.concerned_plot.sum_humidity_ripening + the_weather.humidity;
+                 c.concerned_plot.sum_rain_ripening <-  c.concerned_plot.sum_rain_ripening + the_weather.rain;
+                 c.concerned_plot.days_ripening <-  c.concerned_plot.days_ripening + 1;
+            }
+ 
+
 	       
             
 	   		 if (c.concerned_plot.local_salinity > c.salt_threshold_val ) {

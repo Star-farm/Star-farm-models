@@ -217,6 +217,14 @@ species Plot {
 	float trigger_threshold;
 	float actual_sold_yield;
 	
+	// Variables for dynamic climate-driven Harvest Index and Economics
+    float sum_tmin_ripening <- 0.0;
+    float sum_humidity_ripening <- 0.0;
+    float sum_rain_ripening <- 0.0;
+    int days_ripening <- 0;
+    
+    bool is_high_humidity;
+	
 	
 	/**
 	 * Reflex: sowing

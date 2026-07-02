@@ -130,7 +130,11 @@ species Market {
 		}
 		
 		ask Plot { 
+		
 			float rice_rev <- (actual_sold_yield * 1000) * prices[last_variety] ;
+			if (is_high_humidity) {
+        		rice_rev <- rice_rev * grain_quality_discount_factor; 
+   		 	}
       		the_farmer.revenue <- the_farmer.revenue + rice_rev ;
 		}
 		ask Farmer {
