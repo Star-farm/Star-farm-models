@@ -24,9 +24,15 @@ from mappo_agent import MAPPOAgent
 from eval_per_farmer import run_eval, load_config
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-POLICIES = [("Profit", "saved_models_mappo3_peragent", "#08519c"),
-            ("Pollution", "saved_models_mappo3_pollution", "#31a354"),
-            ("Balanced", "saved_models_mappo3_balanced", "#e6550d")]
+# (label, dir, color, checkpoint). The best_ checkpoint is selected by greedy PROFIT, which
+# is only meaningful for the Profit policy; objective-trained policies (pollution/balanced)
+# use their FINAL checkpoint (converged under their own objective, not profit-cherry-picked).
+POLICIES = [("Profit", "saved_models_mappo3_peragent", "#08519c", "best_starfarm_ippo.pth"),
+            ("Bal-20k", "saved_models_mappo3_balanced", "#fdae6b", "starfarm_ippo.pth"),
+            ("Bal-100k", "saved_models_mappo3_balanced_l100k", "#e6550d", "starfarm_ippo.pth"),
+            ("Bal-200k", "saved_models_mappo3_balanced_l200k", "#a63603", "starfarm_ippo.pth"),
+            ("Bal-400k", "saved_models_mappo3_balanced_l400k", "#7a0177", "starfarm_ippo.pth"),
+            ("Pollution", "saved_models_mappo3_pollution", "#31a354", "starfarm_ippo.pth")]
 
 cfg = load_config(os.path.join(HERE, "config_mappo3_peragent.yaml"))
 g, t = cfg["gama"], cfg["training"]
@@ -41,8 +47,8 @@ n = len(order)
 sequential = bool(t.get("sequential_decisions", True))
 
 rows, details = [], []
-for label, d, _c in POLICIES:
-    ckpt = os.path.join(HERE, d, "best_starfarm_ippo.pth")
+for label, d, _c, ckpt_name in POLICIES:
+    ckpt = os.path.join(HERE, d, ckpt_name)
     ckpt_n = int(torch.load(ckpt, map_location="cpu", weights_only=False).get("n_agents", n))
     agent = MAPPOAgent(obs_dim=int(np.prod(env.observation_space(order[0]).shape)),
                        act_dim=int(np.prod(env.action_space(order[0]).shape)), n_agents=ckpt_n,
@@ -99,10 +105,10 @@ a.invert_yaxis()
 a = ax[0, 1]
 cats = ["premium", "AWD", "IPM", "durable", "3 sais."]
 cols = ["pct_premium", "pct_AWD", "pct_IPM", "pct_durable", "pct_3seasons"]
-x = np.arange(len(cats)); w = 0.26
-for i, (label, _d, col) in enumerate(POLICIES):
+x = np.arange(len(cats)); w = 0.8 / len(POLICIES)
+for i, (label, _d, col, _ck) in enumerate(POLICIES):
     vals = comp.loc[comp.policy == label, cols].iloc[0].values
-    a.bar(x + (i - 1) * w, vals, w, color=col, label=label)
+    a.bar(x + (i - (len(POLICIES) - 1) / 2) * w, vals, w, color=col, label=label)
 a.set_xticks(x); a.set_xticklabels(cats, fontsize=9)
 a.set_title("2. Mix d'actions moyen (% des années)"); a.set_ylabel("%"); a.legend(fontsize=8); a.grid(axis="y", alpha=0.3)
 
@@ -120,7 +126,7 @@ a.set_title("3. Profit et pollution relatifs (Profit = 100%)"); a.set_ylabel("%"
 
 # 4. greedy-profit learning curves
 a = ax[1, 1]
-for label, d, col in POLICIES:
+for label, d, col, _ck in POLICIES:
     p = os.path.join(HERE, d, "eval_returns.json")
     if os.path.exists(p):
         ev = json.load(open(p))
