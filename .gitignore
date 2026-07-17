@@ -17,6 +17,9 @@ STAR FARM/rl/**/episode_rewards.json
 # stray smoke/duplicate configs (config.yaml is the canonical one)
 STAR FARM/rl/config_*.yaml
 
+# ---- External libraries checked out inside the repo (never modified here) ----
+Gama-petz/
+
 # ---- GAMA / Eclipse IDE workspace junk ----
 .gama_application_workspace
 .built_in_models_*
