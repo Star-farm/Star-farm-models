@@ -11,8 +11,10 @@ import "../Global.gaml"
 
 
 global  {
-	int start_year <- 2025;
+	int start_year <- 2026;
     int end_year <- 2050;
+     string province <- DONG_THAP_OLD;
+   
     string OPTIMISTIC <- "Optimistic" ; 
     string BASELINE <- "Baseline" ;
     string PESSIMISTIC <- "Pessimistic";
@@ -27,20 +29,20 @@ global  {
 	action init_action() {
 		switch weather_scenario {
 			match OPTIMISTIC {
-				do generate_scenario(OPTIMISTIC,start_year, end_year, 0.5, 1.0, 1.2, 0.0,0,0);
+				// el_nino_salinity_modifier <- 1.5; // Minor salinity increase
+				do generate_scenario(OPTIMISTIC,start_year, end_year, 0.5, 1.0, 1.2, 0.0,0,0,prob_el_nino,prob_la_nina,el_nino_temp_offset,el_nino_rain_modifier);
 			}
-			match BASELINE {
-				do generate_scenario(BASELINE,start_year, end_year,1.2, 2.5, 1.4, 0.03,15,10);
-			}
+			
 			match PESSIMISTIC{
-				do generate_scenario(PESSIMISTIC,start_year, end_year, 2.5, 4.5, 1.6, 0.06,30,20);
+		
+              	do generate_scenario(PESSIMISTIC,start_year, end_year, 2.5, 4.5, 1.6, 0.06,30,20,0.35,0.15,0.5,2.0);
 			}
 		} 
 		
 		switch market_scenario {
 			match STANDARD {
 				create Market { 
-           			market_id <- "Standard";
+					market_id <- "Standard";
             		// Setup: We leave specific trends at 0.0 (neutral)
             		// We set high correlation (0.8) with the global economy
             		corr_water <- 0.8; trend_water <- 0.0;
@@ -50,6 +52,7 @@ global  {
 			}
 			match RESOURCE_CRISIS {
 				create Market {
+					
            			market_id <- "Resource-Crisis";
            			
 		            // WATER: Becomes expensive (+5% per year ON TOP of inflation) and uncorrelated (0.2)
@@ -61,9 +64,7 @@ global  {
 		            corr_fertilizer <- 0.5;
 		            trend_fertilizer <- 0.04;
 		
-		            // MECHANIZATION: Becomes cheaper (technical progress / efficiency)
-		            corr_mech <- 0.5;
-		            trend_mech <- -0.01;
+		            
 		            
 		            the_market <- self;
         		}
@@ -79,10 +80,10 @@ global  {
 
 experiment test_strategy type: batch until: end_of_sim repeat: 1 keep_seed: true {
 	method exploration 
-	with: ([["possible_practices"::[BAU_3S_sust::1.0], "weather_scenario"::PESSIMISTIC,	"market_scenario"::STANDARD]]);
+	with: ([["possible_practices"::[BAU_3S_AWD::1.0], "weather_scenario"::PESSIMISTIC,	"market_scenario"::STANDARD]]);
 	
 	
-	parameter possible_practices var: possible_practices <- [BAU_3S_sust::1.0] among:[[BAU_3S_sust::1.0]];
+	parameter possible_practices var: possible_practices <- [BAU_3S_AWD::1.0] among:[[BAU_3S_AWD::1.0]];
 	parameter "weather scenario" var: weather_scenario  ;
 	
 	parameter "market scenario" var: market_scenario   ;
@@ -95,16 +96,16 @@ experiment test_strategy type: batch until: end_of_sim repeat: 1 keep_seed: true
 		
 		write_results <- true;
 		day_start_of_year <- 300;
-		starting_date <- date([2025,1,1]) add_days (day_start_of_year -1);
+		starting_date <- date([2027,1,1]) add_days (day_start_of_year -1);
 		use_weather_generator <- true;	
 		use_dynamic_market <- true;
 		
 	}
-}
+} 
 
 experiment explore_strategies type: batch until: end_of_sim repeat: 20 keep_seed: true {
 	//method exploration;
-	parameter possible_practices var: possible_practices <- [BAU_3S::1.0] among:[[OMRH:: 1.0],[BAU_3S::1.0], [BAU_3S_sust::1.0],[BAU_2S::1.0]];
+	parameter possible_practices var: possible_practices <- [BAU_3S::1.0] among:[[BAU_3S:: 1.0],[OMRH::1.0],[BAU_3S_AWD::1.0],[BAU_2S::1.0]];
 	parameter "weather scenario" var: weather_scenario  ;
 	 
 	parameter "market scenario" var: market_scenario   ;
@@ -113,11 +114,11 @@ experiment explore_strategies type: batch until: end_of_sim repeat: 20 keep_seed
 		mode_batch <- true;
 		save_results <- true; 
 		gama.pref_parallel_simulations_all <- false;
-		gama.pref_parallel_threads <- 10;
+		gama.pref_parallel_threads <- 20;
 		
 		write_results <- false;
 		day_start_of_year <- 300;
-		starting_date <- date([2025,1,1]) add_days (day_start_of_year -1);
+		starting_date <- date([2026,1,1]) add_days (day_start_of_year -1);
 		use_weather_generator <- true;	
 		use_dynamic_market <- true;
 		

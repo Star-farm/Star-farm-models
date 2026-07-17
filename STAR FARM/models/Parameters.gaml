@@ -77,10 +77,10 @@ global {
     // =========================================================
     // 2. ECONOMIC PARAMETERS (Prices and Costs)
     // =========================================================
-    float straw_market_price <- 0.02;      // Selling price of rice straw ($/kg)
-    float pumping_cost_per_mm <- 0.5;      // Cost of electricity/fuel for pumping ($/mm/ha)
-    float fertilizer_unit_price <- 1.3;    // Cost of chemical nitrogen fertilizer ($/kg)
-    float pesticide_unit_cost <- 15.0;    // Cost of one pesticide application ($/spray/ha)
+    float straw_market_price <- 0.01;      // Selling price of rice straw ($/kg)
+    float pumping_cost_per_mm <- 0.3;      // Cost of electricity/fuel for pumping ($/mm/ha)
+    float fertilizer_unit_price <- 0.8;    // Cost of chemical nitrogen fertilizer ($/kg)
+    float pesticide_unit_cost <- 8.0;    // Cost of one pesticide application ($/spray/ha)
 
     // =========================================================
     // 3. ENVIRONMENTAL & CLIMATE PARAMETERS
@@ -91,12 +91,12 @@ global {
     float pollution_decay_rate <- 0.9;      // Daily pollution retention (10% natural degradation/day)
     float pollution_diffusion_prop <- 0.1;  // Amount of pollution shared with neighboring cells
     float salinity_diffusion_prop <- 0.1;   // Amount of salt shared with neighboring cells
-    float max_geographic_salinity <- 5.0;   // Maximum salinity at the end of the delta gradient (g/L)
+  //  float max_geographic_salinity <- 5.0;   // Maximum salinity at the end of the delta gradient (g/L)
     float water_extraction_salt_impact <- 0.00002; // Impact of water pumping on salt intrusion
 	float max_pumping_salinity <- 4.0; // Salinity threshold (g/L) above which the farmer refuses to pump water to avoid burning the rice crop
     float drought_water_scarcity_threshold <- 5.0; // If cumulative rainfall over 7 days is < 5 mm, water becomes scarce in the canals
   	
-  	float protection_coefficient <- 0.5;
+  	float protection_coefficient <- 0.7;
   	
   // --- Water Availability & Rain Memory Logic ---
     float max_water_capacity <- 79.0; //in mm
@@ -113,13 +113,13 @@ global {
     // 4. BIOLOGICAL & CROP MANAGEMENT PARAMETERS
     // =========================================================
     float rue_efficiency_factor <- 0.68; // Correction factor to adjust theoretical RUE to field conditions (0.0 to 1.0)
-    float daily_water_loss_mm <- 10.0;     // Sum of evapotranspiration and deep percolation (mm/day)
+    float daily_water_loss_mm <- 9.5;     // Sum of evapotranspiration and deep percolation (mm/day)
   	float straw_burn_emission_factor <- 0.0;// 1460.0; // kg CO2-eq emitted per ton of burned straw
    	
   
-    float daily_ch4_base <- 2.6;   // Base daily emission for a normal flooded field (kg CH4/ha/day). Simulates root exudates and native soil carbon respiration      
-    float ch4_straw_multiplier <- 0.9;// Extra daily CH4 emitted per kg of fresh straw decomposing
-    float leftover_straw_decrease_coefficient <- 0.9;
+    float daily_ch4_base -> 2.9;   // Base daily emission for a normal flooded field (kg CH4/ha/day). Simulates root exudates and native soil carbon respiration      
+    float ch4_straw_multiplier <-  1.6;// Extra daily CH4 emitted per kg of fresh straw decomposing
+    float leftover_straw_decrease_coefficient <- 0.89;
    	float minimum_water_level_for_ch4 <- 10.0;
     float biomass_to_leftover_coeff <- 0.5;
    	// Seeding
@@ -172,14 +172,14 @@ global {
     float harvest_moisture_adjust <- 0.86; // Adjustment for 14% commercial moisture content
 
 	float drought_growth_reduction_factor <- 0.5; // Growth multiplier during drought stress (0.5 = 50% reduction)
-    float salinity_sensitivity_slope <- 0.3;      // Yield reduction rate per unit of salinity above tolerance (e.g., 0.2 = 20% loss per g/L)
+    float salinity_sensitivity_slope <- 0.1;      // Yield reduction rate per unit of salinity above tolerance (e.g., 0.2 = 20% loss per g/L)
     
     // --- SALINITY-INDUCED STERILITY PARAMETERS ---
     // Cumulative salt stress threshold above which sterile grains start to form
-    float salinity_sterility_threshold <- 5.0; 
+    float salinity_sterility_threshold <- 2.7; 
     
     // Sterility/yield penalty rate per unit of cumulative salt stress exceeding the threshold (0.02 = 2% loss)
-    float sterility_penalty_rate <- 0.02; 
+    float sterility_penalty_rate <- 0.095; 
     
     // Absolute cap of allowed yield loss due to late salinity sterility (0.25 = 25% maximum loss)
     float max_sterility_penalty <- 0.25; 
@@ -189,11 +189,14 @@ global {
 	float wet_harvest_rain_threshold <- 40.0;      // Cumulative rainfall (mm) during ripening signaling muddy soil conditions
 	float high_humidity_harvest_threshold <- 82.0; // Average relative humidity (%) during ripening signaling high fungal risk
 	float high_humidity_rain_threshold <- 20.0;    // Cumulative rainfall (mm) during ripening signaling high humidity risk
+
+
+
 	
 	// Economic penalty and surcharge multipliers
-	float grain_quality_discount_factor <- 0.85;   // Price discount multiplier (15% reduction) under high ripening humidity
-	float fungicide_surcharge_factor <- 1.30;      // Curative treatment cost multiplier (+30% surcharge) under high ripening humidity
-	float muddy_harvest_logistics_factor <- 1.40;  // Mechanization harvest surcharge multiplier (+40% surcharge) in flooded/muddy fields
+	float grain_quality_discount_factor <- 0.99;   // Price discount multiplier (15% reduction) under high ripening humidity
+	float fungicide_surcharge_factor <- 1.40;      // Curative treatment cost multiplier (+30% surcharge) under high ripening humidity
+	float muddy_harvest_logistics_factor <- 1.3;  // Mechanization harvest surcharge multiplier (+40% surcharge) in flooded/muddy fields
 	    
     float degradation_rate <- 0.001; // Loss of 0.5% potential per cultivation season
     float regeneration_rate <- 0.02; // Gain of 2% per fallow/flood season
@@ -203,7 +206,7 @@ global {
   // Number of days required for the soil to fully decompose the straw safely
     float safe_rest_period <- 20.0; 
     // Defines how much penalty 1 unit of straw generates
-    float toxicity_per_straw_unit <- 0.005; 
+    float toxicity_per_straw_unit <- 0.0; 
     
      // --- Parameters to control the diffuse light effect ---
     float solar_rad_threshold <- 18.0; // Solar radiation threshold (MJ/m²) below which the sky is considered cloudy
@@ -238,7 +241,7 @@ global {
    // =========================================================
     // 6. SOCIO-ECONOMIC PARAMETERS (Labor & Mechanization)
     // =========================================================
-    float labor_cost_per_hour <- 0.4;//2.5; // Labor cost ($/h) - Rural Vietnam average
+    float labor_cost_per_hour <-2.0; // Labor cost ($/h) - Rural Vietnam average
    	float harvest_loss_rate <- 0.09;    // 15% loss to rats, lodging, and transport drop
    
     // =========================================================
@@ -246,14 +249,14 @@ global {
     // =========================================================
     
     // Fixed startup cost (Laser Leveling, Smart Sensors) - This is a heavy investment
-    float mech_cost_sust_fixed <- 180.0; // $/ha (Increased to be realistic)
-    float mech_cost_bau_fixed <- 60.0;  // $/ha (Just basic tillage)
+    float mech_cost_sust_fixed <- 150.0; // $/ha (Increased to be realistic)
+    float mech_cost_bau_fixed <- 30.0;  // $/ha (Just basic tillage)
 
     // Variable cost: DRONE SPRAY SERVICE
-    // This is expensive: ~18-20$ per hectare per flight
-    float cost_service_drone_spray <- 20.0; 
+    // This is expensive: ~15$ per hectare per flight
+    float cost_service_drone_spray <- 15.0; 
     
-    // Variable cost: MECHANICAL SOWING (Drum Seeder / Machine)
+    // Variable cost: MECHANICAL SOWING (Drum Seeder / Machine) 
     float cost_service_machine_sowing <- 40.0; // $/ha
    
    // =========================================================
@@ -261,18 +264,18 @@ global {
     // =========================================================
     
     // Land preparation: repairing bunds (diguettes), clearing canals, leveling mud before sowing
-    float labor_land_prep_hours_manual <- 32.0; // ~4 days of hard work per ha
-    float labor_land_prep_hours_meca <- 8.0; // ~1 day of hard work per ha
+    float labor_land_prep_hours_manual <- 15.0; // ~2 days of hard work per ha
+    float labor_land_prep_hours_meca <- 7.0; // ~1 day of hard work per ha
    
     // Manual field maintenance: weeding by hand, picking golden apple snails, rat catching
-    float labor_pest_management_hours <- 22.0; // ~3 days spread over the season
+    float labor_pest_management_hours <- 14.0; // ~3 days spread over the season
     float labor_IMP_pest_management_hours <- 34.0; // IPM -> require more time
      
     // --- SOWING ---
  	//  include seed soaking, incubation (24-48h process), transport, and broadcasting
-    float labor_sowing_manual_hours <- 12.0; 
+    float labor_sowing_manual_hours <- 5.5; 
     // Drone/Machine: fast, but still requires bringing seeds to the field and supervision
-    float labor_sowing_machine_hours <- 2.0;
+    float labor_sowing_machine_hours <- 1.0;
 
     // --- FERTILIZER ---
     // Increased: Includes carrying heavy 50kg sacks across narrow muddy bunds, mixing, and spreading
@@ -285,13 +288,13 @@ global {
    
      // --- Labor Hours (Time spent per day) ---
    // Farmers walk the field daily to check for leaks, crab holes, and run pumps.
-    // AWD requires precise tube reading, opening/closing valves, and synchronized pumping.
-    float daily_labor_water_awd <- 1.5; // 1h30 per day for 1ha
-    float daily_labor_water_cf <- 1.0;  // 1h00 per day for 1ha (standard daily patrol)
+    // AWD requires precise tube reading, opening/closing valves, and synchronized pumping but based on IOT.
+    float daily_labor_water_awd <- 1.5; //per day for 1ha
+    float daily_labor_water_cf <- 1.5;  // per day for 1ha (standard daily patrol)
     
    // include mixing toxic chemicals, washing equipment, and walking in deep mud
-    float labor_spray_manual_hours <- 8.0; // per application
-    float labor_spray_drone_hours <- 1.0;  // Calling the service provider and watching
+    float labor_spray_manual_hours <- 2.5; // per application
+    float labor_spray_drone_hours <- 0.5;  // Calling the service provider and watching
 
     
 }

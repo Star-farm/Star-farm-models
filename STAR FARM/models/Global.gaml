@@ -252,7 +252,7 @@ global {
 	                write "\n>>> " + cat + " <<<";
 	                loop ind over: by_cat at cat {
 	                    write "   * " + ind.legend + ": " + (ind.value with_precision ind.float_precision) + " " + ind.unit;
-	                }
+	                } 
 	            }
 	            write "\n================================================================";
 	        }

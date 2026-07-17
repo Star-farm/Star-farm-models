@@ -34,13 +34,12 @@ global {
     // DONG THAP: SOLAR RADIATION DISTRIBUTIONS (Mean and Standard Deviation)
     // ========================================================================
     // Jours SECS (Dry days)
-    list<float> dry_solar_mean <- [215.19, 238.63, 258.14, 274.12, 258.53, 228.17, 216.89, 228.99, 216.22, 212.94, 194.92, 209.64];
-    list<float> dry_solar_std  <- [34.78, 27.78, 23.66, 11.73, 16.25, 36.67, 55.84, 32.56, 30.52, 31.25, 52.29, 25.20];
-
-    // Jours PLUVIEUX (Wet days)
-    list<float> wet_solar_mean <- [190.18, 217.76, 236.70, 237.30, 214.41, 204.20, 192.09, 197.35, 173.58, 172.92, 176.43, 180.86];
-    list<float> wet_solar_std  <- [42.13, 19.24, 22.92, 35.62, 43.14, 45.01, 47.57, 43.27, 45.71, 50.34, 48.09, 32.64];
-    
+  	list<float> dry_solar_mean <- [208.2, 236.1, 252.4, 255.8, 226.4, 205.1, 192.3, 204.6, 184.2, 178.9, 183.5, 191.0];
+	list<float> dry_solar_std  <- [34.78, 27.78, 23.66, 11.73, 16.25, 36.67, 55.84, 32.56, 30.52, 31.25, 52.29, 25.20];
+	
+	// Jours PLUVIEUX (Wet days) 
+	list<float> wet_solar_mean <- [182.4, 210.2, 228.1, 225.4, 198.2, 189.5, 176.4, 181.2, 162.0, 160.5, 165.1, 171.4];
+	list<float> wet_solar_std  <- [42.13, 19.24, 22.92, 35.62, 43.14, 45.01, 47.57, 43.27, 45.71, 50.34, 48.09, 32.64];
     
     // ========================================================================
     // DONG THAP: HUMIDITY DISTRIBUTIONS (Mean and Standard Deviation in %)
@@ -66,6 +65,9 @@ global {
     int salt_start_doy <- 60;
     int salt_end_doy   <- 120;
     
+    float decay_duration <- 20.0;
+    
+    float climb_duration <- 30.0;
    
 	 action init_weather_data() {
 		if (the_weather = nil or not use_weather_generator) {
@@ -78,15 +80,42 @@ global {
 		}
 	}
 	
-	bool is_elNino (date d) {
+	// ==========================================
+    // --- ENSO DYNAMICS (El Niño / La Niña)
+    // ==========================================
+    int enso_state <- 0; // -1 = La Niña, 0 = Neutral, 1 = El Niño
+    
+    // Default Probabilities (Historical Baseline)
+    float prob_el_nino <- 0.25;
+    float prob_la_nina <- 0.25;
+    
+    // Intensity Modifiers (Adjustable per scenario)
+    float el_nino_rain_modifier <- 0.70; // -30% rainfall during El Nino
+    float el_nino_temp_offset <- 1.0;    // +1.0°C during El Nino
+  //  float el_nino_salinity_modifier <- 1.5; // +50% strength for saline intrusion
+    
+    float la_nina_rain_modifier <- 1.20; // +20% rainfall during La Nina
+    float la_nina_temp_offset <- -0.5;   // -0.5°C during La Nina
+    //float la_nina_salinity_modifier <- 0.8; // Salinity pushed back by high river flow
+	
+	int is_elNino (date d, float prob_el_nino_, float prob_la_nina_) {
 		loop el over: elNino {
 			bool is_el <- d between (el[0],el[1]);
-			if is_el {return true;}
+			if is_el {return 1;}
 		}
-		return false;
+		 float rnd_val <- rnd(1.0);
+            if (rnd_val < prob_el_nino_) {
+                enso_state <- 1;
+            } else if (rnd_val < (prob_el_nino_ + prob_la_nina_)) {
+                enso_state <- -1;
+            } else {
+                enso_state <- 0;
+            }
 	}
 	
-	action generate_scenario(string scen_name, int start_year, int end_year, float temp_rise_total, float salt_max_intrusion, float rain_intensity_max, float typhoon_probability_max,  int salt_start_doy_coeff, int salt_end_doy_coeff) {
+	action generate_scenario(string scen_name, int start_year, int end_year, float temp_rise_total, float salt_max_intrusion, float rain_intensity_max, float typhoon_probability_max,  int salt_start_doy_coeff, int salt_end_doy_coeff,
+		float prob_el_nino_target, float prob_la_nina_target, float el_nino_temp_offset_target, float el_nino_rain_modifier_target
+	) {
         
         weather_id <- scen_name;
         create Weather  {
@@ -108,6 +137,11 @@ global {
         loop year from: start_year to: end_year {
             
             float progress <- (year - start_year) / (end_year - start_year);
+            float prob_el_nino_ <- prob_el_nino + (prob_el_nino_target - prob_el_nino)*progress;
+            float prob_la_nina_ <- prob_la_nina + (prob_la_nina_target - prob_la_nina)*progress;
+            float el_nino_temp_offset_ <- el_nino_temp_offset + (el_nino_temp_offset_target - el_nino_temp_offset)*progress;
+           // float el_nino_salinity_modifier_ <- el_nino_salinity_modifier + (el_nino_salinity_modifier_target - el_nino_salinity_modifier)*progress;
+            float el_nino_rain_modifier_ <- el_nino_rain_modifier + (el_nino_rain_modifier_target - el_nino_rain_modifier) *progress;
             float current_warming <- temp_rise_total * progress;
             
             // The total risk for the current year (Today + future aggravation)
@@ -224,14 +258,25 @@ global {
                 // ----------------------------------------------------------------
                 // 6. SALINITY
                 // ----------------------------------------------------------------
+                float salinity <- base_salinity + current_salt_risk * compute_salinity_factor(doy, (salt_start_doy - int(salt_start_doy_coeff * progress)) ,(salt_end_doy + int(salt_end_doy_coeff * progress)), enso_state =1 );
                 
-                
-                float salinity <- base_salinity + current_salt_risk * compute_salinity_factor(doy,(salt_start_doy - int(salt_start_doy_coeff * progress)) ,(salt_end_doy + int(salt_end_doy_coeff * progress)), rain_amount, false );
                /*  if (doy > (salt_start_doy - int(salt_start_doy_coeff * progress)) and doy < (salt_end_doy + int(salt_end_doy_coeff * progress))) {
                     float daily_salt <- abs(gauss(current_salt_risk, 0.5));
                     if (daily_salt > salinity) { salinity <- daily_salt; }
                 }*/
                 
+                
+                
+                if (enso_state = 1) { // El Niño Mode
+			        rain_amount <- rain_amount * el_nino_rain_modifier_;
+			        t_max <- t_max + el_nino_temp_offset_;
+			        t_min <- t_min + el_nino_temp_offset_;
+        
+    			} else if (enso_state = -1) { // La Niña Mode
+			        rain_amount <- rain_amount * la_nina_rain_modifier;
+			        t_max <- t_max + la_nina_temp_offset;
+			        t_min <- t_min + la_nina_temp_offset;
+				}
                 
                 
                 // ----------------------------------------------------------------
@@ -241,6 +286,11 @@ global {
                 rain_amount <- rain_amount with_precision 2;
                 humidity <- humidity with_precision 2;
                 if (rain_amount < 0) { rain_amount <- 0.0; }
+                
+                
+                
+                
+                
                 
                 the_weather._solar_radiation[d] <- solar; 
                 the_weather._temp_min[d] <- t_min; 
@@ -254,19 +304,23 @@ global {
     }
     
    
-	float compute_salinity_factor(int current_doy, int salt_start_doy_, int salt_end_doy_, float rain_amount_, bool is_el_nino) {
+	float compute_salinity_factor(int current_doy, int salt_start_doy_, int salt_end_doy_, bool is_el_nino) {
     
 	    if (is_el_nino) {
-	    	if (current_doy >= 335 or current_doy <= 140) { 
-	            if (current_doy >= 335) {
-	                // Monte en flèche en décembre (DOY 335 à 365)
-	                return min(1.0, 0.3 + (0.7 * (current_doy - 335) / 30)); 
-	            } else if (current_doy <= 120) {
+	    	int el_nino_start <- (salt_start_doy_ + 365) - 90; 
+         	int el_nino_plateau_end <- salt_end_doy_; 
+        	int el_nino_total_end <- salt_end_doy_ + 20; 
+
+	    	
+	    	if (current_doy >= el_nino_start or current_doy <= el_nino_total_end) { 
+	            if (current_doy >= el_nino_start) {
+	                return min(1.0, 0.3 + (0.7 * (current_doy - el_nino_start) / climb_duration)); 
+	            } else if (current_doy <= el_nino_plateau_end) {
 	                // Pic absolu et plateau de janvier à fin avril
 	                return 1.0; 
-	            } else if (current_doy > 120 and current_doy <= 140) {
+	            } else if (current_doy > el_nino_plateau_end and current_doy <= el_nino_total_end) {
 	                // Redescend et disparaît en mai grâce aux premières pluies
-	                return max(0.0, 1.0 - ((current_doy - 120) / 20)); 
+	                return max(0.0, 1.0 - ((current_doy - el_nino_plateau_end) / decay_duration)); 
 	            }
 	        }
 		} else {
@@ -339,12 +393,12 @@ species Weather {
             _windspeed[d] <- float(mat[8, i]);
             _cloud_clover[d] <- float(mat[11, i]);
             _solar_radiation[d] <- float(mat[13, i]) * 1000.0;  
-            float f_ <- world.compute_salinity_factor(d.day_of_year,salt_start_doy,salt_end_doy, float(mat[7, i]), world.is_elNino(d) );
+            float f_ <- world.compute_salinity_factor(d.day_of_year,salt_start_doy,salt_end_doy, world.is_elNino(d, prob_el_nino,prob_la_nina) = 1 );
          	_salinity[d] <- base_salinity + initial_salt_peak * f_;              
            
         }
         
     }
-	
+	 
 } 
 

@@ -83,7 +83,7 @@ species Indicator virtual: true {
 	}
 	action compute_value() virtual: true;
 	
-	
+	 
 	 
 	float compute_error() {
 		float RMSE <- 0.0;

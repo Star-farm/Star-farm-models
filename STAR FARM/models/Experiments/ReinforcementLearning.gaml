@@ -14,7 +14,7 @@ import "Generic Experiment.experiment"
 
 global {
 	
-	
+	 
 	int start_year <- 2025;
     int end_year <- 2050;
     string OPTIMISTIC <- "Optimistic" ; 
@@ -31,13 +31,13 @@ global {
 	action init_action() {
 		switch weather_scenario {
 			match OPTIMISTIC {
-				do generate_scenario(OPTIMISTIC,start_year, end_year, 0.5, 1.0, 1.2, 0.0,0,0);
+				// el_nino_salinity_modifier <- 1.5; // Minor salinity increase
+				do generate_scenario(OPTIMISTIC,start_year, end_year, 0.5, 1.0, 1.2, 0.0,0,0,prob_el_nino,prob_la_nina,el_nino_temp_offset,el_nino_rain_modifier);
 			}
-			match BASELINE {
-				do generate_scenario(BASELINE,start_year, end_year,1.2, 2.5, 1.4, 0.03,15,10);
-			}
+			
 			match PESSIMISTIC{
-				do generate_scenario(PESSIMISTIC,start_year, end_year, 2.5, 4.5, 1.6, 0.06,30,20);
+		
+              	do generate_scenario(PESSIMISTIC,start_year, end_year, 2.5, 4.5, 1.6, 0.06,30,20,0.35,0.15,0.5,2.0);
 			}
 		} 
 		
