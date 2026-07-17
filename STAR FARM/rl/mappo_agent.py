@@ -185,6 +185,13 @@ class MAPPOAgent:
         t = torch.as_tensor(self._norm(obs), dtype=torch.float32, device=self.device).unsqueeze(0)
         return self.actor.dist(t).mean.squeeze(0).cpu().numpy().astype(np.float32)
 
+    @torch.no_grad()
+    def act_sample(self, obs):
+        """Stochastic action (sampled from the policy distribution) WITHOUT updating the
+        normalisation stats: evaluation-only counterpart of select_action."""
+        t = torch.as_tensor(self._norm(obs), dtype=torch.float32, device=self.device).unsqueeze(0)
+        return self.actor.dist(t).sample().squeeze(0).cpu().numpy().astype(np.float32)
+
     # ---- centralized value ----
     @torch.no_grad()
     def get_value(self, gstate):

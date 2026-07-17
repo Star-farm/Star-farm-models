@@ -91,8 +91,10 @@ def decode_action(a):
                seasons=3 if a[5] >= 0.5 else 2)
 
 
-def run_eval(env, agent, order, sequential, rng):
-    """One greedy episode. Returns per_year DataFrame + total_reward dict + sanity global."""
+def run_eval(env, agent, order, sequential, rng, stochastic=False):
+    """One evaluation episode: greedy by default, or stochastic=True to SAMPLE the policy
+    distribution. Returns per_year DataFrame + total_reward dict + sanity global."""
+    act_fn = agent.act_sample if stochastic else agent.act_greedy
     year_obs, year_act, year_rew = {}, {}, defaultdict(float)
     total_rew = {a: 0.0 for a in order}
     global_year = defaultdict(float)
@@ -109,7 +111,7 @@ def run_eval(env, agent, order, sequential, rng):
                 rng.shuffle(turn)
                 for a in turn:
                     o = env.observe_one(a)
-                    act = agent.act_greedy(o)
+                    act = act_fn(o)
                     env.inject_one(a, act)
                     cur[a] = act
                     year_obs[(year, a)] = np.asarray(o, dtype=float)
@@ -117,7 +119,7 @@ def run_eval(env, agent, order, sequential, rng):
                 env.end_decision_round()
             else:
                 for a in order:
-                    act = agent.act_greedy(obs[a])
+                    act = act_fn(obs[a])
                     cur[a] = act
                     year_obs[(year, a)] = np.asarray(obs[a], dtype=float)
                     year_act[(year, a)] = np.asarray(act, dtype=float)
