@@ -15,6 +15,8 @@ global {
 	
 	Weather the_weather;
 	
+	bool use_data <- false;
+	
 	  // ==========================================
     // --- DONG THAP CLIMATE BASELINE (2018-2023)
     // ==========================================
@@ -99,10 +101,15 @@ global {
     //float la_nina_salinity_modifier <- 0.8; // Salinity pushed back by high river flow
 	
 	int is_elNino (date d, float prob_el_nino_, float prob_la_nina_) {
-		loop el over: elNino {
-			bool is_el <- d between (el[0],el[1]);
-			if is_el {return 1;}
+		
+		if (use_data) {
+			loop el over: elNino {
+				bool is_el <- d between (el[0],el[1]);
+				if is_el {return 1;}
+			}
+			return 0;
 		}
+		
 		 float rnd_val <- rnd(1.0);
             if (rnd_val < prob_el_nino_) {
                 enso_state <- 1;
@@ -305,8 +312,7 @@ global {
     
    
 	float compute_salinity_factor(int current_doy, int salt_start_doy_, int salt_end_doy_, bool is_el_nino) {
-    
-	    if (is_el_nino) {
+    	 if (is_el_nino) {
 	    	int el_nino_start <- (salt_start_doy_ + 365) - 90; 
          	int el_nino_plateau_end <- salt_end_doy_; 
         	int el_nino_total_end <- salt_end_doy_ + 20; 
@@ -314,13 +320,13 @@ global {
 	    	
 	    	if (current_doy >= el_nino_start or current_doy <= el_nino_total_end) { 
 	            if (current_doy >= el_nino_start) {
-	                return min(1.0, 0.3 + (0.7 * (current_doy - el_nino_start) / climb_duration)); 
+	                return min(1.25, 0.55 + (0.7 * (current_doy - el_nino_start) / climb_duration)); 
 	            } else if (current_doy <= el_nino_plateau_end) {
 	                // Pic absolu et plateau de janvier à fin avril
-	                return 1.0; 
+	                return 1.25; 
 	            } else if (current_doy > el_nino_plateau_end and current_doy <= el_nino_total_end) {
 	                // Redescend et disparaît en mai grâce aux premières pluies
-	                return max(0.0, 1.0 - ((current_doy - el_nino_plateau_end) / decay_duration)); 
+	                return max(0.0, 1.25 - ((current_doy - el_nino_plateau_end) / decay_duration)); 
 	            }
 	        }
 		} else {
@@ -377,6 +383,7 @@ species Weather {
     }
      
     action load_real_data() {
+    	use_data <- true;
     	csv_file f <- csv_file(weather_file, ";", true);
      	matrix mat <- matrix(f);
         
@@ -393,6 +400,8 @@ species Weather {
             _windspeed[d] <- float(mat[8, i]);
             _cloud_clover[d] <- float(mat[11, i]);
             _solar_radiation[d] <- float(mat[13, i]) * 1000.0;  
+          //  write "" + (d.year) + "/" + d.month +"/" + d.day+" -> " + (world.is_elNino(d, prob_el_nino,prob_la_nina) = 1);
+	   
             float f_ <- world.compute_salinity_factor(d.day_of_year,salt_start_doy,salt_end_doy, world.is_elNino(d, prob_el_nino,prob_la_nina) = 1 );
          	_salinity[d] <- base_salinity + initial_salt_peak * f_;              
            

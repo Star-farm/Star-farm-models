@@ -18,7 +18,7 @@ global  {
     
     string calibration_output <- "Calibration/calibration_result.csv";
     
-    string province <- DONG_THAP_OLD;
+    string province <- BEN_TRE;
     
      string SALINITY_YIELD <- "salinity_yields";
     
@@ -27,7 +27,7 @@ global  {
     
     string AWD_IMPACT <- "awd_impact";
     
-    string calibration_type <- SOCIO_ENVIRONMENTAL;
+    string calibration_type <- SALINITY_YIELD;
    
    map<string, list<list<float>>> historical_yields <- [
     

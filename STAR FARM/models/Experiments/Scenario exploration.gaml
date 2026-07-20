@@ -7,13 +7,13 @@
 
 model Scenarioexploration
 
-import "../Global.gaml"
+import "../Global.gaml" 
 
 
 global  {
 	int start_year <- 2026;
     int end_year <- 2050;
-     string province <- DONG_THAP_OLD;
+     string province <- DONG_THAP;
    
     string OPTIMISTIC <- "Optimistic" ; 
     string BASELINE <- "Baseline" ;
