@@ -267,15 +267,16 @@ experiment calibration_awd type: batch until: end_of_sim repeat: 1 keep_seed: tr
 	
 
  
-experiment check_result type: batch until: end_of_sim repeat: 1 keep_seed: true {
+experiment check_result type: batch until: end_of_sim repeat: 20 keep_seed: true {
 	method exploration 
 	with: ( [["write_calibration_result"::true]]);
 	
 
 
 	init { 
+		output_folder <- "../../results/" + province;
 		gama.pref_parallel_simulations_all <- false;
-		gama.pref_parallel_threads <- 1; 
+		gama.pref_parallel_threads <- 20; 
 		mode_batch <- true;
 		save_results <- true; 
 		write_results <- false;

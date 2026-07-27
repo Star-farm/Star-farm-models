@@ -61,7 +61,7 @@ global {
 	list<list<date>> elNino <- [[date([2015,11]),date([2016,6])],[date([2019,11]),date([2020,6])]];
 	
 	// The peak salinity of a "normal" year today (e.g., 15.0 g/L at the coast)
-	float initial_salt_peak <-6.0; 
+	float initial_salt_peak <-6.5; 
 	 
     // Base historique : Jours 60 à 120 (Mars-Avril)
     int salt_start_doy <- 60;

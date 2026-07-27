@@ -86,10 +86,10 @@ global {
 		if file_exists(specific_parameter_file) {
 			matrix mat <- matrix(csv_file(specific_parameter_file,","));
 			loop i from: 0 to: mat.rows -1 {
-				world[mat[0,i]] <-(mat[1,i]);
+				world[string(mat[0,i])] <-(mat[1,i]);
 			}	
 		}
-	}
+	} 
 	
 	
 	// -------------------------------------------------------------------------
