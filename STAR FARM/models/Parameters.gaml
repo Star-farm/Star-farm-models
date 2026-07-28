@@ -117,7 +117,7 @@ global {
   	float straw_burn_emission_factor <- 0.0;// 1460.0; // kg CO2-eq emitted per ton of burned straw
    	
   
-    float daily_ch4_base -> 2.9;   // Base daily emission for a normal flooded field (kg CH4/ha/day). Simulates root exudates and native soil carbon respiration      
+    float daily_ch4_base <- 2.9;   // Base daily emission for a normal flooded field (kg CH4/ha/day). Simulates root exudates and native soil carbon respiration      
     float ch4_straw_multiplier <-  1.6;// Extra daily CH4 emitted per kg of fresh straw decomposing
     float leftover_straw_decrease_coefficient <- 0.89;
    	float minimum_water_level_for_ch4 <- 10.0;

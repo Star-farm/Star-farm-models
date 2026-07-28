@@ -118,6 +118,7 @@ global {
             } else {
                 enso_state <- 0;
             }
+            return enso_state;
 	}
 	
 	action generate_scenario(string scen_name, int start_year, int end_year, float temp_rise_total, float salt_max_intrusion, float rain_intensity_max, float typhoon_probability_max,  int salt_start_doy_coeff, int salt_end_doy_coeff,
