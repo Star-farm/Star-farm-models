@@ -16,8 +16,14 @@ import "Generic Experiment.experiment"
 
 
 global {
-	
-	 
+
+	// The marl experiment forces simple_spatial_data: true (simplified ~10-farm map used
+	// for training). "Dong Thap old" is the ONLY province shipping plot_shapefile-simple.shp,
+	// so with the upstream default (LONG_AN) plots_shapefile points at a missing file and
+	// envelope(plots_shapefile) aborts world creation BEFORE init runs -- silently: no agent
+	// is ever created and PetzAgent[0] then fails on the Python side.
+	string province <- DONG_THAP_OLD;
+
 	int start_year <- 2025;
     int end_year <- 2050;
     string OPTIMISTIC <- "Optimistic" ; 

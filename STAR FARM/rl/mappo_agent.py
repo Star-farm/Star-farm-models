@@ -15,6 +15,8 @@ value trajectory; every farmer's transition at time t shares that timestep's adv
 """
 from __future__ import annotations
 
+import os
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -123,6 +125,33 @@ class Critic(nn.Module):
 
     def forward(self, g):
         return self.net(g).squeeze(-1)
+
+
+class _PolicyForExport(nn.Module):
+    """Deployable view of the shared actor, used only for the ONNX export.
+
+    An ONNX graph carries weights but no Python-side state, so the running observation
+    statistics (which `_norm` applies before every forward pass) are BAKED IN here as
+    constants. The exported file is therefore self-contained: feed it RAW observations,
+    exactly what GAMA publishes, and no normalisation has to be reimplemented downstream.
+
+    Outputs the Gaussian's parameters rather than a sampled action, so the consumer picks
+    the regime: `action_mean` alone = greedy policy, mean+std = the stochastic policy used
+    by the `--stochastic` evaluations.
+    """
+
+    def __init__(self, actor: "Actor", obs_mean, obs_std):
+        super().__init__()
+        self.body = actor.body
+        self.mean_head = actor.mean
+        self.register_buffer("obs_mean", obs_mean)
+        self.register_buffer("obs_std", obs_std)
+        self.register_buffer("action_std", torch.exp(actor.log_std.detach()).clone())
+
+    def forward(self, obs):
+        h = self.body((obs - self.obs_mean) / self.obs_std)
+        mean = self.mean_head(h)
+        return mean, self.action_std.expand_as(mean)
 
 
 class MAPPOAgent:
@@ -336,6 +365,13 @@ class MAPPOAgent:
         if self.normalize_obs:
             ckpt["obs_rms"] = self.obs_rms.state_dict()
         torch.save(ckpt, path)
+        # The .pth is the RESUME state (optimizer + critic + running stats); the .onnx
+        # written alongside it is the exported policy. Never let an export problem kill a
+        # training run — the checkpoint above is already safely on disk.
+        try:
+            self.export_onnx(os.path.splitext(path)[0] + ".onnx")
+        except Exception as e:
+            print(f"[onnx] export skipped ({type(e).__name__}: {e})", flush=True)
 
     def load(self, path):
         ckpt = torch.load(path, map_location=self.device, weights_only=False)
@@ -350,3 +386,39 @@ class MAPPOAgent:
         # Older checkpoints (pre value-normalisation) don't carry ret_rms.
         if "ret_rms" in ckpt:
             self.ret_rms.load_state_dict(ckpt["ret_rms"])
+
+    def export_onnx(self, path, opset: int = 17):
+        """Export the shared actor as ONNX: raw observation -> (action_mean, action_std).
+
+        The batch axis is dynamic, so the same file drives 10 farmers (training map) or
+        748 (transfer map) — which is the whole point of the shared actor. Only the actor
+        is exported: the centralized critic exists solely for training."""
+        dev = self.device
+        if self.normalize_obs:
+            obs_mean = torch.as_tensor(self.obs_rms.mean, dtype=torch.float32, device=dev)
+            obs_std = torch.sqrt(
+                torch.as_tensor(self.obs_rms.var, dtype=torch.float32, device=dev) + 1e-8)
+        else:
+            obs_mean = torch.zeros(self.obs_dim, dtype=torch.float32, device=dev)
+            obs_std = torch.ones(self.obs_dim, dtype=torch.float32, device=dev)
+
+        # The wrapper SHARES the live actor's modules, so it must stay on the agent's
+        # device — moving it would drag the training actor along with it.
+        was_training = self.actor.training
+        self.actor.eval()
+        try:
+            policy = _PolicyForExport(self.actor, obs_mean, obs_std).eval()
+            dummy = torch.zeros(1, self.obs_dim, dtype=torch.float32, device=dev)
+            with torch.no_grad():
+                torch.onnx.export(
+                    policy, (dummy,), path,
+                    input_names=["obs"], output_names=["action_mean", "action_std"],
+                    dynamic_axes={"obs": {0: "n_agents"},
+                                  "action_mean": {0: "n_agents"},
+                                  "action_std": {0: "n_agents"}},
+                    opset_version=opset, dynamo=False,
+                )
+        finally:
+            if was_training:
+                self.actor.train()
+        return path
