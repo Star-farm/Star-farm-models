@@ -38,9 +38,9 @@ global {
 	image_file farmer_image <- image_file("../includes/Images/farmer.png");
 	
 	
+	shape_file plots_shapefile <- shape_file("../includes/" + province+ "/plot_shapefile"+(simple_spatial_data ? "_simple":"")+ ".shp");
 	
-	shape_file plots_shapefile <- simple_spatial_data ? shape_file("../includes/" + province+ "/plot_shapefile-simple.shp"):  shape_file("../includes/" + province+ "/plot_shapefile.shp");
-	grid_file vuln_map_file <- grid_file("../includes/" + province+ "/salinity_vulnerability_map.tif");
+	grid_file vuln_map_file <- grid_file("../includes/" + province+ "/salinity_vulnerability_map"+(simple_spatial_data ? "_simple":"")+ ".tif");
 	
 	bool use_weather_generator <- false;
 	string weather_id <- "Optimistic";

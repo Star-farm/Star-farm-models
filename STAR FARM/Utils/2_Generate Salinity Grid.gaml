@@ -6,13 +6,16 @@ global {
 	 
     // 1. Input files
     
-    string folder <- "Tra Vinh old";
+    string folder <- "Dong Thap";
    	shape_file bounds_shapefile <- shape_file("../includes/" + folder+ "/plot_shapefile.shp");
 	shape_file stations_shapefile <- shape_file("../includes/General data/stations.shp");
     csv_file timeseries_file <- csv_file("../includes/General data/salinity_timeseries.csv", ",",string, false);
-	string output <- "../includes/" + folder+ "/salinity_vulnerability_map.tif";
+	
+	bool simple_data_mode <- false;
+	
+	string output <- "../includes/" + folder+ "/salinity_vulnerability_map"+(simple_data_mode ? "_simple" : "")+ ".tif";
 
-  	float spatial_discretization <- 5000.0; // length of the cell size for the salinity/pollution grid (m)
+  	float spatial_discretization <- simple_data_mode ? 20000.0 : 5000.0; // length of the cell size for the salinity/pollution grid (m)
   
 
     // Define the world size based on Dong Thap extent
@@ -112,6 +115,22 @@ species Station {
         draw circle(2000) color: rgb(#red, base_salinity/50.0);
         draw name color: #black size: 15 at: location + {0, 600};
     }
+}
+
+
+experiment generate_grid_simple {
+	action _init_(){
+		create simulation(simple_data_mode: true);
+	}
+	
+	output {
+		display map {
+			grid vuln_grid border: #black ;
+			image "plots" gis: bounds_shapefile color: #blue  transparency: 0.5;
+			species Station;
+			
+		}
+	}
 }
 
 experiment generate_grid {

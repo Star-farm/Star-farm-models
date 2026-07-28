@@ -277,7 +277,7 @@ experiment ReinforcementLearning title: "Reinforcement Learning" type:gui parent
 		starting_date <- date([2025,1,1]) add_days (day_start_of_year -1);
 		use_weather_generator <- true;	
 		use_dynamic_market <- true;
-		create AbstractStarFarm_model (simple_spatial_data:true, custom_practices: true, add_market_retroaction: true);
+		create AbstractStarFarm_model (province:DONG_THAP,simple_spatial_data:true, custom_practices: true, add_market_retroaction: true);
 	}
 	
 	output {		
