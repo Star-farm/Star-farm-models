@@ -58,7 +58,7 @@ global {
     float base_salinity <- 0.1; 
     
     
-	list<list<date>> elNino <- [[date([2015,11]),date([2016,6])],[date([2019,11]),date([2020,6])]];
+	list<list<date>> elNino_elNina <- [[date([2015,11]),date([2016,6])],[date([2019,11]),date([2020,6])]];
 	
 	// The peak salinity of a "normal" year today (e.g., 15.0 g/L at the coast)
 	float initial_salt_peak <-6.5; 
@@ -100,26 +100,17 @@ global {
     float la_nina_temp_offset <- -0.5;   // -0.5°C during La Nina
     //float la_nina_salinity_modifier <- 0.8; // Salinity pushed back by high river flow
 	
-	int is_elNino (date d, float prob_el_nino_, float prob_la_nina_) {
-		
-		if (use_data) {
-			loop el over: elNino {
-				bool is_el <- d between (el[0],el[1]);
-				if is_el {return 1;}
+	bool is_elNino_elNina (date d) {
+		loop el over: elNino_elNina {
+			if (d between (el[0],el[1])) {
+				return true;
 			}
-			return 0;
+				
 		}
-		
-		 float rnd_val <- rnd(1.0);
-            if (rnd_val < prob_el_nino_) {
-                enso_state <- 1;
-            } else if (rnd_val < (prob_el_nino_ + prob_la_nina_)) {
-                enso_state <- -1;
-            } else {
-                enso_state <- 0;
-            }
-            return enso_state;
+		return false;
 	}
+		
+	
 	
 	action generate_scenario(string scen_name, int start_year, int end_year, float temp_rise_total, float salt_max_intrusion, float rain_intensity_max, float typhoon_probability_max,  int salt_start_doy_coeff, int salt_end_doy_coeff,
 		float prob_el_nino_target, float prob_la_nina_target, float el_nino_temp_offset_target, float el_nino_rain_modifier_target
@@ -141,9 +132,11 @@ global {
         float solar_offset <- 0.0;
         float wind_offset <- 0.0;
         float previous_humidity <- 75.0; // Starting baseline
-        
+        int enso_state_y <- 0;
+        bool el_ni <- false;    
         loop year from: start_year to: end_year {
-            
+        	
+           
             float progress <- (year - start_year) / (end_year - start_year);
             float prob_el_nino_ <- prob_el_nino + (prob_el_nino_target - prob_el_nino)*progress;
             float prob_la_nina_ <- prob_la_nina + (prob_la_nina_target - prob_la_nina)*progress;
@@ -151,7 +144,22 @@ global {
            // float el_nino_salinity_modifier_ <- el_nino_salinity_modifier + (el_nino_salinity_modifier_target - el_nino_salinity_modifier)*progress;
             float el_nino_rain_modifier_ <- el_nino_rain_modifier + (el_nino_rain_modifier_target - el_nino_rain_modifier) *progress;
             float current_warming <- temp_rise_total * progress;
-            
+           	
+           	if (not el_ni) {
+	           	float rnd_val <- rnd(1.0);
+	            if (rnd_val < prob_el_nino_) {
+	                enso_state_y <- 1;
+	                elNino_elNina << [date([year,11]),date([year+1,6])];
+	                el_ni <- true;
+	            } else if (rnd_val < (prob_el_nino_ + prob_la_nina_)) {
+	                enso_state_y <- -1;
+	                elNino_elNina << [date([year,11]),date([year+1,6])];
+	                el_ni <- true;
+	            }
+	         } else {
+	         	el_ni <- false;
+	         } 
+	        
             // The total risk for the current year (Today + future aggravation)
 			float current_salt_risk <- initial_salt_peak + (salt_max_intrusion * progress);
 
@@ -162,7 +170,8 @@ global {
             loop doy from: 1 to: date([year]).days_in_year {
                 
                 date d <- date([year,1,1]) add_days (doy - 1);
-                int m_idx <- d.month - 1; 
+                enso_state <-is_elNino_elNina(d) ? enso_state_y : 0;
+             	int m_idx <- d.month - 1; 
                 bool is_wet_season <- (d.month >= 5 and d.month <= 11);
                 
                 // ----------------------------------------------------------------
@@ -266,15 +275,10 @@ global {
                 // ----------------------------------------------------------------
                 // 6. SALINITY
                 // ----------------------------------------------------------------
+             
                 float salinity <- base_salinity + current_salt_risk * compute_salinity_factor(doy, (salt_start_doy - int(salt_start_doy_coeff * progress)) ,(salt_end_doy + int(salt_end_doy_coeff * progress)), enso_state =1 );
                 
-               /*  if (doy > (salt_start_doy - int(salt_start_doy_coeff * progress)) and doy < (salt_end_doy + int(salt_end_doy_coeff * progress))) {
-                    float daily_salt <- abs(gauss(current_salt_risk, 0.5));
-                    if (daily_salt > salinity) { salinity <- daily_salt; }
-                }*/
-                
-                
-                
+            
                 if (enso_state = 1) { // El Niño Mode
 			        rain_amount <- rain_amount * el_nino_rain_modifier_;
 			        t_max <- t_max + el_nino_temp_offset_;
@@ -403,7 +407,7 @@ species Weather {
             _solar_radiation[d] <- float(mat[13, i]) * 1000.0;  
           //  write "" + (d.year) + "/" + d.month +"/" + d.day+" -> " + (world.is_elNino(d, prob_el_nino,prob_la_nina) = 1);
 	   
-            float f_ <- world.compute_salinity_factor(d.day_of_year,salt_start_doy,salt_end_doy, world.is_elNino(d, prob_el_nino,prob_la_nina) = 1 );
+            float f_ <- world.compute_salinity_factor(d.day_of_year,salt_start_doy,salt_end_doy, world.is_elNino_elNina(d));
          	_salinity[d] <- base_salinity + initial_salt_peak * f_;              
            
         }
