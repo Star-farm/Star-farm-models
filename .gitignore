@@ -14,8 +14,7 @@ STAR FARM/rl/saved_models/
 STAR FARM/rl/saved_models_*/
 STAR FARM/rl/**/*.pth
 STAR FARM/rl/**/episode_rewards.json
-# stray smoke/duplicate configs (config.yaml is the canonical one)
-STAR FARM/rl/config_*.yaml
+
 
 # ---- External libraries checked out inside the repo (never modified here) ----
 Gama-petz/
