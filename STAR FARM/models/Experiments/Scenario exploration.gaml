@@ -70,7 +70,7 @@ global  {
         		}
 			}
 		}
-		ask the_market {
+		ask the_market { 
 			do generate_data(start_year,end_year);
 		}	
 	}
@@ -112,6 +112,7 @@ experiment explore_strategies type: batch until: end_of_sim repeat: 20 keep_seed
 	
 	init { 
 		mode_batch <- true;
+		save_yield_income_per_plots <- true;
 		save_results <- true; 
 		gama.pref_parallel_simulations_all <- false;
 		gama.pref_parallel_threads <- 20;

@@ -19,6 +19,8 @@ global {
 	
 	bool save_results <- false;
 	
+	bool save_yield_income_per_plots <- false;
+	
 	bool write_calibration_result <- false;     
 	
 	bool save_calibration_results <- false;

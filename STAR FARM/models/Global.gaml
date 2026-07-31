@@ -50,6 +50,7 @@ global {
 // Output file paths
     string output_file_day <- "../results/daily_data.csv";
     string output_file_season <- "../results/seasonal_data.csv";
+    string output_file_plot_yield_income <- "../results/plot_yield_data.csv";
     string output_file_year <- "../results/yearly_data.csv";
     	
     list<Plot> active_plots ;
@@ -104,11 +105,12 @@ global {
 		output_file_day <- output_folder + "/day/daily_data_"  + id_xp+".csv" ;
 		output_file_season <- output_folder + "/season/seasonal_data_"  + id_xp+".csv" ;
 		output_file_year <- output_folder + "/year/yearly_data_" + id_xp+".csv" ;
+		output_file_plot_yield_income  <- output_folder + "/season/plot_yield_data_" + id_xp+".csv" ;
 		
 		if (not file_exists(output_file_day)) { 
 			do write_header_day();
         	do write_header_season();
-        	do write_header_year();
+        	do write_header_year(); 
 		}
         
     }
@@ -132,6 +134,13 @@ global {
             loop ind over: seasonal_inds { header <- header + "," + ind.name; }
            	header <- header + "\n";
             save header to: output_file_season format: "text" rewrite: mode_batch;
+        }
+        if (save_yield_income_per_plots) {
+        	string header <- "type,id_sim,year,month,day,seed";
+        	loop i from: 0 to: length(plots_shapefile.contents) -1  { header <- header + "," + i; }
+        	header <- header + "\n";
+            save header to: output_file_plot_yield_income format: "text" rewrite: mode_batch;
+           
         }
     }
 
@@ -233,7 +242,7 @@ global {
 		active_plots <- Plot where (each.is_active);
 		active_farmers <- Farmer where (each.is_active);
 		
-        list<Indicator> seasonal_inds <- seasonal_indicators.values;
+        list<Indicator> seasonal_inds <- seasonal_indicators.values; 
         if (not empty(seasonal_inds)) {
 	        	        
 	        // 1. Calculate
@@ -265,6 +274,18 @@ global {
 	            save row to: output_file_season format: "text" rewrite: false;
 	        }
 	        seasons_str << string(current_date.year) + "_" + string(current_date.month);
+		}
+		if (save_yield_income_per_plots) {
+			string row_yield <- "yield," + int(self) + "," + current_date.year + "," + current_date.month + "," + current_date.day + "," + seed;
+	       	string row_income <- "income," + int(self) + "," + current_date.year + "," + current_date.month + "," + current_date.day + "," + seed;
+	        ask Plot {
+				row_yield <- row_yield + "," + (final_yield_ton_ha with_precision 2)	;
+				row_income <- row_income + "," + (the_farmer.profit_net	 with_precision 1);
+			}
+			row_yield <- row_yield + "\n";
+			row_income <- row_income + "\n";
+	        save row_yield to: output_file_plot_yield_income format: "text" rewrite: false;
+	        save row_income to: output_file_plot_yield_income format: "text" rewrite: false;
 		}
     }
 
