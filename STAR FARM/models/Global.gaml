@@ -38,8 +38,17 @@ global {
 	
 	bool mode_batch <- false;
    
-	bool end_of_sim <- false; 
-	
+	bool end_of_sim <- false;
+
+	// --- Reinforcement-learning hooks ---
+	// When true, yearly practice changes are driven externally (by the RL controler)
+	// and the internal innovation-diffusion logic is disabled.
+	bool rl_controlled <- false;
+	// Raised by end_of_year so an external stepper knows a full year just elapsed.
+	bool year_done <- false;
+	// Sum of all farmers' yearly profit for the year that just ended (captured before reset).
+	float last_year_global_profit <- 0.0;
+
 	bool first_year <- true;
 	
 	list<string> seasons_str;
@@ -171,16 +180,23 @@ global {
 	
 	
 	reflex end_of_year when: (Farmer first_with not(each.ended_year)) = nil{
-		do write_year_report(); 
+		do write_year_report();
 		ask Farmer {
 			ended_year <- false;
-			
+
 		}
-		do define_farmer_pratices();
+		// Capture the reward for the year that just ended BEFORE counters are reset.
+		last_year_global_profit <- Farmer sum_of (each.yearly_profit);
+		ask Farmer { last_yearly_profit <- yearly_profit; }
+		year_done <- true;
+		// Under RL control, the external controler sets practices instead of the diffusion model.
+		if (not rl_controlled) {
+			do define_farmer_pratices();
+		}
 		ask practices {do switch_to_new_year();}
 			  // 4. Reset counters (Important: do this AFTER saving)
 	    ask Farmer { yearly_profit <- 0.0; }
-		
+
 	}
 	
 	action define_farmer_pratices() {

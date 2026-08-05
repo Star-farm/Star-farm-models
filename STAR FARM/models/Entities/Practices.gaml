@@ -428,14 +428,17 @@ species CF_Irrigating_practice parent: Irrigating_practice{
 	float labor <- daily_labor_water_cf;
 	float pumping_capacity <- pumping_capacity_bau;
 	float pumping_energy_cost;
+	// Per-instance flood-depth target (mm). Defaults to the global; the RL layer tunes it
+	// per farmer (irrigation "quantity" action) to choose how deep to flood.
+	float cf_water_target <- water_target_flooded;
 	float manage_water_needed(Plot plot)  {
 		float water_needed <- 0.0;
-		
-		if (plot.water_level < water_target_flooded) { 
-			water_needed <- water_target_flooded - plot.water_level; 
+
+		if (plot.water_level < cf_water_target) {
+			water_needed <- cf_water_target - plot.water_level;
 		}
 	   	return water_needed;
-	} 
+	}
 }
 
 species AWD_Irrigating_practice parent: Irrigating_practice{
@@ -446,13 +449,16 @@ species AWD_Irrigating_practice parent: Irrigating_practice{
 	float AWD_threshold <- 0.5;   // fraction of FC triggering irrigation
     float irrigation_amount <- 40.0; // mm per event
 	float pumping_capacity <- pumping_capacity_sust;
-	
+	// Per-instance dryness trigger (mm, negative = drier). Defaults to the global; the RL
+	// layer tunes it per farmer (irrigation "quantity" action).
+	float awd_threshold_mm <- awd_pumping_threshold;
+
 	float manage_water_needed(Plot plot)  {
 		float water_needed <- 0.0;
-		if (plot.water_level <= awd_pumping_threshold) {
-			water_needed <- water_target_flooded - plot.water_level; 
+		if (plot.water_level <= awd_threshold_mm) {
+			water_needed <- water_target_flooded - plot.water_level;
 		}
-        return water_needed;  
+        return water_needed;
 	}
 }
 
