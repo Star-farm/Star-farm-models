@@ -1,0 +1,41 @@
+checkpoint:
+  dir: saved_models_mappo3_balanced
+  filename: starfarm_ippo.pth
+  resume: true
+  rewards_log: episode_rewards.json
+  save_every: 10
+gama:
+  controler_path: C:/Users/ktrou/Documents/Work & Internships/Starfarm/STAR FARM/models/Experiments/ReinforcementLearning.gaml
+  experiment_name: marl
+  ip_address: localhost
+  max_days_per_year: 2000
+  min_days_per_year: 340
+  port: 1001
+  substep_days: 122
+  year_end_margin: 3
+training:
+  algo: mappo
+  clip_eps: 0.2
+  critic_hidden_dim: 256
+  entropy_coef: 0.01
+  entropy_coef_final: 0.001
+  eval_every: 25
+  gae_lambda: 0.95
+  gamma: 0.97
+  hidden_dim: 128
+  k_epochs: 4
+  lr: 0.0003
+  minibatch_size: 64
+  normalize_obs: true
+  num_episodes: 400
+  reward_mode: balanced
+  # reward = profit_delta - balance_weight * pollution.
+  # profit/substep ~ a few hundred EUR, pollution ~0.03 -> lambda ~20000 ~ parity.
+  # Increase lambda = greener (penalise pollution more); decrease = more profit-driven.
+  balance_weight: 20000.0
+  reward_scale: 1.0e-06
+  seed: 0
+  sequential_decisions: true
+  target_kl: 0.03
+  value_coef: 0.5
+  verbose: false

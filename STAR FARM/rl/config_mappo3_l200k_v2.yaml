@@ -1,0 +1,55 @@
+# Re-entrainement de Bal-200k sur la carte d'ORIGINE (Dong Thap old simplifiee).
+#
+# But : trancher entre les deux lectures possibles du run initial. Bal-200k est l'anomalie
+# du sweep -- il ne bat pas la baseline sans IA sur sa propre carte d'entrainement, et il
+# fait moins bien que Bal-400k a toutes les echelles, donc la degradation n'est pas monotone
+# en lambda. Soit c'est un tirage malheureux, soit lambda=200k est intrinsequement mauvais.
+#
+# SEED 1 (au lieu de 0) : c'est tout l'interet du re-run. Rejouer avec la meme graine ne
+# testerait rien. Tout le reste est identique a config_mappo3_balanced_l200k.yaml.
+#
+# Dossier de checkpoints SEPARE : le run d'origine sert de reference au rapport de transfert,
+# il ne doit pas etre ecrase.
+
+checkpoint:
+  dir: saved_models_mappo3_l200k_v2
+  filename: starfarm_ippo.pth
+  resume: true
+  rewards_log: episode_rewards.json
+  save_every: 10
+
+gama:
+  controler_path: C:/Users/ktrou/Documents/Work & Internships/Starfarm/STAR FARM/models/Experiments/ReinforcementLearning.gaml
+  experiment_name: marl
+  ip_address: localhost
+  port: 1001
+  province: Dong Thap old
+  simple_spatial_data: true
+  max_days_per_year: 2000
+  min_days_per_year: 340
+  substep_days: 122
+  year_end_margin: 3
+
+training:
+  algo: mappo
+  clip_eps: 0.2
+  critic_hidden_dim: 256
+  entropy_coef: 0.01
+  entropy_coef_final: 0.001
+  eval_every: 25
+  gae_lambda: 0.95
+  gamma: 0.97
+  hidden_dim: 128
+  k_epochs: 4
+  lr: 0.0003
+  minibatch_size: 64
+  normalize_obs: true
+  num_episodes: 400
+  reward_mode: balanced
+  balance_weight: 200000.0
+  reward_scale: 1.0e-06
+  seed: 1
+  sequential_decisions: true
+  target_kl: 0.03
+  value_coef: 0.5
+  verbose: false

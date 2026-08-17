@@ -1,0 +1,15 @@
+# Binary artifacts: never apply text/EOL conversion (a CRLF rewrite corrupts them).
+*.pdf  binary
+*.xlsx binary
+*.png  binary
+*.jpg  binary
+*.pth  binary
+*.shp  binary
+*.shx  binary
+*.dbf  binary
+
+# Text files: keep LF in the repository.
+*.py   text eol=lf
+*.md   text
+*.yaml text
+*.gaml text
