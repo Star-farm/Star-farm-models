@@ -17,11 +17,13 @@ import "Generic Experiment.experiment"
 
 global {
 
-	// The marl experiment forces simple_spatial_data: true (simplified ~10-farm map used
-	// for training). "Dong Thap old" is the ONLY province shipping plot_shapefile-simple.shp,
-	// so with the upstream default (LONG_AN) plots_shapefile points at a missing file and
-	// envelope(plots_shapefile) aborts world creation BEFORE init runs -- silently: no agent
-	// is ever created and PetzAgent[0] then fails on the Python side.
+	// Map the policies were trained on. Exposed as a parameter of the marl experiment below, so
+	// evaluation can replay a trained policy on another province without editing this file.
+	//
+	// Keep the default on a province shipping BOTH plot_shapefile.shp and
+	// plot_shapefile_simple.shp: plots_shapefile feeds envelope() in Global.gaml, which is
+	// evaluated BEFORE init. A missing file aborts world creation silently -- no agent is ever
+	// created, and the failure only surfaces later as an NPE on PetzAgent[0] on the Python side.
 	string province <- DONG_THAP_OLD;
 
 	int start_year <- 2025;
@@ -626,6 +628,9 @@ species PetzAgent {
 // MARL entry point loaded by StarfarmParallelEnv over gama-server. The Starfarm simulation
 // IS the main experiment here (not a co-model), so client.step advances the clock normally.
 experiment marl type: gui {
+	// Both are set from Python at load time (gaml_experiment_parameters) so one trained policy
+	// can be evaluated across maps. The defaults reproduce the training setup.
+	parameter "Province" var: province init: DONG_THAP_OLD;
 	parameter "Simple spatial data" var: simple_spatial_data init: true;
 	parameter "Custom practices" var: custom_practices init: true;
 	parameter "Market retroaction" var: add_market_retroaction init: true;

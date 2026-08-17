@@ -198,9 +198,35 @@ def main():
     rewards_log_path = os.path.join(ckpt_dir, c["rewards_log"])
 
     print(f"Connecting to GAMA at {g['ip_address']}:{g['port']} ...")
+    # Carte d'entrainement. Les deux cles sont OPTIONNELLES : absentes, on laisse les valeurs
+    # par defaut du GAML (Dong Thap old, carte simplifiee), donc les configs existantes sont
+    # inchangees. Presentes, elles sont passees comme parametres de l'experience marl.
+    exp_params = []
+    if g.get("province") is not None:
+        exp_params.append({"type": "string", "name": "Province", "value": str(g["province"])})
+    if g.get("simple_spatial_data") is not None:
+        exp_params.append({"type": "bool", "name": "Simple spatial data",
+                           "value": str(bool(g["simple_spatial_data"])).lower()})
+
     env = StarfarmParallelEnv(
         gaml_experiment_path=g["controler_path"], gaml_experiment_name=g["experiment_name"],
+        gaml_experiment_parameters=exp_params or None,
         gama_ip_address=g["ip_address"], gama_port=g["port"])
+
+    # Relire la carte DANS la simulation. Un parametre silencieusement ignore ferait tourner
+    # 400 episodes sur la mauvaise province sans que rien ne le signale -- bien plus couteux
+    # ici qu'en evaluation, donc on echoue tout de suite.
+    got_prov = str(env.gama_client._execute_expression(env.experiment_id, "province"))
+    got_simple = bool(env.gama_client._execute_expression(env.experiment_id, "simple_spatial_data"))
+    if g.get("province") is not None and got_prov != str(g["province"]):
+        env.close()
+        raise SystemExit(f"GAMA a ignore la province : demande {g['province']!r}, obtenu {got_prov!r}")
+    if g.get("simple_spatial_data") is not None and got_simple != bool(g["simple_spatial_data"]):
+        env.close()
+        raise SystemExit(f"GAMA a ignore simple_spatial_data : demande "
+                         f"{bool(g['simple_spatial_data'])}, obtenu {got_simple}")
+    print(f"Carte: province={got_prov!r} simple_spatial_data={got_simple} "
+          f"| {len(env.possible_agents)} fermes")
     env.MIN_DAYS_PER_YEAR = int(g.get("min_days_per_year", env.MIN_DAYS_PER_YEAR))
     env.MAX_DAYS_PER_YEAR = int(g.get("max_days_per_year", env.MAX_DAYS_PER_YEAR))
     env.YEAR_END_MARGIN = int(g.get("year_end_margin", env.YEAR_END_MARGIN))
