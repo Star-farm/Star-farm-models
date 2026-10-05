@@ -11,14 +11,19 @@ import "../Global.gaml"
  
   
 global  {   
+	
+	bool sensitivity_analysis <- false;
+	string parameter_analysed;
 	 
 	 float fitness;  
+	 
+	 bool validation <- false;
      
      map<Indicator, float> indicators; 
     
     string calibration_output <- "Calibration/calibration_result.csv";
     
-    string province <- BEN_TRE;
+    string province <- DONG_THAP_OLD;
     
      string SALINITY_YIELD <- "salinity_yields";
     
@@ -28,8 +33,70 @@ global  {
     string AWD_IMPACT <- "awd_impact";
     
     string calibration_type <- SALINITY_YIELD;
+    
+   map<string,list<bool>> regroup_s <- map<string, list<bool>>([DONG_THAP_OLD::[],LONG_AN::[false,true,true],TRA_VINH::[false,true,true], BEN_TRE::[false,true,true]]);
+    
+    
+    //2022-2025
+     map<string, list<list<float>>> historical_yields_validation <- [
+    
+    // DONG THAP: High and stable yields (Freshwater control zone)
+    DONG_THAP_OLD :: [
+    // Year :  2021,  2022,  2023,  2024,2025
+    [ 7.32,  7.32,  7.33,  7.23,  7.19 ], // Spring (Win.-Spr.)
+    [ 6,41,  6,56,  6.56,  6,55,  6.54 ], // Autumn (Sum.-Aut.)
+    [ 5.77,  5.9,  6.06,  6.06,  6.22 ]  // Winter (Aut.-Win. - non fourni dans le CSV, à ajuster au besoin)
+],
+    // LONG AN: Acidic soils (Plaine des Joncs) limiting potential despite being in freshwater
+    LONG_AN:: [
+        [6.45,6.78,6.61,6.75], // Spring (Win.-Spr.)
+        [4.97,5.34,5.49,5.27]
+    ],
+
+    // TRA VINH: Coastal Zone (Vulnerable to sea-level dry-season peaks)
+    TRA_VINH:: [
+        [6.5,6.1,6.7,6.46], // Spring (Win.-Spr.)
+        [4.76,5.18,5.26,5]
+    ],
+
+    // BEN TRE: Extreme Estuary Zone (Highly impacted by dry-season saline peaks)
+    BEN_TRE:: [
+        [5,5.29,5.09,5.67], // Spring (Win.-Spr.)
+        [4.85,5.21,4.49,4.25]
+    ]
+   ];
    
-   map<string, list<list<float>>> historical_yields <- [
+     //2016-2021
+     map<string, list<list<float>>> historical_yields_calibration <- [
+    
+    // DONG THAP: High and stable yields (Freshwater control zone) 
+  DONG_THAP_OLD :: [
+    // Year :  2016,  2017,  2018,  2019,  2020
+    [ 6.80,  6.00,  6.99,  7.00,  7.24 ], // Spring (Win.-Spr.)
+    [ 6.03,  6.12,  6.21,  6.26,  6.4 ], // Autumn (Sum.-Aut.)
+    [ 5.41,  5.12,  5.57,  5.69,  5.77 ]  // Winter (Aut.-Win. - non fourni dans le CSV, à ajuster au besoin)
+],
+    
+    // LONG AN: Acidic soils (Plaine des Joncs) limiting potential despite being in freshwater
+    LONG_AN:: [
+        [6.05,5.59,6.12,6.34,6.49,6.65], // Spring (Win.-Spr.)
+        [4.75,4.57,4.95,4.76,4.93,4.99] // Autumn (Sum.-Aut.)
+       
+    ],
+
+    // TRA VINH: Coastal Zone (Vulnerable to sea-level dry-season peaks)
+    TRA_VINH:: [
+        [4.04,5.9,6.71,6.62,3.54,6.41], // Spring (Win.-Spr.)
+        [4.79,4.9,5.25,5.18,5.03,5.14]
+    ],
+
+    // BEN TRE: Extreme Estuary Zone (Highly impacted by dry-season saline peaks)
+    BEN_TRE:: [
+        [0.05,4.42,5.61,4.82,0.04,5.07], // Spring (Win.-Spr.)
+        [4.01,4.16,4.48,4.57,3.47,4.66]
+    ]
+   
+  /*  map<string, list<list<float>>> historical_yields <- [
     
     // DONG THAP: High and stable yields (Freshwater control zone)
    DONG_THAP_OLD:: [
@@ -57,7 +124,7 @@ global  {
         [2.15, 4.95, 5.10, 4.80, 3.45, 5.25, 5.35], // Spring (Win.-Spr.)
         [4.20, 4.65, 4.75, 4.70, 4.80, 4.90, 4.95], // Autumn (Sum.-Aut.)
         [ 4.10, 4.48, 4.55, 4.60, 4.70, 4.80, 4.85]  // Winter (Aut.-Win.)
-    ]
+    ]*/
 ];
 
 
@@ -126,30 +193,43 @@ global  {
    	action prepare_yield_indicator() {
    		  ask Avg_yield {
 					store_values <- true;
-					list<list<float>> data <- historical_yields[province];
+					list<list<float>> data <- validation ? historical_yields_validation[province] : historical_yields_calibration[province];
 					list<float> spring_2016_2023 <- data[0];
 					list<float> autumn_2016_2023 <- data[1];
-					list<float> winter_2016_2023 <- data[2] ;
+					list<float> winter_2016_2023;
+					regroup_season <- regroup_s[province];
+					if (length(data) > 2) {winter_2016_2023 <- data[2] ;}
 					loop i from: 0 to: length(spring_2016_2023) -1  {
 						//conversion -> t/ha
 						observed_values_per_seasons << spring_2016_2023[i];
 						observed_values_per_seasons << autumn_2016_2023[i];
-						observed_values_per_seasons << winter_2016_2023[i];
+						if (not empty(winter_2016_2023)){observed_values_per_seasons << winter_2016_2023[i];}
 						
 					}
 					
-					indicators[self] <- 5.0;
+					indicators[self] <- 1.0;
 					
 				}
    	}
    
 	action prepare_indicators() {
+		if sensitivity_analysis {
+			if parameter_analysed = "rue_efficiency_factor" {
+				output_folder <- "../../results/rue_efficiency_factor" + rue_efficiency_factor;
+			} else if parameter_analysed = "max_water_capacity" {
+				output_folder <- "../../results/max_water_capacity" + max_water_capacity;
+			}else if parameter_analysed = "salinity_sterility_threshold" {
+				output_folder <- "../../results/salinity_sterility_threshold" + salinity_sterility_threshold;
+			}
+			
+		
+		}
 		if (calibration_type=SALINITY_YIELD) {
 		  do prepare_yield_indicator();
 		} else if (calibration_type = BIO_PHYSICS) {
 			do prepare_yield_indicator();
 			ask Avg_pesticide_applications {
-				store_values <- true;
+				store_values <- true; 
 				observed_values_avg_seasons << 6;
 				observed_values_avg_seasons << 5.5;
 				observed_values_avg_seasons << 5;
@@ -174,7 +254,7 @@ global  {
 				observed_values_avg_seasons << (2204 / 10.0);
 				indicators[self] <- 1.0;
 				non_representative_years <- [2016,2020];
-			}
+			} 
 		}else  if (calibration_type=AWD_IMPACT) {
 		 
 		 	ask Avg_methane {
@@ -199,7 +279,7 @@ global  {
 			}
 		 
 		} else {
-			/*ask Avg_methane {
+			ask Avg_methane {
 				store_values <- true;
 				observed_values_avg_seasons << 275.0;
 				observed_values_avg_seasons << 375.0;
@@ -213,7 +293,7 @@ global  {
 				observed_values_avg_total <- 280.0;
 				indicators[self] <- 1.0;
 				non_representative_years <- [2016,2020];
-			}*/
+			}
 			ask Avg_net_income {
 				store_values <- true;
 				observed_values_avg_seasons << 650.0;
@@ -287,7 +367,7 @@ experiment check_result type: batch until: end_of_sim repeat: 20 keep_seed: true
 		innovation_diffusion_model <- NONE;
 		possible_practices <- [BAU_3S::1.0];
    		starting_date <- date([2015,1,1]) add_days (day_start_of_year -1);
-   		ending_date <-  date([2023,1,1]);
+   		ending_date <-  date([2025,12,31]);
 	}
 }   
 
@@ -353,20 +433,20 @@ experiment calibration_Profit type: batch until: end_of_sim repeat: 1 keep_seed:
 	// ======================================================================
 	// 1. METHANE EMISSIONS CALIBRATION PARAMETERS
 	// ======================================================================
-/* 	parameter "Base Daily CH4 Emission (kg/ha/day)" 
+ 	parameter "Base Daily CH4 Emission (kg/ha/day)" 
 	    var: daily_ch4_base min: 1.0 max: 5.0 step: 0.1;
 	    
 	parameter "Straw CH4 Decomposition Multiplier" 
-	    var: ch4_straw_multiplier min: 0.1 max: 1.5 step: 0.05;
+	    var: ch4_straw_multiplier min: 0.1 max: 2.0 step: 0.05;
 	    
 	parameter "Undecomposed Straw Decay Rate (Daily)" 
 	    var: leftover_straw_decrease_coefficient min: 0.80 max: 0.98 step: 0.01;
 	
-	*/
+	
 	// ======================================================================
 	// 2. LABOR TIME-MOTION CALIBRATION PARAMETERS
 	// ======================================================================
-	/*parameter "Manual Land Prep Labor (hours/ha)" 
+	parameter "Manual Land Prep Labor (hours/ha)" 
 	    var: labor_land_prep_hours_manual min: 15.0 max: 50.0 step: 1.0;
 	    
 	parameter "Manual Weeding/Pest Management (hours/ha)" 
@@ -386,7 +466,7 @@ experiment calibration_Profit type: batch until: end_of_sim repeat: 1 keep_seed:
 	    
 	parameter "Daily CF Water Management Labor (hours/day)" 
 	    var: daily_labor_water_cf min: 0.1 max: 2.0 step: 0.1;
-	*/
+	
 	
 	// ======================================================================
 	// 3. ECONOMIC & INCOME CALIBRATION PARAMETERS
@@ -407,14 +487,14 @@ experiment calibration_Profit type: batch until: end_of_sim repeat: 1 keep_seed:
         var: straw_market_price min: 0.005 max: 0.040 step: 0.001;
 
     // Environmental Surcharges & Quality Penalties
-    parameter "Muddy Harvest Logistics Surcharge Multiplier" 
-        var: muddy_harvest_logistics_factor min: 1.00 max: 2.00 step: 0.05;
+   // parameter "Muddy Harvest Logistics Surcharge Multiplier" 
+      //  var: muddy_harvest_logistics_factor min: 1.00 max: 2.00 step: 0.05;
         
-    parameter "Wet/Humid Grain Quality Discount" 
-        var: grain_quality_discount_factor min: 0.70 max: 1.00 step: 0.01;
+    //parameter "Wet/Humid Grain Quality Discount" 
+      //  var: grain_quality_discount_factor min: 0.70 max: 1.00 step: 0.01;
         
-    parameter "High Humidity Fungicide Cost Surcharge" 
-        var: fungicide_surcharge_factor min: 1.00 max: 1.50 step: 0.05;
+   // parameter "High Humidity Fungicide Cost Surcharge" 
+//        var: fungicide_surcharge_factor min: 1.00 max: 1.50 step: 0.05;
 		
 	init {
 		string path_result <- "Calibration/calibration_result_profit.csv";
@@ -443,21 +523,23 @@ experiment calibration_Profit type: batch until: end_of_sim repeat: 1 keep_seed:
 experiment calibration_bio_physics type: batch until: end_of_sim repeat: 1 keep_seed: true {
 	method genetic pop_dim: 10 crossover_prob: 0.7 mutation_prob: 0.1 improve_sol: false stochastic_sel: false
 		nb_prelim_gen: 2 max_gen: 10000  minimize: fitness  aggregation: "avr";
-	// method pso num_particles: 10 weight_inertia:0.7 weight_cognitive: 1.5 weight_social: 1.5  iter_max: 100 aggregation:"avr"  minimize: fitness  ; 
-	parameter rue_efficiency_factor var: rue_efficiency_factor min: 0.5 max: 0.85 step: 0.01;
 	
 	parameter pest_infection_prob var: pest_infection_prob min: 0.4 max: 1.0 step: 0.1;
 	
 	parameter pest_daily_increment var: pest_daily_increment min: 0.01 max: 0.1 step:0.01;
+
 	
+	parameter rue_efficiency_factor var: rue_efficiency_factor min: 0.6 max: 0.95 step: 0.01;
 	
-	parameter toxicity_per_straw_unit var: toxicity_per_straw_unit min: 0.0 max: 0.02 step: 0.001;
+		
+	
+	parameter toxicity_per_straw_unit var: toxicity_per_straw_unit min: 0.0 max: 0.5 step: 0.001;
 	
 	parameter solar_rad_threshold var: solar_rad_threshold min: 10.0 max: 20.0 step: 0.1;   
     parameter max_diffuse_bonus var:max_diffuse_bonus min: 0.0 max: 0.35 step: 0.01;   
      
-	parameter max_light_limit var:max_light_limit min: 18.0 max: 26.0 step: 0.1;   
-	parameter steepness_factor var:steepness_factor min: 2.0 max: 10.0 step: 0.1;   
+	parameter max_light_limit var:max_light_limit min: 15.0 max: 26.0 step: 0.1;   
+	parameter steepness_factor var:steepness_factor min: 2.0 max: 15.0 step: 0.1;   
     
     parameter max_water_capacity var: max_water_capacity min: 70.0 max: 120.0 step: 1.0 <- 74.0; //in mm
 	parameter lateral_leakage_coefficient var: lateral_leakage_coefficient min: 0.001 max: 0.1 step: 0.001 <- 0.005;
@@ -471,15 +553,93 @@ experiment calibration_bio_physics type: batch until: end_of_sim repeat: 1 keep_
 		mode_batch <- true;
 		save_results <- false; 
 		write_results <- false;
-		write_calibration_result <- false;     
+		write_calibration_result <- true;     
 		save_calibration_results <- true;
  
 		use_weather_generator <- false;
 		innovation_diffusion_model <- NONE;
 		possible_practices <- [BAU_3S::1.0];
    		starting_date <- date([2015,1,1]) add_days (day_start_of_year -1);
-   		ending_date <-  date([2024,1,1]);
+   		ending_date <-  date([2021,1,1]);
    		string header <- "id,seed,rue_efficiency_factor,pest_infection_prob,pest_daily_increment,toxicity_per_straw_unit,solar_rad_threshold,max_diffuse_bonus,max_light_limit,steepness_factor,max_water_capacity,lateral_leakage_coefficient,water_excess_coefficient,error_yield,error_pesticide,error_fertilizer,error_water,fitness\n";
    		save header format: "text" to: calibration_output rewrite: true; 
 	}
+}
+
+experiment sensitivity_analysis_OAT_RUE type: batch until: end_of_sim repeat: 20 keep_seed: true {
+    method exploration ;
+	
+    init {
+    	sensitivity_analysis <- true;
+    	parameter_analysed <- "rue_efficiency_factor";
+		gama.pref_parallel_simulations_all <- false;
+		gama.pref_parallel_threads <- 20;
+		mode_batch <- true;
+		save_results <- true; 
+		write_results <- false;
+		write_calibration_result <- false;     
+		save_calibration_results <- false;
+ 
+		use_weather_generator <- false;
+		innovation_diffusion_model <- NONE;
+		possible_practices <- [BAU_3S::1.0];
+   		starting_date <- date([2015,1,1]) add_days (day_start_of_year -1);
+   		ending_date <-  date([2025,12,31]);
+   		}
+    parameter "RUE Efficiency Factor" var: rue_efficiency_factor 
+        among: [0.7, 0.8, 0.9, 1.0];
+
+
+}
+
+
+experiment sensitivity_analysis_OAT_Soil_water type: batch until: end_of_sim repeat: 20 keep_seed: true {
+    method exploration ;
+     init {
+    	sensitivity_analysis <- true;
+    	parameter_analysed <- "max_water_capacity";
+		gama.pref_parallel_simulations_all <- false;
+		gama.pref_parallel_threads <- 20;
+		mode_batch <- true;
+		save_results <- true; 
+		write_results <- false;
+		write_calibration_result <- false;     
+		save_calibration_results <- false;
+ 
+		use_weather_generator <- false;
+		innovation_diffusion_model <- NONE;
+		possible_practices <- [BAU_3S::1.0];
+   		starting_date <- date([2015,1,1]) add_days (day_start_of_year -1);
+   		ending_date <-  date([2025,12,31]);
+   		}
+    parameter "Max Soil Water Capacity" var: max_water_capacity <- 70.0
+        among: [70.0, 80.0, 90.0, 100.0];
+
+
+}
+
+experiment sensitivity_analysis_OAT_Salinity type: batch until: end_of_sim repeat: 20 keep_seed: true {
+    method exploration ;
+	
+   init {
+    	sensitivity_analysis <- true;
+    	parameter_analysed <- "salinity_sterility_threshold";
+		gama.pref_parallel_simulations_all <- false;
+		gama.pref_parallel_threads <- 20;
+		mode_batch <- true;
+		save_results <- true; 
+		write_results <- false;
+		write_calibration_result <- false;     
+		save_calibration_results <- false;
+ 	  	province <- BEN_TRE	;
+   
+		use_weather_generator <- false;
+		innovation_diffusion_model <- NONE;
+		possible_practices <- [BAU_3S::1.0];
+   		starting_date <- date([2015,1,1]) add_days (day_start_of_year -1);
+   		ending_date <-  date([2025,12,31]);
+   		}
+    parameter "Salinity Sterility Threshold" var: salinity_sterility_threshold <- 2.1
+        among: [2.1, 2.4, 2.7, 3.0];
+   
 }

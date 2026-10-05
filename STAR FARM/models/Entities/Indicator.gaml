@@ -31,7 +31,7 @@ global {
 			Indicator ct <- Indicator(first(new_indicators));
 			
 			if(ct.is_dayly) {
-				//dayly_indicators[ct.name] <- ct;
+				dayly_indicators[ct.name] <- ct;
 			}
 			if(ct.is_seasonal) {
 				seasonal_indicators[ct.name] <- ct;
@@ -67,6 +67,7 @@ species Indicator virtual: true {
 	list<float> simulation_values;
 	list<float> observed_values_per_seasons;
 	list<float> observed_values_avg_seasons;
+	list<bool> regroup_season;
 	float observed_values_avg_total;
 	list<int> non_representative_years ;
 	
@@ -82,7 +83,7 @@ species Indicator virtual: true {
 		} 
 	}
 	action compute_value() virtual: true;
-	
+	 
 	 
 	 
 	float compute_error() {
@@ -90,17 +91,43 @@ species Indicator virtual: true {
 		float sum_obs ; 
 		int n <- 1;
 		if not empty(observed_values_per_seasons) {
+			list<float> adjusted_sim ;
+				
+			if (not empty(regroup_season)) {
+				list<float> sim_to_regroup;
+				int num_regroup <- regroup_season count each;
+				loop i from: 0 to: length(simulation_values) - 1 {
+					if (regroup_season[i mod length(regroup_season)]) {
+	        			sim_to_regroup << simulation_values[i];
+	    			} else {
+	        			adjusted_sim << simulation_values[i];
+	    			}
+					if (length(sim_to_regroup) = num_regroup) {
+						adjusted_sim << mean(sim_to_regroup);
+						sim_to_regroup <- [];
+					}
+	    		}
+			}
+			else {
+				adjusted_sim <- simulation_values;
+			}
 			
-			n <- min(length(observed_values_per_seasons), length(simulation_values));
+			n <- min(length(observed_values_per_seasons), length(adjusted_sim));
+			
+			list<float> diffs;
+			list<float> d_s <- [0,0,0];
 			if (n > 0) {
 				loop i from: 0 to: n -1 {
-					RMSE <- RMSE + (simulation_values[i] - observed_values_per_seasons[i]) ^ 2;	
+					d_s[i mod 3] <- d_s[i mod 3] + (adjusted_sim[i] - observed_values_per_seasons[i]);
+					diffs << (adjusted_sim[i] - observed_values_per_seasons[i])with_precision 2;
+					RMSE <- RMSE + (adjusted_sim[i] - observed_values_per_seasons[i]) ^ 2;	
 					sum_obs <- sum_obs + observed_values_per_seasons[i];
 					
 				}
 				RMSE <- sqrt(RMSE/n);
 				if (write_calibration_result) {
-					write "\n *** " + name + " obs: " + observed_values_per_seasons collect (each with_precision 2) + " sim: "+ simulation_values collect (each with_precision 2);
+					
+					write "\n *** " + name + " obs: " + observed_values_per_seasons collect (each with_precision 2) + " sim: "+ adjusted_sim collect (each with_precision 2) + " diff: " + (diffs) + " -> " + d_s ;
 				}
 				
 			}
@@ -415,7 +442,7 @@ species Avg_max_flood_continuous parent: Indicator {
 	}
 }
 
-species Avg_pest_load parent: Indicator {
+/*species Avg_pest_load parent: Indicator {
     string name <- "Pest Pressure";
     string legend <- "Avg Pest Load Index";
     string unit <- "idx (0-1)";
@@ -437,7 +464,7 @@ species Avg_pest_load parent: Indicator {
             value <- active_plots mean_of each.pest_load; 
         }
     }
-}
+}*/
 
 // -----------------------------------------------------------
 // SECTION 4: RESOURCE USE & SOIL HEALTH

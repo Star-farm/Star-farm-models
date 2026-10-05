@@ -211,10 +211,10 @@ species Sowing_practice parent:Practice {
        		
        		if (plot.last_harvest_date != nil) { 
 	           // Check if there is fresh straw decomposing in the soil
-    			if (plot.leftover_straw_base > 0.0 ) {
+	           if (plot.leftover_straw_base > 0.0 ) {
 	        
 	       			 int rest_days <- round((current_date - plot.last_harvest_date) / #day);
-	        
+	        		
 	        		if (rest_days < safe_rest_period) {
 	            
 			            // 1. Time factor: Non-linear decay of toxicity over time

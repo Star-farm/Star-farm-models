@@ -13,7 +13,7 @@ import "../Global.gaml"
 global  {
 	int start_year <- 2026;
     int end_year <- 2050;
-     string province <- DONG_THAP;
+     string province <- DONG_THAP_OLD;
    
     string OPTIMISTIC <- "Optimistic" ; 
     string BASELINE <- "Baseline" ;
@@ -78,9 +78,9 @@ global  {
 		
 }
 
-experiment test_strategy type: batch until: end_of_sim repeat: 1 keep_seed: true {
+experiment test_strategy type: batch until: end_of_sim repeat: 20 keep_seed: true {
 	method exploration 
-	with: ([["possible_practices"::[BAU_3S_AWD::1.0], "weather_scenario"::PESSIMISTIC,	"market_scenario"::STANDARD]]);
+	with: ([["possible_practices"::[OMRH::1.0], "weather_scenario"::PESSIMISTIC,	"market_scenario"::STANDARD]]);
 	
 	
 	parameter possible_practices var: possible_practices <- [BAU_3S_AWD::1.0] among:[[BAU_3S_AWD::1.0]];
@@ -92,7 +92,7 @@ experiment test_strategy type: batch until: end_of_sim repeat: 1 keep_seed: true
 		mode_batch <- true;
 		save_results <- true; 
 		gama.pref_parallel_simulations_all <- false;
-		gama.pref_parallel_threads <- 1;
+		gama.pref_parallel_threads <- 5;
 		
 		write_results <- true;
 		day_start_of_year <- 300;
