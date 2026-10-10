@@ -1,0 +1,52 @@
+# Objectif POLLUTION entraine sur la NOUVELLE province, carte simplifiee.
+#
+# Quatrieme controle. Pollution est la pire politique du sweep : negative sur les 4 cartes,
+# et elle n'obtient JAMAIS la pollution la plus basse -- pas meme sur sa propre carte
+# d'entrainement. Deux lectures restaient ouvertes : recompense mal posee (l'axe pollution ne
+# repond pas au levier IPM), ou simple echec de transfert. L'entrainer sur place tranche : si
+# elle echoue ici aussi, c'est la recompense qui est en cause, pas le transfert.
+#
+# lr 1e-4 et reward_scale 1.0 REPRIS TELS QUELS de config_mappo3_pollution.yaml (la pollution
+# vaut ~0,03, il lui faut sa propre echelle). Graine 0. La province est la seule variable.
+
+checkpoint:
+  dir: saved_models_mappo3_dtnew_pollution
+  filename: starfarm_ippo.pth
+  resume: true
+  rewards_log: episode_rewards.json
+  save_every: 10
+
+gama:
+  controler_path: C:/Users/ktrou/Documents/Work & Internships/Starfarm/STAR FARM/models/Experiments/ReinforcementLearning.gaml
+  experiment_name: marl
+  ip_address: localhost
+  port: 1002
+  province: Dong Thap
+  simple_spatial_data: true
+  max_days_per_year: 2000
+  min_days_per_year: 340
+  substep_days: 122
+  year_end_margin: 3
+
+training:
+  algo: mappo
+  clip_eps: 0.2
+  critic_hidden_dim: 256
+  entropy_coef: 0.01
+  entropy_coef_final: 0.001
+  eval_every: 25
+  gae_lambda: 0.95
+  gamma: 0.97
+  hidden_dim: 128
+  k_epochs: 4
+  lr: 0.0001
+  minibatch_size: 64
+  normalize_obs: true
+  num_episodes: 400
+  reward_mode: pollution
+  reward_scale: 1.0
+  seed: 0
+  sequential_decisions: true
+  target_kl: 0.03
+  value_coef: 0.5
+  verbose: false

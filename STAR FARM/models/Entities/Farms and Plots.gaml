@@ -43,6 +43,7 @@ species Farmer  {
 	float profit_margin <- 0.0;
    
     float yearly_profit;
+    float last_yearly_profit; // snapshot of yearly_profit taken at year end, before reset (for RL observations)
     float profit_net;
     float total_costs;
     float revenue <- 0.0;
@@ -138,9 +139,9 @@ species Farmer  {
 	 * Each year (on the same calendar day as initialization), farmers reconsider their practice.
 	 */
 
-	reflex change_practices when:cycle > 0 and current_date.day_of_year = init_day_of_year {
+	reflex change_practices when: not rl_controlled and cycle > 0 and current_date.day_of_year = init_day_of_year {
 		do decide_practice();
-	} 
+	}
 
 
    

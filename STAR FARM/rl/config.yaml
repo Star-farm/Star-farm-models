@@ -1,0 +1,48 @@
+gama:
+  # Absolute path to the embedded MARL model. PetzAgent lives inside the Starfarm
+  # world (no co-model), so client.step advances the simulation clock normally.
+  # Loaded with experiment "marl".
+  controler_path: "C:/Users/ktrou/Documents/Work & Internships/Starfarm/STAR FARM/models/Experiments/ReinforcementLearning.gaml"
+  experiment_name: "marl"
+  # Safety cap: max simulated days to advance per RL year before giving up.
+  max_days_per_year: 2000
+  # Macro-step batching: FIRST time each year-slot is seen, jump this many days in ONE
+  # multi-cycle step then finish day-by-day. MUST stay below the shortest crop year
+  # (~363 days observed) so the first jump never overshoots. After that, the env remembers
+  # each year's exact length (deterministic env) and jumps (length - year_end_margin) in one
+  # call, polling only the small tail. Higher = fewer GAMA<->Python round-trips = faster.
+  min_days_per_year: 340
+  # Days left un-jumped before the boundary on remembered years (polled day-by-day).
+  year_end_margin: 3
+  ip_address: "localhost"
+  # GAMA-server port. The gama-pettingzoo examples launch the server on 1001.
+  port: 6969
+
+training:
+  num_episodes: 200
+  # Learning reward: "global" = shared sum of all farmers' profit (the project objective);
+  # "per_agent" = each farmer's own profit (cleaner gradient, no credit-assignment dilution).
+  # The logged/eval metric stays the true global profit either way (read from infos).
+  reward_mode: "global"
+  gamma: 0.95          # short 10-year horizon -> discount distant years a bit
+  gae_lambda: 0.95
+  clip_eps: 0.2
+  lr: 0.0003
+  k_epochs: 4
+  minibatch_size: 64
+  hidden_dim: 128
+  entropy_coef: 0.01
+  value_coef: 0.5
+  # Reward = sum of farmers' yearly profit (large magnitude) -> scale for stability.
+  reward_scale: 0.000001
+  normalize_obs: true
+  seed: 0
+  # Per-year detail logs inside each episode (days simulated, global profit, action mix).
+  verbose: true
+
+checkpoint:
+  dir: "saved_models"
+  filename: "starfarm_ippo.pth"
+  save_every: 10
+  rewards_log: "episode_rewards.json"
+  resume: true
