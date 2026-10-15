@@ -79,10 +79,10 @@ global {
     // =========================================================
     // 2. ECONOMIC PARAMETERS (Prices and Costs)
     // =========================================================
-    float straw_market_price <- 0.01;      // Selling price of rice straw ($/kg)
-    float pumping_cost_per_mm <- 0.3;      // Cost of electricity/fuel for pumping ($/mm/ha)
-    float fertilizer_unit_price <- 0.8;    // Cost of chemical nitrogen fertilizer ($/kg)
-    float pesticide_unit_cost <- 8.0;    // Cost of one pesticide application ($/spray/ha)
+    float straw_market_price <- 0.035;//0.01;      // Selling price of rice straw ($/kg)
+    float pumping_cost_per_mm <- 0.35;//0.3;      // Cost of electricity/fuel for pumping ($/mm/ha)
+    float fertilizer_unit_price <- 1.55;//0.8;    // Cost of chemical nitrogen fertilizer ($/kg)
+    float pesticide_unit_cost <- 16.0;//8.0;    // Cost of one pesticide application ($/spray/ha)
 
     // =========================================================
     // 3. ENVIRONMENTAL & CLIMATE PARAMETERS
@@ -114,7 +114,7 @@ global {
    // =========================================================
     // 4. BIOLOGICAL & CROP MANAGEMENT PARAMETERS
     // =========================================================
-    float rue_efficiency_factor <- 0.68; // Correction factor to adjust theoretical RUE to field conditions (0.0 to 1.0)
+    float rue_efficiency_factor <-0.9;// 0.56; // Correction factor to adjust theoretical RUE to field conditions (0.0 to 1.0)
     float daily_water_loss_mm <- 9.5;     // Sum of evapotranspiration and deep percolation (mm/day)
   	float straw_burn_emission_factor <- 0.0;// 1460.0; // kg CO2-eq emitted per ton of burned straw
    	
@@ -174,7 +174,7 @@ global {
     float harvest_moisture_adjust <- 0.86; // Adjustment for 14% commercial moisture content
 
 	float drought_growth_reduction_factor <- 0.5; // Growth multiplier during drought stress (0.5 = 50% reduction)
-    float salinity_sensitivity_slope <- 0.1;      // Yield reduction rate per unit of salinity above tolerance (e.g., 0.2 = 20% loss per g/L)
+    float salinity_sensitivity_slope <- 0.3;      // Yield reduction rate per unit of salinity above tolerance (e.g., 0.2 = 20% loss per g/L)
     
     // --- SALINITY-INDUCED STERILITY PARAMETERS ---
     // Cumulative salt stress threshold above which sterile grains start to form
@@ -196,9 +196,9 @@ global {
 
 	
 	// Economic penalty and surcharge multipliers
-	float grain_quality_discount_factor <- 0.99;   // Price discount multiplier (15% reduction) under high ripening humidity
-	float fungicide_surcharge_factor <- 1.40;      // Curative treatment cost multiplier (+30% surcharge) under high ripening humidity
-	float muddy_harvest_logistics_factor <- 1.3;  // Mechanization harvest surcharge multiplier (+40% surcharge) in flooded/muddy fields
+	float grain_quality_discount_factor <- 1.0;   // Price discount multiplier (1% reduction) under high ripening humidity
+	float fungicide_surcharge_factor <- 1.0;      // Curative treatment cost multiplier (10% surcharge) under high ripening humidity
+	float muddy_harvest_logistics_factor <- 1.0;  // Mechanization harvest surcharge multiplier (+40% surcharge) in flooded/muddy fields
 	    
     float degradation_rate <- 0.001; // Loss of 0.5% potential per cultivation season
     float regeneration_rate <- 0.02; // Gain of 2% per fallow/flood season
@@ -206,17 +206,17 @@ global {
     float max_soil_health <- 1.0;   // 
    
   // Number of days required for the soil to fully decompose the straw safely
-    float safe_rest_period <- 20.0; 
+    float safe_rest_period <- 30.0; 
     // Defines how much penalty 1 unit of straw generates
-    float toxicity_per_straw_unit <- 0.0; 
+    float toxicity_per_straw_unit <- 0.001; 
     
      // --- Parameters to control the diffuse light effect ---
-    float solar_rad_threshold <- 18.0; // Solar radiation threshold (MJ/m²) below which the sky is considered cloudy
-    float max_diffuse_bonus <- 0.32;  // Maximum RUE increase under 100% overcast conditions
+    float solar_rad_threshold <- 15.0; // Solar radiation threshold (MJ/m²) below which the sky is considered cloudy
+    float max_diffuse_bonus <- 0.3;  // Maximum RUE increase under 100% overcast conditions
         // ------------------------------------------------------
  	  
- 	float max_light_limit <- 21.5; // The absolute unbreakable ceiling (Asymptote)
-    float steepness_factor <- 4.8; // Controls how fast it climbs. Lower value = steeper initial climb.
+ 	float max_light_limit <- 18.5; // The absolute unbreakable ceiling (Asymptote)
+    float steepness_factor <- 12.0; // Controls how fast it climbs. Lower value = steeper initial climb.
                
     // =========================================================
     // 5. STRATEGY-SPECIFIC CONSTANTS
@@ -243,7 +243,7 @@ global {
    // =========================================================
     // 6. SOCIO-ECONOMIC PARAMETERS (Labor & Mechanization)
     // =========================================================
-    float labor_cost_per_hour <-2.0; // Labor cost ($/h) - Rural Vietnam average
+    float labor_cost_per_hour <-1.35;//2.0; // Labor cost ($/h) - Rural Vietnam average
    	float harvest_loss_rate <- 0.09;    // 15% loss to rats, lodging, and transport drop
    
     // =========================================================
