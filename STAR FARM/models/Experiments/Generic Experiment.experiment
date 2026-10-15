@@ -50,33 +50,33 @@ global{
 	
 	////WARNING: (Arno) WRONG FORMULA fro now it is attached to a crop should be plot
 	// computes the total biomass for a given type of crop and practice
-	float get_total_ghg(Crop_strategy p){
+	float get_total_ghg(Agricultural_strategy p){
 		return Crop where(each.the_farmer.practice = p) sum_of(each.B);
 	}
 	////WARNING: WRONG FORMULA
 	// computes the biomass per ha for a given type of crop and practice
-	float get_ghg_per_ha(Crop_strategy p){
+	float get_ghg_per_ha(Agricultural_strategy p){
 		return p.practice_area = 0 ? 0 : get_total_biomass(p) / p.practice_area;
 	}
 	
 	// computes the total biomass for a given type of crop and practice. Convert to kg/ha
 
-	float get_total_biomass(Crop_strategy p){
+	float get_total_biomass(Agricultural_strategy p){
 		return (Crop where(each.the_farmer.practice = p) sum_of(each.B)) * 10;
 	}
 	
 	// computes the biomass per ha for a given type of crop and practice
-	float get_biomass_per_ha(Crop_strategy p){
+	float get_biomass_per_ha(Agricultural_strategy p){
 		return p.practice_area = 0 ? 0 : get_total_biomass(p) / p.practice_area;
 	}
 	
 	// computes the income per ha for a given type of crop and practice
-	float get_income_per_ha(Crop_strategy p){
+	float get_income_per_ha(Agricultural_strategy p){
 		return p.practice_area = 0 ? 0 : p.day_income / p.practice_area;
 	}
 	
 	// computes the biomass per ha for a given type of crop and practice
-	float get_expenses_per_ha(Crop_strategy p){
+	float get_expenses_per_ha(Agricultural_strategy p){
 		return p.practice_area = 0 ? 0 : p.day_expenses / p.practice_area;
 	}
 	// detail the expenses per categories
@@ -127,7 +127,7 @@ global{
 	}
 	
 	// make x labels for season histograms
-	list<string> update_x_labels(Crop_strategy p){
+	list<string> update_x_labels(Agricultural_strategy p){
 		list<string> tmp;
 		ask first(practices){
 			tmp <- create_x_labels(); 
@@ -136,7 +136,7 @@ global{
 	}
 	
 	// used to keep only practices that are currently displayed
-	list<Crop_strategy> current_practices(){
+	list<Agricultural_strategy> current_practices(){
 		return practices.values where (each.id = show_season);
 	}
 		 
@@ -231,22 +231,55 @@ experiment generic_exp type:gui virtual: true {
 		output {
 		
 		display base_map axes: false toolbar: false virtual: true type: 3d{
-			overlay position:overlayPos size: {0.1, 0.1} background: background_color transparency: 0.0 border: background_color rounded:true visible:show_overlay{			 
-			  point legendPos <- overlayPos + {10#px, 10#px};
-			  float spaceY <- 25#px;
-			  string day_str <- (current_date.day < 10 ? "0" + current_date.day : "" + current_date.day);
-			  string month_str <- (current_date.month < 10 ? "0" + current_date.month : "" + current_date.month);
-			  string date_str<-day_str + "/" + month_str + "/"   + string(current_date.year);
-			  draw string("STAR FARM: " + date_str) at: legendPos color: text_color font: titleFont;	
-			  legendPos <- {legendPos.x, legendPos.y + spaceY};
-			  draw string("Nb Famers: " + length(Farmer)) at: legendPos color: text_color font: titleFont;	
-			  legendPos <- {legendPos.x, legendPos.y + spaceY};
-			  map<string, list<Farmer>> pts <- Farmer group_by (each.practice.id);
-			  loop p over: pts.keys {
-				draw square(10 #px) at: legendPos color: practices_color[p] border: #white;
-				draw p + ": "+ length(pts[p]) at: legendPos + {20 #px, 5 #px} color: practices_color[p]  font:titleFont;
-				legendPos <- {legendPos.x, legendPos.y + spaceY/2};
-			  }			
+		overlay position: overlayPos size: {0.26, 0.42} background: background_color transparency: 0.0 border: background_color rounded: true visible: show_overlay {			 
+			point legendPos <- overlayPos + {15#px, 25#px};
+			float spaceY <- 32#px;
+			
+			// Larger fonts for high readability
+			font headerFont <- font("SansSerif", 18, #bold);
+			font sectionFont <- font("SansSerif", 15, #bold);
+			font itemFont <- font("SansSerif", 14, #bold);
+		
+			string day_str <- (current_date.day < 10 ? "0" + current_date.day : "" + current_date.day);
+			string month_str <- (current_date.month < 10 ? "0" + current_date.month : "" + current_date.month);
+			string date_str <- day_str + "/" + month_str + "/" + string(current_date.year);
+			
+			// --- HEADER ---
+			draw string("STAR FARM: " + date_str) at: legendPos color: text_color font: headerFont;	
+			legendPos <- {legendPos.x, legendPos.y + spaceY};
+			draw string("Nb Farmers: " + length(Farmer)) at: legendPos color: text_color font: sectionFont;	
+			legendPos <- {legendPos.x, legendPos.y + (spaceY * 1.2)};
+			
+			// --- SECTION 1: PRACTICES (Triangles) ---
+			draw "Practices (Triangles):" at: legendPos color: text_color font: sectionFont;
+			legendPos <- {legendPos.x, legendPos.y + spaceY};
+			
+			map<string, list<Farmer>> pts <- Farmer group_by (each.practice.id);
+			loop p over: pts.keys {
+				draw triangle(22#px) at: legendPos + {10#px, -5#px} color: practices_color[p] border: #white;
+				draw p + ": " + length(pts[p]) at: legendPos + {32#px, 0#px} color: practices_color[p] font: itemFont;
+				legendPos <- {legendPos.x, legendPos.y + (spaceY * 0.85)};
+			}
+		
+			// --- SECTION 2: PRODUCTION TYPES (Squares) ---
+			legendPos <- {legendPos.x, legendPos.y + (spaceY * 0.5)};
+			draw "Active Productions (Plots):" at: legendPos color: text_color font: sectionFont;
+			legendPos <- {legendPos.x, legendPos.y + spaceY};
+		
+			loop prod_type over: production_type_colors.keys {
+				int nb_plots <- Plot count (
+					each.associated_crop != nil and 
+					((each.associated_crop.is_aquaculture ? each.associated_crop.aqua_variety.type : PROD_RICE) = prod_type)
+				);
+				draw square(18#px) at: legendPos + {10#px, -5#px} color: production_type_colors[prod_type] border: #black;
+				draw prod_type + ": " + nb_plots at: legendPos + {32#px, 0#px} color: production_type_colors[prod_type] font: itemFont;
+				legendPos <- {legendPos.x, legendPos.y + (spaceY * 0.85)};
+			}
+		
+			// Fallow / Empty plots entry
+			int nb_fallow <- Plot count (each.associated_crop = nil);
+			draw square(18#px) at: legendPos + {10#px, -5#px} color: #white border: #black;
+			draw "Fallow / Empty: " + nb_fallow at: legendPos + {32#px, 0#px} color: text_color font: itemFont;
 			}
 			picture background_image_file refresh: false visible: display_background;
 			species species(plot_species);  

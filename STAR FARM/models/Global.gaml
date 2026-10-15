@@ -247,6 +247,7 @@ global {
 		active_plots <- Plot where (each.is_active);
 		active_farmers <- Farmer where (each.is_active);
 		
+		
         list<Indicator> seasonal_inds <- seasonal_indicators.values; 
         if (not empty(seasonal_inds)) {
 	        	        
@@ -291,6 +292,14 @@ global {
 			row_income <- row_income + "\n";
 	        save row_yield to: output_file_plot_yield_income format: "text" rewrite: false;
 	        save row_income to: output_file_plot_yield_income format: "text" rewrite: false;
+	        
+	        string row_prod <- "prod_type," + int(self) + "," + current_date.year + "," + current_date.month + "," + current_date.day + "," + seed;
+			ask Plot {
+			    string p_type <- not(is_active) ? "None" : (last_harvest_was_aqua ? last_aqua_variety.type : PROD_RICE);
+			    row_prod <- row_prod + "," + p_type;
+			}
+			row_prod <- row_prod + "\n";
+			save row_prod to: output_file_plot_yield_income format: "text" rewrite: false;
 		}
     }
 

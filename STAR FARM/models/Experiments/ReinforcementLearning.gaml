@@ -192,7 +192,7 @@ global {
 		ask f.practice {
 			list<Input_use_practice> ip <- other_practices of_species Input_use_practice;
 			if not empty(ip) { is_sust_input <- first(ip).base_dose = sust_n_dose_amount; }
-			
+			 
 			list<Pesticide_application_practice> pp <- other_practices of_species Pesticide_application_practice;
 			if not empty(pp) { is_ipm_pest <- first(pp).mechanical; }
 			

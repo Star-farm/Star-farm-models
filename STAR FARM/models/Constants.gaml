@@ -10,7 +10,9 @@ model STARFARM
 
 global {
 	
-	
+	string PROD_RICE   <- "Rice";
+	string PROD_SHRIMP <- "Shrimp";
+	string PROD_FISH   <- "Fish";
 	
 	/******* RICE GROTWH MODEL ********/
 	string RICE <- "rice" const: true;

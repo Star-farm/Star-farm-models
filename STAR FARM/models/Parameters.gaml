@@ -59,7 +59,7 @@ global {
 	float neighbor_distance <- 10.0;
 	
 	 	
-    map<string, float> possible_practices <- [BAU_3S::0.2, OMRH::0.3, RICE_SHRIMP::0.5];
+    map<string, float> possible_practices <- [BAU_3S::0.0, OMRH::0.0, RICE_SHRIMP::1.0];
     
    
 	map<string,string> plots_to_keep <- [];

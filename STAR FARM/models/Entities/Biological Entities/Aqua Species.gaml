@@ -12,11 +12,13 @@ import "../../Parameters.gaml"
 global {
  
     action load_aquaspecies() { 
-        create Aqua_species from: aquaspecies_csv_file ;
+    	
+        create Aqua_species from: aquaspecies_csv_file  ;
     }
 }
   
 species Aqua_species {
+	string type;
   // Thermal & Cycle Parameters
     float t_base;                   // Minimum temperature for metabolic activity (°C)
     float t_opt;                    // Optimal temperature for growth (°C)
