@@ -9,6 +9,8 @@
 
 model STARFARM 
 
+import "Aqua Species.gaml"
+
 import "Environment.gaml"
 
 // Import external modules containing crop growth models, farming practices, and parameters
@@ -172,6 +174,8 @@ species Plot {
 	Crop associated_crop;     // The crop currently growing on the plot (if any)
 	float surface_in_ha;      // surface in ha
 	Cultivar last_variety;
+	Aqua_species last_aqua_variety;
+	bool last_harvest_was_aqua <- false;
 	
 	// Soil parameters
 	float soil_water <- 200.0; 	     // water level in mm
@@ -384,7 +388,9 @@ species Plot {
  * Represents an individual crop growing on a plot.
  */
 species Crop  {
-	Cultivar variety;
+	Cultivar variety;                      // Used when cultivating crops (Rice)
+    Aqua_species aqua_variety;             // Used when cultivating aquaculture (Shrimp/Fish)
+    bool is_aquaculture <- false;          // Flag distinguishing aquaculture from plant crops
 	Farmer the_farmer;     // The farmer who owns the crop
 	Plot concerned_plot;   // The plot where the crop is located
 	int lifespan <- 0 update: lifespan + 1;  // Number of days since sowing
@@ -441,12 +447,14 @@ species Crop  {
 		ask  PG_models[the_farmer.practice.id] {
 			do day_biomass_growth(myself);
 		}  
-		concerned_plot.pest_load <- concerned_plot.pest_load + (concerned_plot.my_cell.pollution_level * pest_pollution_feedback);
-  
+		if (not is_aquaculture) {
+            concerned_plot.pest_load <- concerned_plot.pest_load + (concerned_plot.my_cell.pollution_level * pest_pollution_feedback);
+        }
+	
 	}
 	
 	
-	reflex track_stress_days when: !is_harvested and !is_dead {
+	reflex track_stress_days when: !is_harvested and !is_dead and !is_aquaculture {
     
 	    // 1. SALINITY STRESS: Applied if salinity exceeds the cultivar tolerance threshold
 	    if (concerned_plot.my_cell.salinity_level > variety.salinity_tolerance) {

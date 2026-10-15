@@ -14,6 +14,9 @@ global {
 	string ORYZA <- "oryza" const: true;
 	string CERES <- "ceres" const: true;
 	
+	string AQUA_MD <- "aqua_md";
+	string RICE_SHRIMP <- "Rice_Shrimp";
+	
 	
 	/******* INNOVATION DIFFUSION MODEL ********/
 	string NONE <- "none" const: true;

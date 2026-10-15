@@ -111,6 +111,8 @@ species Market {
 	
 	action compute_farmer_revenu() {
 		
+		
+		
 		map<Cultivar,float> prices;
 		loop c over: Cultivar {
 			prices[c] <- the_market.r_for_crop(c) * c.rice_market_price ;
@@ -134,15 +136,20 @@ species Market {
 	      	}
 		}
 		
-		ask Plot { 
-		
-			float rice_rev <- (actual_sold_yield * 1000) * prices[last_variety] ;
-			if (is_high_humidity) {
-        		rice_rev <- rice_rev * grain_quality_discount_factor; 
-   		 	}
-      		the_farmer.revenue <- the_farmer.revenue + rice_rev ;
-      		
+		ask Plot {
+		    if (last_harvest_was_aqua and last_aqua_variety != nil) {
+		        float aqua_price <- last_aqua_variety.market_price * (current_date.year in the_market.r_crop.keys ? the_market.r_crop[current_date.year] : 1.0);
+		        float aqua_rev <- (actual_sold_yield * 1000.0) * aqua_price;
+		        the_farmer.revenue <- the_farmer.revenue + aqua_rev;
+		    } else if (last_variety != nil) {
+		        float rice_rev <- (actual_sold_yield * 1000.0) * prices[last_variety];
+		        if (is_high_humidity) {
+		            rice_rev <- rice_rev * grain_quality_discount_factor;
+		        }
+		        the_farmer.revenue <- the_farmer.revenue + rice_rev;
+		    }
 		}
+		
 		ask Farmer {
 			 profit_net <- revenue - total_costs;
 			 yearly_profit <- yearly_profit + profit_net;

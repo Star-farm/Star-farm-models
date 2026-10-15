@@ -298,6 +298,30 @@ global {
     float labor_spray_manual_hours <- 2.5; // per application
     float labor_spray_drone_hours <- 0.5;  // Calling the service provider and watching
 
-    
+
+	// =========================================================
+	// 7. AQUACULTURE & RICE-SHRIMP PARAMETERS
+	// =========================================================
+	float initial_aqua_biomass <- 2.0;            // Initial biomass at stocking (g/m² = 20 kg/ha)
+	float min_aqua_survival_biomass <- 0.5;       // Minimum biomass threshold before pond collapse (g/m²)
+	float base_aqua_mortality_rate <- 0.003;      // Natural daily mortality rate (0.3%/day)
+	float lethal_pollution_threshold <- 0.65;     // Grid cell pollution level causing immediate mass mortality
+	float aqua_disease_prob <- 0.05;              // Daily probability of disease outbreak under environmental stress
+	float aqua_disease_mortality_spike <- 0.10;   // Extra daily mortality during a disease outbreak (10%/day)
+	
+	// Feed & Agro-ecological Synergy
+	float aqua_initial_feed_stock <- 20.0;        // Initial natural/supplied feed pool at stocking
+	float daily_aqua_feed_consumption <- 0.6;     // Daily feed consumption rate
+	float aqua_feed_growth_boost <- 0.25;         // Growth rate bonus when supplemental feed is available (+25%)
+	float shrimp_organic_n_bonus <- 35.0;         // Free organic Nitrogen (kg N/ha) left in soil after shrimp harvest
+	float aqua_harvest_loss_rate <- 0.05;         // Post-harvest handling losses for shrimp/fish (5%)
+	
+	// Economic & Labor Costs for Aquaculture
+	float aqua_feed_unit_price <- 1.20;           // Price of commercial shrimp/fish feed ($/kg)
+	float mech_cost_shrimp_pond_prep <- 220.0;    // Excavator cost for peripheral trench dredging and bund reinforcement ($/ha)
+	float labor_pond_prep_hours <- 20.0;          // Manual labor for sluice gate & net installation (hours/ha)
+	float daily_labor_aqua_water <- 2.0;          // Daily labor for water quality and dissolved oxygen monitoring (hours/ha/day)
+	float labor_shrimp_harvest <- 24.0;           // Labor required for pond draining and net harvesting (hours/ha)
+	    
 }
 

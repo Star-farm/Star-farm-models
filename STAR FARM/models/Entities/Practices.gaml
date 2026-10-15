@@ -540,13 +540,179 @@ species Input_use_practice parent:Practice {
 	} 
 }
 
+// ======================================================================
+// AQUACULTURE & RICE-SHRIMP ROTATION PRACTICES (Add to Practices.gaml)
+// ======================================================================
+
+/**
+ * Rotational Sowing/Stocking Practice for Rice-Shrimp systems.
+ * Alternates between stocking Shrimp post-larvae in the dry/saline season
+ * and sowing Rice in the wet/freshwater season.
+ */
+species Shrimp_Rice_Sowing_practice parent: Sowing_practice {
+    Aqua_species target_aqua_species;
+    int shrimp_stocking_day <- 35;  // Early February (onset of saline intrusion)
+    int rice_sowing_day <- 210;     // Late July (monsoon flushing of salinity)
+
+    action effect(Plot plot) {
+        bool is_shrimp_season <- abs(current_date.day_of_year - shrimp_stocking_day) < 45;
+
+        if (is_shrimp_season) {
+            // --- SEASON 1: SHRIMP STOCKING ---
+            plot.date_sowing_ok <- false;
+            ready_to_end_season <- true;
+            plot.the_farmer.ended_season <- false;
+            plot.last_aqua_variety <- target_aqua_species;
+            plot.last_harvest_was_aqua <- true;
+
+            create Crop (
+                the_farmer: plot.the_farmer,
+                aqua_variety: target_aqua_species,
+                is_aquaculture: true
+            ) {
+                plot.associated_crop <- self;
+                concerned_plot <- plot;
+                thermal_units_total <- myself.target_aqua_species.tt_maturity;
+                seed_density_kg_ha <- myself.target_aqua_species.default_stocking_density;
+                
+                // Initial feed/probiotic pool
+                nitrogen_stock <- aqua_initial_feed_stock;
+
+                // Reset plot seasonal counters
+                concerned_plot.stress_days_salinity <- 0;
+                concerned_plot.stress_days_drought <- 0;
+                concerned_plot.stress_days_flood <- 0;
+                concerned_plot.pesticide_count <- 0;
+                concerned_plot.total_water_pumped <- 0.0;
+                concerned_plot.final_yield_ton_ha <- 0.0;
+                concerned_plot.straw_yield_ton_ha <- 0.0;
+                concerned_plot.total_fertilizer_applied <- 0.0;
+                concerned_plot.methane_emissions_kg_ha <- 0.0;
+
+                // Economic initialization: Trench dredging and pond preparation
+                the_farmer.accumulated_labor_hours <- labor_pond_prep_hours;
+                the_farmer.mechanization_costs <- mech_cost_shrimp_pond_prep;
+            }
+        } else {
+            // --- SEASON 2: RICE SOWING (Wet Season) ---
+            plot.last_harvest_was_aqua <- false;
+            
+            // Call standard rice sowing logic from parent Sowing_practice
+            invoke effect(plot);
+            
+            // Explicitly assign the LUA-MD plant growth engine for the rice season
+            plot.associated_crop.is_aquaculture <- false;
+ 
+            // Agro-ecological synergy: Shrimp waste provides free organic nitrogen and soil regeneration
+            plot.associated_crop.nitrogen_stock <- plot.associated_crop.nitrogen_stock + shrimp_organic_n_bonus;
+            plot.soil_health <- min(max_soil_health, plot.soil_health + regeneration_rate);
+        }
+    }
+}
+
+/**
+ * Rotational Harvesting & Economic Accounting Practice for Rice-Shrimp systems.
+ */
+species Shrimp_Rice_Harvesting_practice parent: Harvesting_practice {
+
+    action effect(Plot plot) {
+        if (plot.associated_crop != nil and plot.associated_crop.is_aquaculture) {
+            // --- SHRIMP HARVEST & ECONOMIC ACCOUNTING ---
+            Aqua_species sp <- plot.associated_crop.aqua_variety;
+
+            // Convert g/m² to tons/ha (0.01 factor)
+            plot.final_yield_ton_ha <- plot.associated_crop.biomass * biomass_to_ton_conv;
+            plot.straw_yield_ton_ha <- 0.0;
+            plot.actual_sold_yield <- plot.final_yield_ton_ha * (1.0 - aqua_harvest_loss_rate);
+
+            // Soil regeneration after aquaculture phase
+            ask plot { do update_soil_status(true); }
+
+            // Add harvest labor (netting, draining, sorting)
+            plot.the_farmer.accumulated_labor_hours <- plot.the_farmer.accumulated_labor_hours + labor_shrimp_harvest;
+
+            // Compute seasonal operational costs
+            float r_lab <- (current_date.year in the_market.r_labor.keys) ? the_market.r_labor[current_date.year] : 1.0;
+            float r_wat <- (current_date.year in the_market.r_water.keys) ? the_market.r_water[current_date.year] : 1.0;
+            float r_mec <- (current_date.year in the_market.r_mech.keys) ? the_market.r_mech[current_date.year] : 1.0;
+            float r_fer <- (current_date.year in the_market.r_fertilizer.keys) ? the_market.r_fertilizer[current_date.year] : 1.0;
+
+            float cost_labor <- plot.the_farmer.accumulated_labor_hours * labor_cost_per_hour * r_lab;
+            float cost_post_larvae <- plot.associated_crop.seed_density_kg_ha * sp.stocking_unit_cost;
+            float cost_feed <- plot.total_fertilizer_applied * aqua_feed_unit_price * r_fer;
+            float cost_water <- plot.total_water_pumped * pumping_cost_per_mm * r_wat;
+            float cost_meca <- plot.the_farmer.mechanization_costs * r_mec;
+
+            plot.the_farmer.revenue <- 0.0; // Market will add shrimp sales revenue at end_of_season
+            plot.the_farmer.total_costs <- cost_labor + cost_post_larvae + cost_feed + cost_water + cost_meca;
+        } else {
+            // --- STANDARD RICE HARVEST & ECONOMIC ACCOUNTING ---
+            invoke effect(plot);
+        }
+    }
+}
+
+/**
+ * Dual-regime Water Management Practice:
+ * - During Shrimp season: Actively pumps brackish water to maintain deep pond levels (e.g., 300 mm).
+ * - During Rice season: Operates as standard AWD/CF, blocking saline water (> 4 g/L).
+ */
+species Brackish_Rotational_Irrigating_practice parent: Irrigating_practice {
+    string name <- "Brackish_Rotational_Irrigation";
+    float pumping_capacity <- pumping_capacity_sust;
+
+    float manage_water_needed(Plot plot) {
+        if (plot.associated_crop = nil) { return 0.0; }
+
+        if (plot.associated_crop.is_aquaculture) {
+            float target_depth <- plot.associated_crop.aqua_variety.min_water_level + 50.0;
+            return (plot.water_level < plot.associated_crop.aqua_variety.min_water_level) ? (target_depth - plot.water_level) : 0.0;
+        } else {
+            return (plot.water_level <= awd_pumping_threshold) ? (water_target_flooded - plot.water_level) : 0.0;
+        }
+    }
+
+    action effect(Plot plot) {
+        if (plot.associated_crop = nil) { return; }
+
+        float water_needed <- max(0.0, manage_water_needed(plot));
+        bool is_aqua <- plot.associated_crop.is_aquaculture;
+
+        // Quality check: Shrimp require brackish water within their tolerance bounds; Rice requires freshwater (< 4 g/L)
+        bool water_is_good_quality <- is_aqua ?
+            (plot.my_cell.salinity_level >= plot.associated_crop.aqua_variety.salinity_min and plot.my_cell.salinity_level <= plot.associated_crop.aqua_variety.salinity_max) :
+            (plot.my_cell.salinity_level < max_pumping_salinity);
+
+        // Availability check: Brackish canal water is always available in the dry season for coastal/estuarine plots
+        bool water_is_available <- is_aqua ? true : ((rain_last_days > min_rain_for_access) and (total_province_pumping < max_province_pumping_capacity));
+
+        float water_pumped <- (water_is_good_quality and water_is_available) ? min(pumping_capacity, water_needed) : 0.0;
+
+        plot.water_level <- plot.water_level + water_pumped;
+        plot.associated_crop.water_pumped_today <- water_pumped;
+        if (water_pumped > 0) {
+            plot.total_water_pumped <- plot.total_water_pumped + water_pumped;
+        }
+
+        // Daily labor for water & dissolved oxygen monitoring
+        plot.the_farmer.accumulated_labor_hours <- plot.the_farmer.accumulated_labor_hours + (is_aqua ? daily_labor_aqua_water : daily_labor_water_awd);
+
+        // Drainage if extreme rainfall threatens rice submergence (only active for rice)
+        if (not is_aqua and plot.water_level > flood_stress_threshold) {
+            plot.water_level <- plot.water_level - pumping_capacity;
+            plot.the_farmer.mechanization_costs <- plot.the_farmer.mechanization_costs + (pumping_energy_cost * pumping_cost_per_mm);
+        }
+    }
+}
+
+
 
 // ======================================================================
 // GENERIC CROP PRACTICE DEFINITION
 // ======================================================================
 
 
-species Crop_strategy virtual: true {
+species Crop_strategy virtual: false {
 	string id;  // Unique identifier for the practice
 	string short_name; // Short name used for displays
 	rgb color;  // Color used for visual representation
@@ -849,4 +1015,52 @@ species OMH_rice parent:Crop_strategy {
 			} 
 			do initialize();
 	}
+}
+
+
+/**
+ * Complete Strategy Definition: Rice-Shrimp Rotational System (1 Shrimp cycle + 1 High-Quality Rice cycle)
+ */
+species Rice_Shrimp_strategy parent: Crop_strategy {
+    string id <- RICE_SHRIMP;
+    string short_name <- "Rice-Shrimp Rotation (Lua-Tom)";
+    rgb color <- practices_color[id];
+
+    init {
+        // Schedule: Day 35 (Feb -> Shrimp stocking, cleans straw), Day 210 (July -> Rice sowing)
+        map<int, bool> rotation_days <- [35::true, 210::true];
+
+        create Shrimp_Rice_Sowing_practice (
+            type_of_cultivar: Cultivar first_with (each.name = ST25),
+            target_aqua_species: Aqua_species first_with (each.name = "PENAEUS_MONODON"),
+            implementation_days: rotation_days,
+            mechanical_seeding: true
+        ) returns: sow_p;
+        sowing <- first(sow_p);
+
+        create Shrimp_Rice_Harvesting_practice (collect_straw: true) returns: harv_p;
+        harvesting <- first(harv_p);
+
+        create Brackish_Rotational_Irrigating_practice {
+            myself.irrigation <- self;
+            myself.other_practices << self;
+        }
+
+        // Low nitrogen input for Rice season (thanks to shrimp organic residue) and feed input for Shrimp season
+        map<int, float> ftr <- [35::10.0, 210::sust_n_trigger_threshold];
+        map<int, float> fta <- [35::60.0, 210::(sust_nitrogen_goal * 0.6)]; // 40% reduction in chemical N during rice season!
+
+        ask world {
+            do add_input_use_practice(
+                cp: myself,
+                trigger_thresholds_: ftr,
+                base_dose_: sust_n_dose_amount,
+                targets: fta,
+                mech: false
+            );
+            // Note: NO pesticide practice is added! Rice-Shrimp farmers strictly avoid pesticides
+            // to prevent toxic residue accumulation in pond sediment.
+        }
+        do initialize();
+    }
 }
