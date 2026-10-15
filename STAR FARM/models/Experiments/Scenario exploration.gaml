@@ -76,7 +76,7 @@ global  {
 	}
 	
 		
-}
+}  
 
 experiment test_strategy type: batch until: end_of_sim repeat: 20 keep_seed: true {
 	method exploration 

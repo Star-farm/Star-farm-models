@@ -8,9 +8,10 @@
 
 model STARFARM
 
+import "Biological Entities/Cultivar.gaml"
+
 import "Farms and Plots.gaml"
 
-import "Cultivar.gaml"
 
 global {
 	Market the_market;

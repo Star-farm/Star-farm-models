@@ -8,15 +8,21 @@
 
 model STARFARM 
 
-import "Entities/Indicator.gaml"
+import "Entities/Grow Models/Grow model.gaml"
 
-import "Entities/Cultivar.gaml"
+import "Entities/Grow Models/Plant growth models.gaml"
+
+import "Entities/Grow Models/Aquaculture growth models.gaml"
+
+import "Entities/Biological Entities/Cultivar.gaml"
+
+import "Entities/Biological Entities/Aqua Species.gaml"
+
+import "Entities/Indicator.gaml"
 
 //import "Entities/Parasite.gaml"
 
 import "Entities/Weather.gaml"
-
-import "Entities/Plant growth models.gaml"
 
 import "Entities/Farms and Plots.gaml"
 
@@ -26,7 +32,7 @@ import "Constants.gaml"
  
 
 global { 
-	
+	 
 	geometry shape <- envelope(plots_shapefile);
 	int init_day_of_year <-  current_date.day_of_year;
 		
@@ -68,16 +74,15 @@ global {
 		do create_indicators();
 		do init_all_headers();
 		do load_cultivars();
+		do load_aquaspecies();
 		do create_practices();
-		do create_plant_growth_models(); 
+		do create_growth_models(); 
 		do create_plots();	
 		do init_weather_data();
 		do init_market();
 		// compute the surface for each practice at the begining of the simulation
 		ask practices {do compute_practice_area();}
-		ask remove_duplicates(PG_models){
-			do initialize();
-		}  
+		
 		list<Sowing_practice> sp_r <- remove_duplicates(Farmer collect each.practice.sowing);
 		
 	}

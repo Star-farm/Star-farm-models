@@ -59,15 +59,17 @@ global {
 	float neighbor_distance <- 10.0;
 	
 	 	
-    map<string, float> possible_practices <- [BAU_3S::0.5, OMRH::0.5];
+    map<string, float> possible_practices <- [BAU_3S::0.2, OMRH::0.3, RICE_SHRIMP::0.5];
     
    
 	map<string,string> plots_to_keep <- [];
 		
-	map<string,string> plant_grow_models <-[];
-	string default_plant_grow_model <- LUA_MD;
+	string rice_grow_model <- LUA_MD;
+	string aqua_species_grow_model <- AQUA_MD;
+	
 	
 	csv_file cultivars_csv_file <- csv_file("../includes/General data/cultivars.csv", true);
+	csv_file aquaspecies_csv_file <- csv_file("../includes/General data/aquaspecies.csv", true);
 	
 	string output_folder <- "../../results";
 	

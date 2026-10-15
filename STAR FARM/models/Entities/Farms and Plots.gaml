@@ -9,7 +9,9 @@
 
 model STARFARM 
 
-import "Aqua Species.gaml"
+import "Grow Models/Grow model.gaml"
+
+import "Biological Entities/Aqua Species.gaml"
 
 import "Environment.gaml"
 
@@ -444,7 +446,15 @@ species Crop  {
    // int days_ripening <- 0;
 	 
 	reflex plantGrow  {
-		ask  PG_models[the_farmer.practice.id] {
+		Growth_model g_model ; 
+		
+		if (is_aquaculture) {
+			g_model <- G_models[AQUA_SPECIES];	
+		} else {
+			g_model <- G_models[RICE];	
+		}
+		
+		ask  g_model{
 			do day_biomass_growth(myself);
 		}  
 		if (not is_aquaculture) {

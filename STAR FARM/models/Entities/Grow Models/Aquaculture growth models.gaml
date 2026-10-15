@@ -7,12 +7,13 @@
 
 model STARFARM
 
-import "Aqua Species.gaml"
+import "Grow model.gaml"
 
-import "Plant growth models.gaml"
+import "../Biological Entities/Aqua Species.gaml"
+ 
 
 
-species aqua_mdModel parent: Plant_growth_model {
+species aqua_mdModel parent: Growth_model {
     string id <- AQUA_MD;
 
     action day_biomass_growth(Crop c) {

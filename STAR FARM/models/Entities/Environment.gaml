@@ -7,7 +7,7 @@
 
 model Environment 
 
-import "Plant growth models.gaml"
+import "Weather.gaml" 
 
  
 global {

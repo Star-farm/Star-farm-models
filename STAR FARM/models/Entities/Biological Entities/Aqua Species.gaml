@@ -1,27 +1,23 @@
 /**
 * Name: AquaSpecies
 * Description: Defines aquaculture species (shrimp, fish) traits and economic parameters.
-* Kept separate from Cultivar to maintain clean modularity.
 * Author: Patrick Taillandier
 */
 
 model STARFARM
 
-import "../Parameters.gaml"
-import "../Constants.gaml"
+import "../../Parameters.gaml"
+
 
 global {
-    csv_file aquaspecies_csv_file <- csv_file("../includes/General data/aquaspecies.csv", true);
-
-    action load_aquaspecies() {
+ 
+    action load_aquaspecies() { 
         create Aqua_species from: aquaspecies_csv_file ;
     }
 }
-
+  
 species Aqua_species {
-    string name;
-    
-    // Thermal & Cycle Parameters
+  // Thermal & Cycle Parameters
     float t_base;                   // Minimum temperature for metabolic activity (°C)
     float t_opt;                    // Optimal temperature for growth (°C)
     float tt_maturity;              // Thermal time required to reach commercial harvest size (°C-days)

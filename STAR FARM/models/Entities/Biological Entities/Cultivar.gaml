@@ -7,7 +7,7 @@
 
 model STARFARM
  
-import "../Parameters.gaml"
+import "../../Parameters.gaml"
 
 
 global {

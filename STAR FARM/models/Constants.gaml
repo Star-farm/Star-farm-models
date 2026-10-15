@@ -9,13 +9,16 @@
 model STARFARM
 
 global {
-	/******* RICE GROTWH MODEL ********/
-	string LUA_MD <- "lua md" const: true;
-	string ORYZA <- "oryza" const: true;
-	string CERES <- "ceres" const: true;
 	
+	
+	
+	/******* RICE GROTWH MODEL ********/
+	string RICE <- "rice" const: true;
+	string LUA_MD <- "lua md" const: true;
+	
+	/******* AQUA SPECIES GROTWH MODEL ********/
+	string AQUA_SPECIES <- "aqua_species" const: true;
 	string AQUA_MD <- "aqua_md";
-	string RICE_SHRIMP <- "Rice_Shrimp";
 	
 	
 	/******* INNOVATION DIFFUSION MODEL ********/
@@ -31,7 +34,8 @@ global {
 	string BAU_3S_AWD <- "BAU-awd" ; //BUSINESS AS USUAL 3 SEASONS - with AWD
 	string BAU_2S <- "BAU-2seasons"; //BUSINESS AS USUAL 2 SEASONS
 	string OMRH <- "OMRH" const: true; //ONE MILLION RICE HECTARES 
-	string CUSTOM <- "custom" ; //BUSINESS AS USUAL 3 SEASONS
+	string CUSTOM <- "custom" ;
+	string RICE_SHRIMP <- "Rice_Shrimp";
 	
 	
 	/******* RICE IRRIGATION *******/
