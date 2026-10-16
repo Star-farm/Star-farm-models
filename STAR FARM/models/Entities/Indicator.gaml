@@ -575,11 +575,15 @@ species Gini_index parent: Indicator {
     bool is_yearly <- true;
     int float_precision <- 2;
 
+    
     action compute_value() {
-        list<float> farmer_profit <- Farmer collect each.yearly_profit;
-        if empty(farmer_profit) { value <- 0.0; }
-        else { value <- gini(farmer_profit); }
-    }
+    list<float> farmer_profit <- Farmer collect each.yearly_profit;
+	    if empty(farmer_profit) or (mean(farmer_profit) <= 0.0) { 
+	        value <- 0.0; // Avoid meaningless negative Gini under systemic loss
+	    } else { 
+	        value <- gini(farmer_profit); 
+	    }
+	}
 }
 
 species Bankruptcy_risk parent: Indicator {
@@ -601,6 +605,9 @@ species Bankruptcy_risk parent: Indicator {
     }
 }
 
+
+
+
 species Top20_Bottom20_Ratio parent: Indicator {
     string name <- "Top20/Bottom20 Ratio";
     string legend <- "Ratio Income Top 20% vs Bottom 20%";
@@ -610,17 +617,18 @@ species Top20_Bottom20_Ratio parent: Indicator {
     bool is_yearly <- true;
     int float_precision <- 2;
 
-    action compute_value() {
-        list<float> farmer_profit <- (Farmer collect each.yearly_profit) sort_by each;
-        if (length(farmer_profit) < 5) { 
-            value <- 0.0;
-        } else {
-            int number <- round(0.2 * length(farmer_profit));
-            float mean_bottom <- mean(number first farmer_profit);
-            float mean_top <- mean(number last farmer_profit);
-            value <- (mean_bottom = 0.0) ? 0.0 : (mean_top / mean_bottom);
-        }
-    }
+   // In Top20_Bottom20_Ratio -> compute_value()
+	action compute_value() {
+	    list<float> farmer_profit <- (Farmer collect each.yearly_profit) sort_by each;
+	    if (length(farmer_profit) < 5) { value <- 0.0; }
+	    else {
+	        int number <- round(0.2 * length(farmer_profit));
+	        float mean_bottom <- mean(number first farmer_profit);
+	        float mean_top <- mean(number last farmer_profit);
+	        // If the bottom tier is in deficit, ratio is undefined/zero
+	        value <- (mean_bottom <= 0.0) ? 0.0 : (mean_top / mean_bottom);
+	    }
+	}
 }
 
 species Coefficient_of_variation parent: Indicator {

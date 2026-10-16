@@ -11,7 +11,7 @@ model STARFARM
 import "Visual_Parameters.gaml"
 
 global {
-	string province <- DONG_THAP;
+	string province <- BEN_TRE;
 	
 	float step <- 1 #day;
 	

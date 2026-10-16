@@ -317,33 +317,34 @@ global {
     
    
 	float compute_salinity_factor(int current_doy, int salt_start_doy_, int salt_end_doy_, bool is_el_nino) {
-    	 if (is_el_nino) {
-	    	int el_nino_start <- (salt_start_doy_ + 365) - 90; 
-         	int el_nino_plateau_end <- salt_end_doy_; 
-        	int el_nino_total_end <- salt_end_doy_ + 20; 
+    if (is_el_nino) {
+        int el_nino_start <- (salt_start_doy_ + 365) - 90; 
+        int el_nino_plateau_end <- salt_end_doy_; 
+        int el_nino_total_end <- salt_end_doy_ + 20; 
 
-	    	
-	    	if (current_doy >= el_nino_start or current_doy <= el_nino_total_end) { 
-	            if (current_doy >= el_nino_start) {
-	                return min(1.25, 0.55 + (0.7 * (current_doy - el_nino_start) / climb_duration)); 
-	            } else if (current_doy <= el_nino_plateau_end) {
-	                // Pic absolu et plateau de janvier à fin avril
-	                return 1.25; 
-	            } else if (current_doy > el_nino_plateau_end and current_doy <= el_nino_total_end) {
-	                // Redescend et disparaît en mai grâce aux premières pluies
-	                return max(0.0, 1.25 - ((current_doy - el_nino_plateau_end) / decay_duration)); 
-	            }
-	        }
-		} else {
-		    	// Rain flushes the salt out of the canals
-			//if (rain_amount_ > 10.0) { return 0.0; }
-		    if (current_doy >= salt_start_doy_ and current_doy <= salt_end_doy_) {
-		     	// Le pic normal est plus court et moins violent
-		        return 0.6 * sin(((current_doy - salt_start_doy_) / (salt_end_doy_/2)) * 180); 
-		    }
-		}
-	   	return 0.0;
-   	}
+        if (current_doy >= el_nino_start or current_doy <= el_nino_total_end) { 
+            if (current_doy >= el_nino_start) {
+                return min(1.25, 0.55 + (0.7 * (current_doy - el_nino_start) / max(1, climb_duration))); 
+            } else if (current_doy <= el_nino_plateau_end) {
+                return 1.25; 
+            } else if (current_doy > el_nino_plateau_end and current_doy <= el_nino_total_end) {
+                return max(0.0, 1.25 - ((current_doy - el_nino_plateau_end) / max(1, decay_duration))); 
+            }
+        }
+    } else {
+        // Normal Year (Coastal estuary baseline)
+        // Saline intrusion starts earlier (late Jan ~ day 25) and peaks in March-April (~ day 70-110)
+        int normal_start <- min(salt_start_doy_, 25);
+        int normal_end <- max(salt_end_doy_, 140);
+        
+        if (current_doy >= normal_start and current_doy <= normal_end) {
+            float progress <- (current_doy - normal_start) / float(normal_end - normal_start);
+            // Half-sine bell curve from 0.0 to 180 degrees -> always positive, smooth peak at 0.70-0.85
+            return 0.75 * sin(progress * 180.0);
+        }
+    }
+    return 0.0;
+}
 	
 }
 species Weather {

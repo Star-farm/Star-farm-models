@@ -175,6 +175,8 @@ species Plot {
     
     // Climate Stress Counters (For Star Farm KPIs)
     int stress_days_salinity <- 0; 
+    // Dans species Plot (Farms and Plots.gaml)
+	int stress_days_shallow_water <- 0;
     int stress_days_drought <- 0;
     int stress_days_flood <- 0;
     int stress_days_flood_continuous <- 0;
@@ -456,7 +458,10 @@ species Crop {
         }
 	}
 	
-	reflex track_stress_days when: !is_harvested and !is_dead and !is_aquaculture {
+	
+	
+	reflex track_stress_days_rice when: !is_harvested and !is_dead and !is_aquaculture {
+	    
 	    // 1. SALINITY STRESS: Applied if salinity exceeds the cultivar tolerance threshold
 	    if (concerned_plot.my_cell.salinity_level > variety.salinity_tolerance) {
 	        concerned_plot.stress_days_salinity <- concerned_plot.stress_days_salinity + 1;

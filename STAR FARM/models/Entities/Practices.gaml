@@ -506,12 +506,15 @@ species Aqua_Stocking_practice parent: Practice {
 	}
 
 	action effect(Plot plot) {
+		plot.stress_days_shallow_water <- 0;
 		plot.date_aqua_stocking_ok <- false;
 		ready_to_end_season <- true;
 		plot.the_farmer.ended_season <- false;
 		plot.last_aqua_variety <- target_aqua_species;
 		plot.last_harvest_was_aqua <- true;
-
+		ask plot.my_cell {
+			do change_protection_status(false);
+		}
 		create Crop (
 			the_farmer: plot.the_farmer,
 			aqua_variety: target_aqua_species,
@@ -559,6 +562,9 @@ species Aqua_Harvesting_practice parent: Practice {
 	}
 
 	action effect(Plot plot) {
+		ask plot.my_cell {
+			do change_protection_status(true);
+		}
 		Aqua_species sp <- plot.associated_crop.aqua_variety;
 
 		// 1. Convert biomass (g/m²) to commercial yield (tons/ha)
@@ -587,35 +593,65 @@ species Aqua_Harvesting_practice parent: Practice {
 	}
 }
 
+
 /**
  * Practice managing brackish water pumping and pond depth maintenance during the aquaculture season.
  */
 species Aqua_Irrigating_practice parent: Practice {
-	string name <- "aqua_irrigation";
-	float labor <- daily_labor_aqua_water;
-	float pumping_capacity <- pumping_capacity_sust;
+    string name <- "aqua_irrigation";
+    float pumping_capacity <- pumping_capacity_sust;
+    float internal_saline_water_buffer <- 0.0;
+    float max_buffer_capacity <- 150.0;
 
-	bool to_apply(Plot plot, int current_day) {
-		return plot.associated_crop != nil and plot.associated_crop.is_aquaculture;
-	}
+    bool to_apply(Plot plot, int current_day) {
+        return plot.associated_crop != nil and plot.associated_crop.is_aquaculture;
+    }
+    
+    float manage_water_needed(Plot plot) {
+        if (plot.associated_crop = nil) { return 0.0; }
+        float target_depth <- plot.associated_crop.aqua_variety.min_water_level + 50.0;
+        return (plot.water_level < target_depth) ? (target_depth - plot.water_level) : 0.0;
+    }
 
-	action effect(Plot plot) {
-		Aqua_species sp <- plot.associated_crop.aqua_variety;
-		float target_depth <- sp.min_water_level + 50.0;
-		float water_needed <- (plot.water_level < sp.min_water_level) ? (target_depth - plot.water_level) : 0.0;
+    action effect(Plot plot) {
+        if (plot.associated_crop = nil) { return; }
 
-		if (water_needed > 0.0) {
-			// Check if canal salinity is within tolerable bounds for the aquaculture species
-			bool water_is_good_quality <- (plot.my_cell.salinity_level >= sp.salinity_min) and (plot.my_cell.salinity_level <= sp.salinity_max);
-			float water_pumped <- water_is_good_quality ? min(pumping_capacity, water_needed) : 0.0;
+        float water_needed <- max(0.0, manage_water_needed(plot));
+        Aqua_species sp <- plot.associated_crop.aqua_variety;
+        float canal_salinity <- plot.my_cell.salinity_level;
 
-			plot.water_level <- plot.water_level + water_pumped;
-			plot.associated_crop.water_pumped_today <- water_pumped;
-			if (water_pumped > 0.0) {
-				plot.total_water_pumped <- plot.total_water_pumped + water_pumped;
-			}
-		}
-	}
+        bool optimal_canal_water <- (canal_salinity >= sp.salinity_opt_min and canal_salinity <= sp.salinity_opt_max);
+        bool tolerable_canal_water <- (canal_salinity >= sp.salinity_min and canal_salinity <= sp.salinity_max);
+
+        float water_in <- 0.0;
+
+        if (optimal_canal_water) {
+            water_in <- min(pumping_capacity, water_needed + 20.0);
+            internal_saline_water_buffer <- min(max_buffer_capacity, internal_saline_water_buffer + 15.0);
+        } else if (tolerable_canal_water) {
+            water_in <- min(pumping_capacity, water_needed);
+        } else {
+            // Canal water is suboptimal: first draw from buffer if available
+            if (internal_saline_water_buffer > 0.0) {
+                float buffer_release <- min(internal_saline_water_buffer, water_needed);
+                plot.water_level <- plot.water_level + buffer_release;
+                internal_saline_water_buffer <- internal_saline_water_buffer - buffer_release;
+                water_needed <- max(0.0, water_needed - buffer_release);
+            }
+            // Survival pumping: if water level drops below minimum threshold, pump anyway to prevent desiccation
+            if (plot.water_level < sp.min_water_level) {
+                water_in <- min(pumping_capacity, sp.min_water_level - plot.water_level);
+            }
+        }
+
+        if (water_in > 0.0) {
+            plot.water_level <- plot.water_level + water_in;
+            plot.associated_crop.water_pumped_today <- water_in;
+            plot.total_water_pumped <- plot.total_water_pumped + water_in;
+        }
+
+        plot.the_farmer.accumulated_labor_hours <- plot.the_farmer.accumulated_labor_hours + daily_labor_aqua_water;
+    }
 }
 
 /**

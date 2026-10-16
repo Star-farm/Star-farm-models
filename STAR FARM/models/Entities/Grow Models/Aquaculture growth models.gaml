@@ -32,27 +32,39 @@ species aqua_mdModel parent: Growth_model {
             }
 
             // 2. Salinity Stress Factor (Trapezoidal response curve)
-            p.local_salinity <- p.my_cell.salinity_level;
-            float sal <- p.local_salinity;
-            float k_salt <- 1.0;
 
-            if (sal < sp.salinity_min or sal > sp.salinity_max) {
-                k_salt <- 0.0; // Outside lethal bounds
-                p.stress_days_salinity <- p.stress_days_salinity + 1;
-            } else if (sal < sp.salinity_opt_min) {
-                k_salt <- (sal - sp.salinity_min) / max(0.1, (sp.salinity_opt_min - sp.salinity_min));
-                p.stress_days_salinity <- p.stress_days_salinity + 1;
-            } else if (sal > sp.salinity_opt_max) {
-                k_salt <- 1.0 - ((sal - sp.salinity_opt_max) / max(0.1, (sp.salinity_max - sp.salinity_opt_max)));
-                p.stress_days_salinity <- p.stress_days_salinity + 1;
-            }
+			// 2. Salinity Factor for Aquaculture
+			p.local_salinity <- p.my_cell.salinity_level;
+			float sal <- p.local_salinity;
+			float k_salt <- 1.0;
+			
+			if (sal < sp.salinity_min) {
+			    // Suboptimal fresh water: growth slows down, but no salinity stress day (it's lack of salt, not salt toxicity!)
+			    k_salt <- 0.5; 
+			} else if (sal < sp.salinity_opt_min) {
+			    // Transition zone: smooth growth ramp-up
+			    k_salt <- 0.5 + 0.5 * ((sal - sp.salinity_min) / max(0.1, (sp.salinity_opt_min - sp.salinity_min)));
+			} else if (sal <= sp.salinity_opt_max) {
+			    // Optimal brackish conditions
+			    k_salt <- 1.0;
+			} else if (sal <= sp.salinity_max) {
+			    // Hypersalinity stress: growth slows down and stress is recorded
+			    k_salt <- 1.0 - 0.5 * ((sal - sp.salinity_opt_max) / max(0.1, (sp.salinity_max - sp.salinity_opt_max)));
+			    p.stress_days_salinity <- p.stress_days_salinity + 1;
+			} else {
+			    // Extreme lethal hypersalinity (> 35 g/L)
+			    k_salt <- 0.1;
+			    p.stress_days_salinity <- p.stress_days_salinity + 1;
+			}
 
-            // 3. Water Depth Stress Factor (Shallow water causes thermal and oxygen stress)
-            float k_water <- 1.0;
-            if (p.water_level < sp.min_water_level) {
-                k_water <- max(0.1, p.water_level / sp.min_water_level);
-                p.stress_days_drought <- p.stress_days_drought + 1;
-            }
+
+
+			float k_water <- 1.0;
+			if (p.water_level < sp.min_water_level) {
+			    k_water <- max(0.1, p.water_level / sp.min_water_level);
+			    p.stress_days_shallow_water <- p.stress_days_shallow_water + 1; // <--- Utilise le nouveau compteur
+			}
+		            // 3. Water Depth Stress Factor (Shallow water causes thermal and oxygen stress
 
             // 4. Temperature Stress Factor
             float k_temp <- (the_weather.t_mean > sp.t_base) ? min(1.0, (the_weather.t_mean - sp.t_base) / (sp.t_opt - sp.t_base)) : 0.0;

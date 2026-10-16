@@ -47,9 +47,8 @@ global {
 	        }
 	    	
 	      // --- 4. FINAL CALCULATION & RAIN DILUTION ---
-	        float potential_salinity <- (base_sal + human_impact)* location_vulnerability * ( 1 - protection_coefficient);
-	       
-	     	
+	        float potential_salinity <- (base_sal + human_impact)* location_vulnerability * ( 1 - current_protection_coefficient);
+	      	     	
 	        salinity_level <- potential_salinity * dilution_factor;
 	    		
 			pollution_level <- pollution_level * pollution_decay_rate;
@@ -76,7 +75,7 @@ global {
 
       			salinity_level <- salinity_level - to_share;
       		}
-
+			
       	}
 
       	ask unit_cell {
@@ -93,7 +92,14 @@ grid unit_cell file: vuln_map_file neighbors: 8{
     float salinity_level <- 0.0;
     float pollution_level_tmp <- 0.0;
     float salinity_level_tmp <- 0.0;
+   	float local_protection_coefficient <- protection_coefficient; // Baseline structural protection
+    bool is_protected <- true;                                   // Closed gates (true) vs Open gates (false)
+    float current_protection_coefficient <- local_protection_coefficient;
   
+  	action change_protection_status(bool new_status) {
+  		is_protected <- new_status;
+        current_protection_coefficient <- is_protected ? local_protection_coefficient : 0.0;
+    }
     rgb color <- #white update: rgb(255 - (pollution_level * 500), 255, 255 - (pollution_level * 500));
     
 }  
