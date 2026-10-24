@@ -3,13 +3,13 @@
 * This wizard creates a new experiment file. 
 * Author: patricktaillandier 
 * Tags:    
-*/    
+*/     
   
 model STARFARM    
    
-import "Generic Experiment.experiment"  
+import "Generic Experiment.experiment"   
 
-
+ 
 // ======================================================================
 // experiments
 // ======================================================================

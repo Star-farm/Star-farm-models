@@ -56,10 +56,20 @@ species lua_mdModel parent: Growth_model {
 				float daily_heat <- (the_weather.t_mean - c.variety.t_base);
 				 
 				if(daily_heat<0){daily_heat<-0.0;} 
+				
+				
+				
 		        c.accumulated_heat <- c.accumulated_heat + daily_heat;
 		        c.growth_stage <- c.accumulated_heat / c.thermal_units_total;
 			    
-			    float k_water <- (c.concerned_plot.water_level < awd_pumping_threshold) ? drought_growth_reduction_factor : 1.0;
+				// Heat stress tracking during sensitive flowering and grain filling stages
+				if (c.growth_stage >= 0.65 and c.growth_stage <= 0.95) {
+					
+				    if (the_weather.t_max > c.variety.heat_tolerance) {
+				        c.concerned_plot.cumulative_heat_stress_flowering <- c.concerned_plot.cumulative_heat_stress_flowering + (the_weather.t_max - c.variety.heat_tolerance);
+				    }
+				}
+				float k_water <- (c.concerned_plot.water_level < awd_pumping_threshold) ? drought_growth_reduction_factor : 1.0;
 		        
 		        c.concerned_plot.local_salinity <- c.concerned_plot.my_cell.salinity_level;
 		        float k_salt <- 1.0;
@@ -136,7 +146,7 @@ species lua_mdModel parent: Growth_model {
 	       
             
 	   		 if (c.concerned_plot.local_salinity > c.salt_threshold_val ) {
-	        	c.cumulative_salt_stress_ripening <- c.cumulative_salt_stress_ripening + (c.concerned_plot.local_salinity - c.salt_threshold_val);
+	        	c.concerned_plot.cumulative_salt_stress_ripening <- c.concerned_plot.cumulative_salt_stress_ripening + (c.concerned_plot.local_salinity - c.salt_threshold_val);
 	    	}
 
 	     

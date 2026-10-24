@@ -58,6 +58,9 @@ global {
 	string DONG_THAP_OLD <- "Dong Thap old";
 	string LONG_AN <- "Long An old";
 	string TRA_VINH <- "Tra Vinh old";
+	string AN_GIANG <- "An Giang";
+	string VINH_LONG <- "Vinh Long";
+	
 
 }
 

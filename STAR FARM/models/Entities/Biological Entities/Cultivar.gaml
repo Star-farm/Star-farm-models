@@ -23,6 +23,7 @@ species Cultivar {
 	float tt_emergence;       // °C·days (planting → emergence)
 	float tt_veg;     // °C·days (emergence → flowering)
 	float tt_rep;       // °C·days (flowering → maturity)
+	float heat_tolerance ; // Max temperature threshold (°C) before spikelet sterility occurs
 	float RUE;   //  g DM / MJ
 	float harvest_index_potential;   //  0–1
 	float grain_filling_duration;   //  °C·days

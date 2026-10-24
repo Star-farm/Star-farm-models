@@ -9,10 +9,11 @@
 
 model STARFARM 
 
+import "Practices/Practices.gaml"
+
 import "Grow Models/Grow model.gaml"
 import "Biological Entities/Aqua Species.gaml"
 import "Environment.gaml"
-import "Practices.gaml"
 import "../Parameters.gaml"  
 
 
@@ -118,7 +119,7 @@ species Farmer {
 		day_expenses <- day_expenses + expenses;
 		money <- money - expenses;
 		ask practice {
-			do add_to_indicator('Profit', -expenses);
+			do add_to_indicator('Profit', -expenses); 
 			do add_to_indicator('Expense: '+category, expenses);
 			day_expenses <- day_expenses + expenses;
 			total_balance <- total_balance - expenses;
@@ -212,6 +213,11 @@ species Plot {
     int days_ripening <- 0;
     
     bool is_high_humidity;
+    
+    
+	float cumulative_heat_stress_flowering <- 0.0; 
+	float cumulative_salt_stress_ripening <- 0.0;
+  
 	
 	/**
 	 * Reflex: sowing (Rice / Plant Crops)
@@ -338,6 +344,38 @@ species Plot {
 		associated_crop <- nil;
 	}
 	
+	// Dynamic salinity threshold tracking for Scenario 3 land-use conversion
+	int consecutive_high_salinity_days <- 0;
+	bool has_shifted_to_shrimp <- false;
+
+	/**
+	 * Reflex: check_salinity_threshold_shift
+	 * If canal water salinity exceeds 4 g/L for more than 10 consecutive days during the dry season,
+	 * the plot shifts dynamically from continuous rice to a Rice-Shrimp-Pineapple rotation.
+	 */
+	reflex check_salinity_threshold_shift when: not has_shifted_to_shrimp and ("Rice_Shrimp_Pineapple" in practices.keys) {
+		// Evaluate raw canal salinity (before polder gate attenuation)
+		float raw_canal_salinity <- my_cell.salinity_level / max(0.1, (1.0 - my_cell.current_protection_coefficient));
+		
+		if (raw_canal_salinity > 4.0) {
+			consecutive_high_salinity_days <- consecutive_high_salinity_days + 1;
+		} else {
+			consecutive_high_salinity_days <- 0;
+		}
+
+		if (consecutive_high_salinity_days > 10) {
+			has_shifted_to_shrimp <- true;
+			Agricultural_strategy target_strat <- practices["Rice_Shrimp_Pineapple"];
+			if (target_strat != nil) {
+				the_farmer.practice <- target_strat;
+				int rice_s <- (target_strat.sowing != nil) ? length(target_strat.sowing.implementation_days) : 0;
+				int aqua_s <- (target_strat.aqua_stocking != nil) ? length(target_strat.aqua_stocking.implementation_days) : 0;
+				the_farmer.num_seasons <- rice_s + aqua_s;
+			}
+		}
+	}
+	
+	
 	bool next_sowing_clean_straw() {
 		if (the_farmer.practice.aqua_stocking != nil) {
 			return true; // Pond preparation for shrimp cleans out rice straw
@@ -426,7 +464,6 @@ species Crop {
     float thermal_units_total;
     float potential_rue_calibrated;
     float salt_threshold_val;          
-    float cumulative_salt_stress_ripening <- 0.0;
     float current_harvest_index;
     
     float straw_yield_ton_ha <- 0.0;
@@ -440,7 +477,7 @@ species Crop {
 	float seed_density_kg_ha;       
 	
     float sum_tmin_ripening <- 0.0;
-	 
+	
 	reflex plantGrow {
 		Growth_model g_model; 
 		

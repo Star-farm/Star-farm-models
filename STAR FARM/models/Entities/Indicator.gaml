@@ -630,7 +630,7 @@ species Top20_Bottom20_Ratio parent: Indicator {
 	    }
 	}
 }
-
+ 
 species Coefficient_of_variation parent: Indicator {
     string name <- "CV Profit";
     string legend <- "Coefficient of Variation (Profit)";
@@ -646,6 +646,45 @@ species Coefficient_of_variation parent: Indicator {
         else {
             float avg_profit <- mean(farmer_profit);
             value <- (avg_profit = 0.0) ? 0.0 : (mean_deviation(farmer_profit) / avg_profit);
+        }
+    }
+}
+
+
+// 1. Taux moyen de stérilité thermique subie
+species Avg_heat_sterility parent: Indicator {
+    string name <- "Heat Sterility";
+    string legend <- "Avg Heat Sterility Penalty";
+    string unit <- "%";
+    string category <- ADAPTATION_RESILIENCE;
+    bool is_seasonal <- true;
+    int float_precision <- 1;
+
+   action compute_value() {
+	    list<Plot> rice_plots <- active_plots where not(each.last_harvest_was_aqua);
+	    if empty(rice_plots) { 
+	        value <- 0.0; 
+	    } else {
+	        // Multiply by (heat_sterility_penalty_rate * 100.0) rather than hardcoded 3.0
+	        value <- mean(rice_plots collect (each.cumulative_heat_stress_flowering * (heat_sterility_penalty_rate * 100.0)));
+	    }
+	}
+}
+
+// 2. Émissions de GES dues au carburant de pompage d'urgence
+species Avg_pumping_fuel_ghg parent: Indicator {
+    string name <- "Pumping Fuel Emissions";
+    string legend <- "Emergency Pumping Fuel Emissions";
+    string unit <- "kg CO2e/ha";
+    string category <- CLIMATE_MITIGATION;
+    bool is_seasonal <- true;
+    int float_precision <- 1;
+
+    action compute_value() {
+        // Approx. 0.45 kg CO2e emitted per mm of diesel pumping per ha
+        if empty(active_plots) { value <- 0.0; }
+        else {
+            value <- mean(active_plots collect (each.total_water_pumped * 0.45));
         }
     }
 }

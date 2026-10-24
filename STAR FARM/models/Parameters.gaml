@@ -185,8 +185,11 @@ global {
     // Sterility/yield penalty rate per unit of cumulative salt stress exceeding the threshold (0.02 = 2% loss)
     float sterility_penalty_rate <- 0.095; 
     
-    // Absolute cap of allowed yield loss due to late salinity sterility (0.25 = 25% maximum loss)
-    float max_sterility_penalty <- 0.25; 
+    // Absolute cap of allowed yield loss due to late salinity sterility and heat (0.25 = 25% maximum loss)
+    float max_sterility_penalty <- 0.7; 
+    
+    // Heat sterility penalty coefficient: fractional loss of Harvest Index (HI) per °C-day above heat_tolerance
+    float heat_sterility_penalty_rate <- 0.03 ;
     
     // Abiotic thresholds during ripening phase
 	float wet_harvest_water_threshold <- 30.0;     // Field water depth (mm) indicating muddy/flooded conditions at harvest

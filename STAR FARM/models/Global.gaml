@@ -53,7 +53,7 @@ global {
 	list<string> years_str;
 	
 
-// Output file paths
+// Output file paths 
     string output_file_day <- "../results/daily_data.csv";
     string output_file_season <- "../results/seasonal_data.csv";
     string output_file_plot_yield_income <- "../results/plot_yield_data.csv";
@@ -104,7 +104,7 @@ global {
      
     action init_all_headers() {
         if save_results { 
-			string pr <- string(possible_practices.keys) replace("[","") replace("]","")replace("'","")  ;
+			string pr <- province + "_" + string(possible_practices.keys) replace("[","") replace("]","")replace("'","")  ;
 			id_xp <- pr + "-" + weather_id +"-"+market_id;
 		} 
 		output_file_day <- output_folder + "/day/daily_data_"  + id_xp+".csv" ;

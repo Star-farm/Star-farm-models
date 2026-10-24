@@ -20,7 +20,7 @@ global {
 
 	shape_file lua_2019_shape_file <- shape_file("../includes/General data/lua_2019.shp");
 
-	string province_choice <- "Dong Thap";
+	string province_choice <- "Vinh Long";
 	bool old_province <- false;
 	shape_file province_shapefile <- shape_file("../includes/General data/vnm_admin1" + (old_province ? "-old": "")+ ".shp");
 	string output <- "../includes/" +  province_choice + (old_province ? " old" : "")+ "/plot_shapefile" +(simple_data_mode ? "_simple" : "")+ ".shp";

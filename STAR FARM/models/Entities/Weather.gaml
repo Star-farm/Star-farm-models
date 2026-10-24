@@ -210,6 +210,14 @@ global {
                 float t_min <- min_temp_month[m_idx] + current_warming + t_min_offset;
                 float t_max <- max_temp_month[m_idx] + current_warming + t_max_offset;
                 
+				if (enso_state = 1) { // El Niño Mode
+				    rain_amount <- rain_amount * el_nino_rain_modifier_;
+				    // Heat wave amplification during dry days in dry season (Jan to April)
+				    float heat_wave_bonus <- (!is_raining_today and d.month <= 4) ? rnd(0.5, 2.0) : 0.0;
+				    t_max <- t_max + el_nino_temp_offset_ + heat_wave_bonus;
+				    t_min <- t_min + el_nino_temp_offset_;
+				}
+                
                 // Physical constraint: Rain immediately cools down the maximum temperature
                 if (is_raining_today) { 
                     t_max <- t_max - rnd(1.0, 3.0); 
@@ -298,11 +306,6 @@ global {
                 rain_amount <- rain_amount with_precision 2;
                 humidity <- humidity with_precision 2;
                 if (rain_amount < 0) { rain_amount <- 0.0; }
-                
-                
-                
-                
-                
                 
                 the_weather._solar_radiation[d] <- solar; 
                 the_weather._temp_min[d] <- t_min; 

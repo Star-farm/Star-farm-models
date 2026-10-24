@@ -14,7 +14,7 @@ global {
     init {
         // Lecture du fichier brut ligne par ligne
         file input_file <- text_file(input_path);
-        list<string> lines <- input_file.contents;
+        list<string> lines <- list<string>(input_file.contents);
 
         // Initialisation de l'en-tête ORYZA (Longitude, Latitude, Altitude, A, B)
         string final_output <- "105.63, 10.45, 5, 0, 0\n";
