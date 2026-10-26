@@ -1,0 +1,2 @@
+id,seed,rue_efficiency_factor,pest_infection_prob,pest_daily_increment,toxicity_per_straw_unit,solar_rad_threshold,max_diffuse_bonus,max_light_limit,steepness_factor,max_water_capacity,lateral_leakage_coefficient,water_excess_coefficient,error_yield,error_pesticide,error_fertilizer,error_water,fitness
+0,8.242055086819334E18,0.74,0.6,0.04,0.027,15.9,0.28,18.9,8.7,79.0,0.01,0.6,0.2543008622348706,0.2543008622348706

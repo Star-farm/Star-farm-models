@@ -43,7 +43,7 @@ global {
 // ----------------------------------------------------------------------
 // EXPERIMENT: Explore Preventive vs Adaptive (3 Seasons) in Dong Thap
 // ----------------------------------------------------------------------
-experiment explore_scenario2 type: batch until: end_of_sim repeat: 5 keep_seed: true {
+experiment explore_scenario2 type: batch until: end_of_sim repeat: 20 keep_seed: true {
     
     // Compare the two branches defined in the Scenario
     parameter "Evaluated Practice" var: possible_practices <- [STRAT_BAU_PREVENTIVE::1.0] among: [
@@ -61,7 +61,7 @@ experiment explore_scenario2 type: batch until: end_of_sim repeat: 5 keep_seed: 
         write_results <- false;
         
         gama.pref_parallel_simulations_all <- false;
-        gama.pref_parallel_threads <- 5;
+        gama.pref_parallel_threads <- 20;
 
         day_start_of_year <- 300;
         starting_date <- date([start_year, 1, 1]) add_days (day_start_of_year - 1);

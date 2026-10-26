@@ -61,7 +61,7 @@ global {
 // ----------------------------------------------------------------------
 // EXPERIMENT: Full Matrix Exploration (Continuous Rice vs Agro-Ecological Diversification)
 // ----------------------------------------------------------------------
-experiment explore_scenario3 type: batch until: end_of_sim repeat: 5 keep_seed: true {
+experiment explore_scenario3 type: batch until: end_of_sim repeat: 20 keep_seed: true {
     parameter "Practice Strategy" var: possible_practices <- [BAU_2S::1.0] among: [
         [BAU_2S::1.0], 
         [STRAT_RICE_SHRIMP_PINEAPPLE::1.0],
@@ -76,7 +76,7 @@ experiment explore_scenario3 type: batch until: end_of_sim repeat: 5 keep_seed: 
         save_results <- true;
         write_results <- false;
         gama.pref_parallel_simulations_all <- false;
-        gama.pref_parallel_threads <- 5;
+        gama.pref_parallel_threads <- 20;
 
         day_start_of_year <- 300;
         starting_date <- date([start_year, 1, 1]) add_days (day_start_of_year - 1);
