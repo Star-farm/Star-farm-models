@@ -18,7 +18,9 @@ global {
 	
 	//shape_file lu_dongthap_shape_file <- shape_file("../includes/Dong Thap/2020/lu_dongthap2020.shp");
 
-	shape_file lua_2019_shape_file <- shape_file("../includes/General data/lua_2019.shp");
+	//shape_file lua_2019_shape_file <- shape_file("../includes/General data/lua_2019.shp");
+
+	shape_file lua_2019_shape_file <- shape_file("../includes/General data/lua_2019_simple.shp");
 
 	string province_choice <- "Vinh Long";
 	bool old_province <- false;
